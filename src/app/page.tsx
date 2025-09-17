@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Typography, Heading } from '@/components/ui/Typography'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useAuth } from '@/contexts/AuthContext'
+import { canAccessTeacherPortal } from '@/lib/auth-utils'
 
 const teacherFeatures = [
   {
@@ -90,6 +92,8 @@ const itemVariants = {
 }
 
 export default function HomePage() {
+  const { user, isAuthenticated } = useAuth()
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -123,9 +127,16 @@ export default function HomePage() {
               <Button asChild size="lg">
                 <Link href="/quiz/join">Prova som gäst</Link>
               </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/teacher">Skapa lärarkonto</Link>
-              </Button>
+              {!isAuthenticated && (
+                <Button variant="outline" size="lg" asChild>
+                  <Link href="/teacher">Skapa lärarkonto</Link>
+                </Button>
+              )}
+              {isAuthenticated && canAccessTeacherPortal(user) && (
+                <Button variant="outline" size="lg" asChild>
+                  <Link href="/teacher">Gå till lärarportal</Link>
+                </Button>
+              )}
             </motion.div>
           </motion.div>
         </Container>
@@ -176,9 +187,16 @@ export default function HomePage() {
             variants={itemVariants}
             className="text-center"
           >
-            <Button size="lg" asChild>
-              <Link href="/teacher">Kom igång som lärare</Link>
-            </Button>
+            {!isAuthenticated && (
+              <Button size="lg" asChild>
+                <Link href="/teacher">Kom igång som lärare</Link>
+              </Button>
+            )}
+            {isAuthenticated && canAccessTeacherPortal(user) && (
+              <Button size="lg" asChild>
+                <Link href="/teacher">Gå till lärarportal</Link>
+              </Button>
+            )}
           </motion.div>
         </Container>
       </Section>
@@ -256,13 +274,24 @@ export default function HomePage() {
               </Typography>
             </motion.div>
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                variant="secondary" 
-                size="lg"
-                asChild
-              >
-                <Link href="/teacher">Starta som lärare</Link>
-              </Button>
+              {!isAuthenticated && (
+                <Button 
+                  variant="secondary" 
+                  size="lg"
+                  asChild
+                >
+                  <Link href="/teacher">Starta som lärare</Link>
+                </Button>
+              )}
+              {isAuthenticated && canAccessTeacherPortal(user) && (
+                <Button 
+                  variant="secondary" 
+                  size="lg"
+                  asChild
+                >
+                  <Link href="/teacher">Gå till lärarportal</Link>
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="lg"
