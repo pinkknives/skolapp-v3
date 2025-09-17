@@ -1,19 +1,38 @@
-name: ✨ Featureförslag
-description: Föreslå en ny funktion eller förbättring för Skolapp
-title: "[Feature]: "
-labels: ["enhancement"]
+name: ✨ Featureförslag (Skolapp)
+description: Föreslå en ny funktion eller förbättring – med /plan och /tasks
+title: "[Feature][MVP]: "
+labels: ["enhancement", "MVP", "Designsystem", "GDPR", "AI"]
 assignees: []
+
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Fyll i **/plan** och **/tasks** enligt mallen nedan. Denna mall följer Skolapps konstitution (designsystem, svenska UI, WCAG, GDPR och prestandabudgetar).
+
   - type: textarea
     id: plan
     attributes:
       label: /plan
-      description: Mål, scope, constraints, acceptance (kopiera din vanliga /plan-struktur).
+      description: Mål, scope, constraints och acceptance för denna feature.
       placeholder: |
         Goal:
+          - Vad vill vi uppnå och för vem (lärare/elev/admin)?
+
         Scope:
+          - Vad ingår? (skärmar, komponenter, API)
+          - Vad exkluderas? (lägg i Out of scope nedan)
+
         Constraints:
+          - Svenska först: all UI/copy på svenska (sv-SE).
+          - Designsystemstvång: ENDAST tokens + kärnkomponenter (inga inline-stilar/hex).
+          - Tillgänglighet: WCAG 2.1 AA (kontrast, fokus, ARIA, tangentbord).
+          - Prestanda: LCP < 2.5s (mobil), initial JS < 200 kB gzip; PWA-stöd där relevant.
+          - GDPR: definiera dataläge (Korttidsläge vs Långtidsläge m. samtycke).
+          - Säkerhet: roll/behörigheter, audit-loggar för känsliga åtgärder.
+
         Acceptance:
+          - Konkreta, testbara kriterier (vad måste vara sant för “klart”).
     validations:
       required: true
 
@@ -21,7 +40,7 @@ body:
     id: tasks
     attributes:
       label: /tasks
-      description: Dela upp i konkreta steg. Använd designsystemets tokens/komponenter.
+      description: Bryt ner arbetet i konkreta steg som Copilot/utvecklare kan ta.
       placeholder: |
         Tasks:
         1) ...
@@ -30,13 +49,60 @@ body:
     validations:
       required: true
 
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance (testbart)
+      description: Lista verifierbara kriterier (UI, API, mätvärden, QA) – kan kopieras till testfall.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: Vad ingår uttryckligen inte i denna issue (så vi undviker scope creep)?
+      placeholder: |
+        - ...
+        - ...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioritet
+      options:
+        - P0 – Blockerande
+        - P1 – Hög
+        - P2 – Normal
+        - P3 – Låg
+      default: 1
+
   - type: checkboxes
     id: guards
     attributes:
-      label: Kvalitetsvakter
+      label: Kvalitetsvakter (måste uppfyllas innan merge)
       options:
-        - label: All UI/copy på svenska
-        - label: Följer designsystem (endast tokens + kärnkomponenter, inga inline-stilar/hex)
-        - label: WCAG 2.1 AA (fokus, kontrast, ARIA)
-        - label: Prestandabudget (LCP < 2.5s, initial JS < 200 kB gzip)
-        - label: GDPR (korttidsläge vs långtidsläge beskrivet)
+        - label: All UI/copy på svenska (sv-SE)
+          required: true
+        - label: Följer designsystem (endast tokens + kärnkomponenter; inga inline-stilar/hex)
+          required: true
+        - label: WCAG 2.1 AA (kontrast ≥ 4.5:1, fokus, ARIA, tangentbord)
+          required: true
+        - label: Prestanda – LCP < 2.5s mobil, initial JS < 200 kB gzip (mät i Lighthouse)
+          required: true
+        - label: GDPR – dataläge definierat (Korttid/Långtid), samtycke om Långtid
+          required: true
+        - label: Tester – komponent-/flödestest eller e2e där relevant
+          required: true
+        - label: Dokumentation uppdaterad (README/CONTRIBUTING/DESIGN_SYSTEM)
+          required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Referenser & beroenden
+      description: Länka relaterade issues/PRs/designskisser/specar.
+      placeholder: "#123, #456 …"
