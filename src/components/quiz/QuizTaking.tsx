@@ -77,6 +77,32 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
   }, [quizState.status])
 
   // Handle answer submission
+  const proceedToNextQuestion = useCallback((updatedAnswers: StudentAnswer[], questionTimeSpent: number) => {
+    if (isLastQuestion) {
+      // Quiz completed
+      setQuizState(prev => ({ ...prev, status: 'completed' }))
+      onComplete({
+        answers: updatedAnswers,
+        timeSpent: quizState.progress.timeElapsed + questionTimeSpent
+      })
+    } else if (!isTeacherControlled) {
+      // Move to next question (only in self-paced mode)
+      setQuizState(prev => ({
+        ...prev,
+        progress: {
+          ...prev.progress,
+          currentQuestionIndex: prev.progress.currentQuestionIndex + 1
+        }
+      }))
+      setSelectedAnswer('')
+      setQuestionStartTime(Date.now())
+    } else {
+      // In teacher-controlled mode, just wait for teacher to advance
+      setSelectedAnswer('')
+      setQuestionStartTime(Date.now())
+    }
+  }, [isLastQuestion, isTeacherControlled, onComplete, quizState.progress])
+
   const handleAnswerSubmit = useCallback(() => {
     const questionTimeSpent = Math.floor((Date.now() - questionStartTime) / 1000)
     
@@ -110,32 +136,6 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
       proceedToNextQuestion(updatedAnswers, questionTimeSpent)
     }
   }, [currentQuestion.id, selectedAnswer, questionStartTime, quizState.progress, quiz.settings.showCorrectAnswers, currentQuestion.type, proceedToNextQuestion])
-
-  const proceedToNextQuestion = useCallback((updatedAnswers: StudentAnswer[], questionTimeSpent: number) => {
-    if (isLastQuestion) {
-      // Quiz completed
-      setQuizState(prev => ({ ...prev, status: 'completed' }))
-      onComplete({
-        answers: updatedAnswers,
-        timeSpent: quizState.progress.timeElapsed + questionTimeSpent
-      })
-    } else if (!isTeacherControlled) {
-      // Move to next question (only in self-paced mode)
-      setQuizState(prev => ({
-        ...prev,
-        progress: {
-          ...prev.progress,
-          currentQuestionIndex: prev.progress.currentQuestionIndex + 1
-        }
-      }))
-      setSelectedAnswer('')
-      setQuestionStartTime(Date.now())
-    } else {
-      // In teacher-controlled mode, just wait for teacher to advance
-      setSelectedAnswer('')
-      setQuestionStartTime(Date.now())
-    }
-  }, [isLastQuestion, isTeacherControlled, onComplete, quizState.progress])
 
   // Handle multiple choice selection
   const handleMultipleChoiceSelect = (optionId: string) => {

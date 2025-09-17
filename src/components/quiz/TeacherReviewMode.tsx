@@ -89,41 +89,6 @@ export function TeacherReviewMode({
     return { count, percentage }
   }
 
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowRight':
-        case ' ':
-          e.preventDefault()
-          if (showAnswer && !isLastQuestion) {
-            nextQuestion()
-          } else if (!showAnswer) {
-            setShowAnswer(true)
-          }
-          break
-        case 'ArrowLeft':
-          e.preventDefault()
-          if (currentQuestionIndex > 0) {
-            previousQuestion()
-          }
-          break
-        case 'Escape':
-          if (isFullscreen) {
-            exitFullscreen()
-          }
-          break
-        case 'f':
-        case 'F':
-          e.preventDefault()
-          toggleFullscreen()
-          break
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentQuestionIndex, showAnswer, isLastQuestion, isFullscreen, nextQuestion, previousQuestion, toggleFullscreen, exitFullscreen])
-
   const nextQuestion = useCallback(() => {
     if (currentQuestionIndex < localQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
@@ -159,6 +124,41 @@ export function TeacherReviewMode({
       setIsFullscreen(false)
     }
   }, [isFullscreen])
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+          e.preventDefault()
+          if (showAnswer && !isLastQuestion) {
+            nextQuestion()
+          } else if (!showAnswer) {
+            setShowAnswer(true)
+          }
+          break
+        case 'ArrowLeft':
+          e.preventDefault()
+          if (currentQuestionIndex > 0) {
+            previousQuestion()
+          }
+          break
+        case 'Escape':
+          if (isFullscreen) {
+            exitFullscreen()
+          }
+          break
+        case 'f':
+        case 'F':
+          e.preventDefault()
+          toggleFullscreen()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [currentQuestionIndex, showAnswer, isLastQuestion, isFullscreen, nextQuestion, previousQuestion, toggleFullscreen, exitFullscreen])
 
   const renderQuestion = (question: Question) => {
     switch (question.type) {
