@@ -4,20 +4,65 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
-import { Quiz, Question, MultipleChoiceQuestion } from '@/types/quiz'
+import { Quiz, Question, MultipleChoiceQuestion, QuizResult, Student } from '@/types/quiz'
 
 interface TeacherReviewModeProps {
   quiz: Quiz
   onExit: () => void
+  results?: QuizResult[]
+  students?: Student[]
+  showStudentResponses?: boolean
 }
 
-export function TeacherReviewMode({ quiz, onExit }: TeacherReviewModeProps) {
+export function TeacherReviewMode({ 
+  quiz, 
+  onExit, 
+  results = [], 
+  students = [], 
+  showStudentResponses = false 
+}: TeacherReviewModeProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [anonymizeNames, setAnonymizeNames] = useState(false)
+  const [showResponses, setShowResponses] = useState(showStudentResponses)
 
   const currentQuestion = quiz.questions[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
+
+  // Helper functions for student response analysis
+  const getStudentName = (studentId: string) => {
+    const student = students.find(s => s.id === studentId)
+    if (!student) return 'Okänd elev'
+    return anonymizeNames ? `Elev ${students.indexOf(student) + 1}` : student.alias
+  }
+
+  const getStudentResponsesForCurrentQuestion = () => {
+    return results.map(result => {
+      const answer = result.answers.find(a => a.questionId === currentQuestion.id)
+      return {
+        studentId: result.studentId,
+        studentName: getStudentName(result.studentId),
+        answer: answer?.answer,
+        isCorrect: isAnswerCorrect(answer?.answer, currentQuestion)
+      }
+    }).filter(response => response.answer !== undefined)
+  }
+
+  const isAnswerCorrect = (answer: string | string[] | undefined, question: Question): boolean => {
+    if (!answer || question.type !== 'multiple-choice') return false
+    
+    const mcQuestion = question as MultipleChoiceQuestion
+    const correctOption = mcQuestion.options.find(opt => opt.isCorrect)
+    return correctOption?.id === answer
+  }
+
+  const getOptionStats = (optionId: string) => {
+    const responses = getStudentResponsesForCurrentQuestion()
+    const count = responses.filter(r => r.answer === optionId).length
+    const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0
+    return { count, percentage }
+  }
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -108,35 +153,101 @@ export function TeacherReviewMode({ quiz, onExit }: TeacherReviewModeProps) {
             )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mcQuestion.options.map((option, index) => (
-                <div
-                  key={option.id}
-                  className={`p-6 rounded-lg border-2 transition-all duration-300 ${
-                    showAnswer && option.isCorrect
-                      ? 'border-success-500 bg-success-50 text-success-800'
-                      : showAnswer && !option.isCorrect
-                      ? 'border-neutral-300 bg-neutral-50 text-neutral-600'
-                      : 'border-neutral-300 bg-white hover:border-primary-300'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                      showAnswer && option.isCorrect ? 'bg-success-500' : 'bg-primary-500'
-                    }`}>
-                      {String.fromCharCode(65 + index)}
+              {mcQuestion.options.map((option, index) => {
+                const optionStats = showResponses ? getOptionStats(option.id) : { count: 0, percentage: 0 }
+                
+                return (
+                  <div
+                    key={option.id}
+                    className={`p-6 rounded-lg border-2 transition-all duration-300 ${
+                      showAnswer && option.isCorrect
+                        ? 'border-success-500 bg-success-50 text-success-800'
+                        : showAnswer && !option.isCorrect
+                        ? 'border-neutral-300 bg-neutral-50 text-neutral-600'
+                        : 'border-neutral-300 bg-white hover:border-primary-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                          showAnswer && option.isCorrect ? 'bg-success-500' : 'bg-primary-500'
+                        }`}>
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <Typography variant="h6" className="flex-1">
+                          {option.text}
+                        </Typography>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {showResponses && (
+                          <div className="text-right">
+                            <Typography variant="caption" className="text-neutral-600 block">
+                              {optionStats.count} elever ({optionStats.percentage.toFixed(0)}%)
+                            </Typography>
+                          </div>
+                        )}
+                        {showAnswer && option.isCorrect && (
+                          <svg className="h-6 w-6 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
                     </div>
-                    <Typography variant="h6" className="flex-1">
-                      {option.text}
-                    </Typography>
-                    {showAnswer && option.isCorrect && (
-                      <svg className="h-6 w-6 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                    
+                    {/* Response bar */}
+                    {showResponses && results.length > 0 && (
+                      <div className="mt-3">
+                        <div className="w-full bg-neutral-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-500 ${
+                              option.isCorrect ? 'bg-success-500' : 'bg-primary-500'
+                            }`}
+                            style={{ width: `${optionStats.percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
+            
+            {/* Student response list */}
+            {showResponses && showAnswer && results.length > 0 && (
+              <div className="mt-6 bg-neutral-50 p-4 rounded-lg">
+                <Typography variant="subtitle2" className="font-medium mb-3">
+                  Elevernas svar:
+                </Typography>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {getStudentResponsesForCurrentQuestion().map((response, idx) => (
+                    <div
+                      key={`${response.studentId}-${idx}`}
+                      className={`flex items-center justify-between p-3 rounded ${
+                        response.isCorrect ? 'bg-success-100 text-success-800' : 'bg-error-100 text-error-800'
+                      }`}
+                    >
+                      <Typography variant="body2" className="font-medium">
+                        {response.studentName}
+                      </Typography>
+                      <div className="flex items-center space-x-2">
+                        <Typography variant="body2">
+                          {mcQuestion.options.find(opt => opt.id === response.answer)?.text?.substring(0, 20) || 'Okänt svar'}
+                        </Typography>
+                        {response.isCorrect ? (
+                          <svg className="h-4 w-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )
 
@@ -223,14 +334,43 @@ export function TeacherReviewMode({ quiz, onExit }: TeacherReviewModeProps) {
 
         {/* Controls */}
         <div className="mt-8 flex flex-col items-center space-y-6">
-          {/* Answer Toggle */}
-          <Button
-            size="lg"
-            onClick={() => setShowAnswer(!showAnswer)}
-            className={showAnswer ? 'bg-success-600 hover:bg-success-700' : ''}
-          >
-            {showAnswer ? 'Dölj svar' : 'Visa svar'}
-          </Button>
+          {/* Primary Controls */}
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {/* Answer Toggle */}
+            <Button
+              size="lg"
+              onClick={() => setShowAnswer(!showAnswer)}
+              className={showAnswer ? 'bg-success-600 hover:bg-success-700' : ''}
+            >
+              {showAnswer ? 'Dölj svar' : 'Visa svar'}
+            </Button>
+
+            {/* Student Responses Toggle */}
+            {results.length > 0 && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setShowResponses(!showResponses)}
+                className={`text-white border-neutral-600 hover:bg-neutral-800 ${
+                  showResponses ? 'bg-neutral-700' : ''
+                }`}
+              >
+                {showResponses ? 'Dölj elevdata' : 'Visa elevdata'}
+              </Button>
+            )}
+
+            {/* Anonymization Toggle */}
+            {showResponses && results.length > 0 && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setAnonymizeNames(!anonymizeNames)}
+                className="text-white border-neutral-600 hover:bg-neutral-800"
+              >
+                {anonymizeNames ? 'Visa namn' : 'Anonymisera'}
+              </Button>
+            )}
+          </div>
 
           {/* Navigation */}
           <div className="flex items-center space-x-4">
