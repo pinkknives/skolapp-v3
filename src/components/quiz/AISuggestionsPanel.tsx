@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
+import { RubricDisplay } from './RubricDisplay'
 import { AIAssessment, TeacherDecision, Question, QuizResult } from '@/types/quiz'
 import { createAIGradingClient } from '@/lib/ai-grading'
 import { aiGradingAuditService } from '@/lib/ai-grading-audit'
@@ -260,6 +261,19 @@ export function AISuggestionsPanel({
           </div>
         )}
 
+        {/* Rubric display */}
+        {currentQuestion.rubric && (
+          <div className="mb-6">
+            <RubricDisplay
+              rubric={currentQuestion.rubric}
+              className="mb-4"
+            />
+            <Typography variant="caption" className="text-neutral-600">
+              AI kommer att använda dessa kriterier för att bedöma elevernas svar.
+            </Typography>
+          </div>
+        )}
+
         {/* Generate AI assessments button */}
         {studentAnswers.length > 0 && !studentAnswers.some(sa => sa.assessment) && (
           <div className="mb-6">
@@ -382,6 +396,15 @@ export function AISuggestionsPanel({
                           {studentAnswer.assessment.rationale}
                         </Typography>
                       </div>
+
+                      {/* Rubric evaluation if available */}
+                      {studentAnswer.assessment.rubricEvaluation && currentQuestion.rubric && (
+                        <RubricDisplay
+                          rubric={currentQuestion.rubric}
+                          evaluation={studentAnswer.assessment.rubricEvaluation}
+                          className="mt-3"
+                        />
+                      )}
 
                       {/* Teacher decision */}
                       {studentAnswer.decision ? (
