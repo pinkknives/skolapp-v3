@@ -27,7 +27,7 @@ export function Layout({
         href="#main-content"
         className="skip-to-content"
       >
-        Skip to main content
+        Hoppa till huvudinnehåll
       </a>
 
       {/* Navigation */}

@@ -23,27 +23,27 @@ interface FooterProps {
 
 const defaultSections: FooterSection[] = [
   {
-    title: 'Product',
+    title: 'Produkt',
     links: [
-      { href: '/plan', label: 'Plan' },
-      { href: '/tasks', label: 'Tasks' },
-      { href: '/features', label: 'Features' },
+      { href: '/designsystem', label: 'Designsystem' },
+      { href: '/komponenter', label: 'Komponenter' },
+      { href: '/funktioner', label: 'Funktioner' },
     ],
   },
   {
     title: 'Support',
     links: [
-      { href: '/help', label: 'Help Center' },
-      { href: '/contact', label: 'Contact Us' },
+      { href: '/hjalp', label: 'Hjälpcenter' },
+      { href: '/kontakt', label: 'Kontakta oss' },
       { href: '/feedback', label: 'Feedback' },
     ],
   },
   {
-    title: 'Legal',
+    title: 'Juridiskt',
     links: [
-      { href: '/privacy', label: 'Privacy Policy' },
-      { href: '/terms', label: 'Terms of Service' },
-      { href: '/cookies', label: 'Cookie Policy' },
+      { href: '/integritet', label: 'Integritetspolicy' },
+      { href: '/villkor', label: 'Användarvillkor' },
+      { href: '/cookies', label: 'Cookie-policy' },
     ],
   },
 ]
@@ -124,8 +124,8 @@ export function Footer({
               </Typography>
             </Link>
             <Typography variant="body2" className="max-w-md">
-              Modern school management application designed for accessibility, 
-              performance, and user experience.
+              Modern applikation för skolhantering designad för tillgänglighet, 
+              prestanda och användarupplevelse.
             </Typography>
             {showSocial && (
               <div className="flex space-x-6">
@@ -216,14 +216,14 @@ export function Footer({
               {showNewsletter && (
                 <div className="mt-8 md:mt-0">
                   <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase">
-                    Subscribe to our newsletter
+                    Prenumerera på vårt nyhetsbrev
                   </Typography>
                   <Typography variant="body2" className="mt-4">
-                    Get the latest updates and news delivered to your inbox.
+                    Få de senaste uppdateringarna och nyheterna levererade till din inkorg.
                   </Typography>
                   <form className="mt-4 sm:flex sm:max-w-md">
                     <label htmlFor="email-address" className="sr-only">
-                      Email address
+                      E-postadress
                     </label>
                     <input
                       type="email"
@@ -232,14 +232,14 @@ export function Footer({
                       autoComplete="email"
                       required
                       className="min-w-0 flex-auto rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                      placeholder="Enter your email"
+                      placeholder="Ange din e-postadress"
                     />
                     <div className="mt-4 sm:mt-0 sm:ml-4 sm:flex-shrink-0">
                       <button
                         type="submit"
                         className="flex w-full items-center justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors duration-200"
                       >
-                        Subscribe
+                        Prenumerera
                       </button>
                     </div>
                   </form>
@@ -253,26 +253,26 @@ export function Footer({
         <div className="mt-12 border-t border-neutral-200 pt-8">
           <div className="md:flex md:items-center md:justify-between">
             <Typography variant="body2">
-              &copy; {currentYear} Skolapp. All rights reserved.
+              &copy; {currentYear} Skolapp. Alla rättigheter förbehållna.
             </Typography>
             <div className="mt-4 flex space-x-6 md:mt-0">
               <Link 
-                href="/privacy" 
+                href="/integritet" 
                 className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
               >
-                Privacy
+                Integritet
               </Link>
               <Link 
-                href="/terms" 
+                href="/villkor" 
                 className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
               >
-                Terms
+                Villkor
               </Link>
               <Link 
-                href="/accessibility" 
+                href="/tillganglighet" 
                 className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
               >
-                Accessibility
+                Tillgänglighet
               </Link>
             </div>
           </div>

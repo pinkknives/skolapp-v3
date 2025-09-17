@@ -19,9 +19,7 @@ interface NavbarProps {
 }
 
 const defaultItems: NavItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/plan', label: 'Plan' },
-  { href: '/tasks', label: 'Tasks' },
+  { href: '/', label: 'Hem' },
 ]
 
 export function Navbar({ 

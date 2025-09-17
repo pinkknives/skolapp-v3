@@ -3,11 +3,11 @@ import '../styles/globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Skolapp v3 - Modern School Management',
+    default: 'Skolapp v3 - Modern designsystem',
     template: '%s | Skolapp v3'
   },
-  description: 'Modern school management application with accessibility, design system, and progressive web app features.',
-  keywords: ['school management', 'education', 'progressive web app', 'accessibility', 'modern design'],
+  description: 'Modern designsystem och progressiv webbapplikation med tillgänglighet, prestanda och användarupplevelse i fokus.',
+  keywords: ['designsystem', 'tillgänglighet', 'progressiv webbapp', 'modern design', 'svenska'],
   authors: [{ name: 'Skolapp Team' }],
   creator: 'Skolapp Team',
   publisher: 'Skolapp',
@@ -17,24 +17,24 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'en_US',
+    locale: 'sv_SE',
     url: 'https://skolapp.example.com',
-    title: 'Skolapp v3 - Modern School Management',
-    description: 'Modern school management application with accessibility, design system, and progressive web app features.',
+    title: 'Skolapp v3 - Modern designsystem',
+    description: 'Modern designsystem och progressiv webbapplikation med tillgänglighet, prestanda och användarupplevelse i fokus.',
     siteName: 'Skolapp v3',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Skolapp v3 - Modern School Management',
+        alt: 'Skolapp v3 - Modern designsystem',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Skolapp v3 - Modern School Management',
-    description: 'Modern school management application with accessibility, design system, and progressive web app features.',
+    title: 'Skolapp v3 - Modern designsystem',
+    description: 'Modern designsystem och progressiv webbapplikation med tillgänglighet, prestanda och användarupplevelse i fokus.',
     images: ['/og-image.png'],
     creator: '@skolapp',
   },
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
-  category: 'education',
+  category: 'technology',
 }
 
 export const viewport: Viewport = {
@@ -84,7 +84,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="sv">{/* Changed to Swedish */}
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />

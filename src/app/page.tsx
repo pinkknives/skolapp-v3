@@ -9,44 +9,44 @@ import { motion } from 'framer-motion'
 
 const features = [
   {
-    title: 'Plan Management',
-    description: 'Organize and track educational plans with ease. Create, edit, and monitor progress.',
+    title: 'Designsystem',
+    description: 'Komplett designsystem med tokens, komponenter och responsiv design för konsekvent användarupplevelse.',
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v1a2 2 0 001 1.732l.732.732a2 2 0 002.828 0l.732-.732A2 2 0 0017 6V5a2 2 0 012-2h2a2 2 0 012 2v12a4 4 0 01-4 4H7z" />
       </svg>
     ),
-    href: '/plan',
+    href: '/designsystem',
   },
   {
-    title: 'Task Management',
-    description: 'Stay on top of assignments and deadlines with our comprehensive task system.',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    ),
-    href: '/tasks',
-  },
-  {
-    title: 'Accessibility First',
-    description: 'Built with WCAG 2.1 AA compliance, ensuring everyone can use our platform effectively.',
+    title: 'Tillgänglighet först',
+    description: 'Byggd med WCAG 2.1 AA-efterlevnad för att säkerställa att alla kan använda vår plattform effektivt.',
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
       </svg>
     ),
-    href: '/accessibility',
+    href: '/tillganglighet',
   },
   {
-    title: 'Progressive Web App',
-    description: 'Install on any device and enjoy offline functionality with modern web technologies.',
+    title: 'Progressiv webbapp',
+    description: 'Installera på vilken enhet som helst och njut av offline-funktionalitet med modern webbteknik.',
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     ),
     href: '/pwa',
+  },
+  {
+    title: 'Prestanda',
+    description: 'Optimerad för snabb laddning och responsiv användarinteraktion på alla enheter.',
+    icon: (
+      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+    href: '/prestanda',
   },
 ]
 
@@ -86,7 +86,7 @@ export default function HomePage() {
           >
             <motion.div variants={itemVariants}>
               <Heading level={1} className="mb-6">
-                Welcome to{' '}
+                Välkommen till{' '}
                 <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
                   Skolapp v3
                 </span>
@@ -98,17 +98,17 @@ export default function HomePage() {
                 variant="subtitle1" 
                 className="mx-auto max-w-2xl mb-8 text-neutral-600"
               >
-                A modern, accessible, and progressive school management application 
-                built with cutting-edge web technologies and inclusive design principles.
+                En modern, tillgänglig och progressiv applikation för skolhantering 
+                byggd med banbrytande webbteknologi och inkluderande designprinciper.
               </Typography>
             </motion.div>
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg">
-                <Link href="/plan">Get Started</Link>
+                <Link href="/designsystem">Kom igång</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link href="/features">Learn More</Link>
+                <Link href="/funktioner">Läs mer</Link>
               </Button>
             </motion.div>
           </motion.div>
@@ -120,10 +120,10 @@ export default function HomePage() {
         <Container>
           <div className="text-center mb-16">
             <Heading level={2} className="mb-4">
-              Everything you need for modern education management
+              Allt du behöver för modern designsystem-utveckling
             </Heading>
             <Typography variant="subtitle1" className="text-neutral-600 max-w-2xl mx-auto">
-              Powerful features designed with accessibility, performance, and user experience in mind.
+              Kraftfulla funktioner designade med tillgänglighet, prestanda och användarupplevelse i åtanke.
             </Typography>
           </div>
 
@@ -152,7 +152,7 @@ export default function HomePage() {
                     </CardDescription>
                     <Button variant="link" asChild className="p-0 h-auto">
                       <Link href={feature.href}>
-                        Learn more →
+                        Läs mer →
                       </Link>
                     </Button>
                   </CardContent>
@@ -178,7 +178,7 @@ export default function HomePage() {
                 99.9%
               </Typography>
               <Typography variant="subtitle2" className="text-neutral-600">
-                Uptime Reliability
+                Drifttillförlitlighet
               </Typography>
             </motion.div>
             <motion.div variants={itemVariants}>
@@ -186,7 +186,7 @@ export default function HomePage() {
                 WCAG 2.1 AA
               </Typography>
               <Typography variant="subtitle2" className="text-neutral-600">
-                Accessibility Compliance
+                Tillgänglighetsefterlevnad
               </Typography>
             </motion.div>
             <motion.div variants={itemVariants}>
@@ -194,7 +194,7 @@ export default function HomePage() {
                 &lt;2s
               </Typography>
               <Typography variant="subtitle2" className="text-neutral-600">
-                Average Load Time
+                Genomsnittlig laddningstid
               </Typography>
             </motion.div>
           </motion.div>
@@ -213,12 +213,12 @@ export default function HomePage() {
           >
             <motion.div variants={itemVariants}>
               <Heading level={2} className="mb-4 text-white">
-                Ready to get started?
+                Redo att komma igång?
               </Heading>
             </motion.div>
             <motion.div variants={itemVariants}>
               <Typography variant="subtitle1" className="mb-8 text-primary-100">
-                Join thousands of educators already using Skolapp to manage their schools.
+                Upptäck kraften i ett modernt designsystem byggt för skalbarhet och prestanda.
               </Typography>
             </motion.div>
             <motion.div variants={itemVariants}>
@@ -227,7 +227,7 @@ export default function HomePage() {
                 size="lg"
                 asChild
               >
-                <Link href="/plan">Start Planning</Link>
+                <Link href="/designsystem">Utforska designsystemet</Link>
               </Button>
             </motion.div>
           </motion.div>
