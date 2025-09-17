@@ -1,0 +1,4 @@
+refactor:
+  - title: '/[Rr]efactor/'
+  - changed-files:
+      - any-glob-to-any-file: ['src/components/**', 'src/lib/**']
