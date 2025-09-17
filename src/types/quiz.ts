@@ -100,3 +100,23 @@ export interface QuizSession {
   currentQuestionIndex?: number // For teacher-controlled mode
   shareCode: string
 }
+
+export interface Student {
+  id: string
+  alias: string
+  joinedAt: Date
+  isGuest: boolean
+}
+
+export interface QuizJoinResult {
+  success: boolean
+  quiz?: Quiz
+  session?: QuizSession
+  error?: string
+  errorCode?: 'INVALID_CODE' | 'QUIZ_NOT_ACTIVE' | 'QUIZ_CLOSED' | 'QUIZ_NOT_FOUND'
+}
+
+export interface QuizJoinRequest {
+  shareCode: string
+  studentAlias: string
+}
