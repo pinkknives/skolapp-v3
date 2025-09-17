@@ -1,0 +1,42 @@
+name: ✨ Featureförslag
+description: Föreslå en ny funktion eller förbättring för Skolapp
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: textarea
+    id: plan
+    attributes:
+      label: /plan
+      description: Mål, scope, constraints, acceptance (kopiera din vanliga /plan-struktur).
+      placeholder: |
+        Goal:
+        Scope:
+        Constraints:
+        Acceptance:
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: /tasks
+      description: Dela upp i konkreta steg. Använd designsystemets tokens/komponenter.
+      placeholder: |
+        Tasks:
+        1) ...
+        2) ...
+        3) ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: guards
+    attributes:
+      label: Kvalitetsvakter
+      options:
+        - label: All UI/copy på svenska
+        - label: Följer designsystem (endast tokens + kärnkomponenter, inga inline-stilar/hex)
+        - label: WCAG 2.1 AA (fokus, kontrast, ARIA)
+        - label: Prestandabudget (LCP < 2.5s, initial JS < 200 kB gzip)
+        - label: GDPR (korttidsläge vs långtidsläge beskrivet)
