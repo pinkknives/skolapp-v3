@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
@@ -328,10 +329,13 @@ function MultipleChoiceQuestionView({
       {/* Image for image questions */}
       {question.type === 'image' && (question as ImageQuestion).imageUrl && (
         <div className="flex justify-center">
-          <img
-            src={(question as ImageQuestion).imageUrl}
+          <Image
+            src={(question as ImageQuestion).imageUrl!}
             alt={(question as ImageQuestion).imageAlt || 'Frågans bild'}
-            className="max-w-full max-h-96 rounded-lg shadow-md"
+            width={800}
+            height={400}
+            className="max-w-full max-h-96 rounded-lg shadow-md object-contain"
+            priority={false}
           />
         </div>
       )}

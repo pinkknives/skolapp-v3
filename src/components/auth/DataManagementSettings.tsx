@@ -73,7 +73,7 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
       // If switching to long-term mode and user is minor, trigger consent flow
       if (selectedMode === 'långtid' && user.isMinor && !user.hasParentalConsent) {
         // In a real app, this would trigger the consent request flow
-        console.log('Triggering parental consent request...')
+        // Parental consent request would be triggered here
       }
       
       // If switching from long-term to short-term, show data migration options
@@ -114,7 +114,7 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
     
     if (confirmed) {
       // In a real app, this would call an API to delete user data
-      console.log('Deleting all user data...')
+      // User data deletion would be processed here
       
       // Simulate the deletion locally
       if (typeof window !== 'undefined') {

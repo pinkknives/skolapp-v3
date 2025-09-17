@@ -13,7 +13,6 @@ export default function CreateWizardPage() {
   const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1'))
 
   const handleQuizComplete = (completedQuiz: Quiz) => {
-    console.log('Quiz created:', completedQuiz)
     // In real implementation, this would save to database and redirect
   }
 

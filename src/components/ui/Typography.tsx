@@ -148,7 +148,7 @@ const Heading = forwardRef<HTMLHeadingElement, Omit<TypographyProps, 'variant'> 
   ({ level, ...props }, ref) => (
     <Typography 
       ref={ref} 
-      variant={`h${level}` as any} 
+      variant={`h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'} 
       {...props} 
     />
   )

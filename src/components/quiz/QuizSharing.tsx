@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import QRCode from 'qrcode'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -125,10 +126,13 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
             </Typography>
             <div className="flex justify-center mb-4">
               <div className="bg-white p-4 rounded-lg shadow-sm border">
-                <img
+                <Image
                   src={qrCodeUrl}
                   alt={`QR-kod för quiz ${quiz.title}`}
+                  width={192}
+                  height={192}
                   className="w-48 h-48"
+                  priority={false}
                 />
               </div>
             </div>

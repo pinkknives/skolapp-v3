@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
-import { Question } from '@/types/quiz'
+import { Question, MultipleChoiceQuestion, FreeTextQuestion, MultipleChoiceOption } from '@/types/quiz'
 import { generateAIQuizDraft } from '@/lib/quiz-utils'
 
 interface AIQuizDraftProps {
@@ -204,7 +204,7 @@ export function AIQuizDraft({ onQuestionsGenerated, onClose }: AIQuizDraftProps)
                         </Typography>
                         {question.type === 'multiple-choice' && (
                           <div className="space-y-1">
-                            {(question as any).options?.map((option: any, optIndex: number) => (
+                            {(question as MultipleChoiceQuestion).options?.map((option: MultipleChoiceOption, optIndex: number) => (
                               <div key={option.id} className={`text-sm pl-4 ${option.isCorrect ? 'text-success-600 font-medium' : 'text-neutral-600'}`}>
                                 {String.fromCharCode(65 + optIndex)}. {option.text}
                                 {option.isCorrect && ' ✓'}
@@ -214,7 +214,7 @@ export function AIQuizDraft({ onQuestionsGenerated, onClose }: AIQuizDraftProps)
                         )}
                         {question.type === 'free-text' && (
                           <Typography variant="caption" className="text-neutral-600">
-                            Fritextsvar förväntat: {(question as any).expectedAnswer}
+                            Fritextsvar förväntat: {(question as FreeTextQuestion).expectedAnswer}
                           </Typography>
                         )}
                       </div>

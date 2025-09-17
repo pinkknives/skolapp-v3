@@ -210,7 +210,7 @@ class DataRetentionService {
     const session = this.getSession(job.sessionId)
     if (!session) return
 
-    console.log(`[DataRetention] Cleaning up session ${job.sessionId} (reason: ${job.reason})`)
+    // Clean up session data
 
     // Remove session data from storage
     if (typeof window !== 'undefined') {
@@ -249,7 +249,7 @@ class DataRetentionService {
     }
 
     // In a real app, this would be sent to an audit logging service
-    console.log('[DataRetention] Audit Log:', auditLog)
+    // Audit log: data cleanup action recorded
   }
 
   /**
