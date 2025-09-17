@@ -59,3 +59,8 @@
 ## Example prompts (internal)
 - "Implementera `Navbar` och `Footer` med tokens, svensk copy och a11y. Lägg till responsiv mobilmeny och fokuslogik. Ingen auth."
 - "Skapa `Button`, `Card`, `Input`, `Typography` enligt tokens och lägg till `prefers-reduced-motion`-stöd."
+
+## Issue template compliance
+- All new features must be defined with `/plan` and `/tasks` (see `.github/ISSUE_TEMPLATE/`).
+- Copilot should decline vague tasks until `/plan` is clarified.
+- Each `/plan` must include Acceptance criteria that are testable.
