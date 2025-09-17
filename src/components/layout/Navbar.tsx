@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+'use client'
+
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -20,6 +22,8 @@ interface NavbarProps {
 
 const defaultItems: NavItem[] = [
   { href: '/', label: 'Hem' },
+  { href: '/quiz/join', label: 'Gå med i Quiz' },
+  { href: '/teacher', label: 'Lärarportal' },
 ]
 
 export function Navbar({ 
@@ -29,7 +33,18 @@ export function Navbar({
   className 
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 20
+      setIsScrolled(scrolled)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const isActiveLink = (href: string) => {
     if (href === '/') {
@@ -79,14 +94,18 @@ export function Navbar({
   return (
     <nav
       className={cn(
-        'sticky top-0 z-fixed bg-white/95 backdrop-blur-md border-b border-neutral-200',
+        'sticky top-0 z-fixed bg-white/95 backdrop-blur-md border-b border-neutral-200 transition-all duration-200',
+        isScrolled && 'shadow-md',
         className
       )}
       role="navigation"
       aria-label="Main navigation"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className={cn(
+          "flex items-center justify-between transition-all duration-200",
+          isScrolled ? "h-14" : "h-16"
+        )}>
           {/* Logo */}
           <div className="flex items-center">
             <Link
