@@ -308,4 +308,20 @@
       page-break-after: always;
     }
   }
+
+  /* Progress bar utility */
+  .progress-bar {
+    transition: width 0.3s ease;
+  }
+
+  /* Animation delay utilities */
+  .animate-bounce-delay-1 {
+    animation: bounce 1s infinite;
+    animation-delay: 0.1s;
+  }
+
+  .animate-bounce-delay-2 {
+    animation: bounce 1s infinite;
+    animation-delay: 0.2s;
+  }
 }

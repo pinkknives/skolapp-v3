@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
 import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Typography, Heading } from '@/components/ui/Typography'
+import { ProgressBar } from '@/components/ui/ProgressBar'
 import { TeacherReviewMode } from '@/components/quiz/TeacherReviewMode'
 import { Quiz, QuizResult, Student, MultipleChoiceQuestion } from '@/types/quiz'
 import { User, SubscriptionPlan, DataRetentionMode } from '@/types/auth'
@@ -188,7 +188,6 @@ interface ClassSummary {
 }
 
 export default function QuizResultsPage() {
-  const params = useParams()
   const [quiz] = useState<Quiz>(mockQuiz)
   const [results] = useState<QuizResult[]>(mockResults)
   const [students] = useState<Student[]>(mockStudents)
@@ -440,15 +439,10 @@ export default function QuizResultsPage() {
                       </div>
                       
                       {/* Progress bar */}
-                      <div className="w-full bg-neutral-200 rounded-full h-2 mb-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            stat.correctPercentage >= 80 ? 'bg-success-500' :
-                            stat.correctPercentage >= 60 ? 'bg-warning-500' : 'bg-error-500'
-                          }`}
-                          style={{ width: `${stat.correctPercentage}%` }}
-                        ></div>
-                      </div>
+                      <ProgressBar 
+                        value={stat.correctPercentage}
+                        className="mb-2"
+                      />
                       
                       <div className="flex justify-between text-sm text-neutral-600">
                         <span>{stat.correctAnswers} rätt</span>

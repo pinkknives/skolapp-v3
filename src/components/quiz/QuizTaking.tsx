@@ -9,7 +9,6 @@ import {
   QuizSession, 
   Student, 
   MultipleChoiceQuestion, 
-  FreeTextQuestion, 
   ImageQuestion,
   QuizTakingState,
   StudentAnswer
@@ -110,7 +109,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
     } else {
       proceedToNextQuestion(updatedAnswers, questionTimeSpent)
     }
-  }, [currentQuestion.id, selectedAnswer, questionStartTime, quizState.progress, quiz.settings.showCorrectAnswers, currentQuestion.type])
+  }, [currentQuestion.id, selectedAnswer, questionStartTime, quizState.progress, quiz.settings.showCorrectAnswers, currentQuestion.type, proceedToNextQuestion])
 
   const proceedToNextQuestion = useCallback((updatedAnswers: StudentAnswer[], questionTimeSpent: number) => {
     if (isLastQuestion) {
