@@ -1,10 +1,10 @@
 // AI-assisted grading service with adapter pattern
-import { AIAssessment, Question, QuestionType } from '@/types/quiz'
+import { AIAssessment, Question, QuestionType, Rubric, RubricEvaluation } from '@/types/quiz'
 import { type User, type DataRetentionMode } from '@/types/auth'
 
 export interface AIGradingAdapter {
-  gradeText(answer: string, question: Question, rubric?: string): Promise<AIAssessment>
-  gradeImage(imageRef: string, question: Question, rubric?: string): Promise<AIAssessment>
+  gradeText(answer: string, question: Question, rubric?: Rubric): Promise<AIAssessment>
+  gradeImage(imageRef: string, question: Question, rubric?: Rubric): Promise<AIAssessment>
   explainAnswer(question: Question, correctAnswer?: string): Promise<string>
   generateFeedback(answer: string, question: Question, isCorrect: boolean): Promise<string>
   name: string
@@ -18,7 +18,7 @@ export class LocalDemoAdapter implements AIGradingAdapter {
   requiresExternalAPI = false
   supportedQuestionTypes: QuestionType[] = ['free-text', 'multiple-choice', 'image']
 
-  async gradeText(answer: string, question: Question, rubric?: string): Promise<AIAssessment> {
+  async gradeText(answer: string, question: Question, rubric?: Rubric): Promise<AIAssessment> {
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400))
     
@@ -26,29 +26,83 @@ export class LocalDemoAdapter implements AIGradingAdapter {
     let suggestedScore = 0
     let confidence = 0.7
     let rationale = ''
+    let rubricEvaluation: RubricEvaluation | undefined
 
     if (question.type === 'free-text') {
-      const expectedAnswers = question.expectedAnswer ? [question.expectedAnswer.toLowerCase()] : []
-      const acceptedAnswers = question.acceptedAnswers?.map(a => a.toLowerCase()) || []
-      const allAccepted = [...expectedAnswers, ...acceptedAnswers]
+      // If rubric is provided, use it for more sophisticated grading
+      if (rubric && rubric.criteria.length > 0) {
+        const criteriaResults = rubric.criteria.map(criterion => {
+          // Simple keyword matching against criterion text and examples
+          const criterionKeywords = [
+            ...criterion.text.toLowerCase().split(' '),
+            ...(criterion.example ? criterion.example.toLowerCase().split(' ') : [])
+          ].filter(word => word.length > 3) // Only consider words longer than 3 chars
 
-      // Simple keyword matching
-      const hasKeywords = allAccepted.some(expected => 
-        trimmedAnswer.includes(expected) || expected.includes(trimmedAnswer)
-      )
+          const matchesFound = criterionKeywords.filter(keyword => 
+            trimmedAnswer.includes(keyword)
+          )
+          
+          const matchPercentage = matchesFound.length / Math.max(criterionKeywords.length, 1)
+          const met = matchPercentage > 0.3 // Criterion met if 30% of keywords match
+          const score = met ? Math.min(criterion.weight, Math.round(matchPercentage * criterion.weight)) : 0
+          
+          let explanation = ''
+          if (met) {
+            explanation = `Kriteriet uppfylls delvis/helt. Hittade relevanta nyckelord: ${matchesFound.slice(0, 3).join(', ')}.`
+          } else {
+            explanation = `Kriteriet uppfylls inte. Svaret saknar relevanta element för detta kriterium.`
+          }
 
-      if (hasKeywords) {
-        suggestedScore = question.points
-        confidence = 0.8
-        rationale = 'Svaret innehåller förväntade nyckelord och verkar korrekt.'
-      } else if (trimmedAnswer.length > 10) {
-        suggestedScore = Math.floor(question.points * 0.5)
-        confidence = 0.5
-        rationale = 'Svaret är genomtänkt men kanske inte helt korrekt. Behöver manuell granskning.'
+          return {
+            criterionId: criterion.id,
+            met,
+            score,
+            explanation
+          }
+        })
+
+        // Calculate total score based on criteria
+        const totalWeightedScore = criteriaResults.reduce((sum, result) => sum + result.score, 0)
+        const maxPossibleScore = rubric.criteria.reduce((sum, criterion) => sum + criterion.weight, 0)
+        const scorePercentage = totalWeightedScore / Math.max(maxPossibleScore, 1)
+        
+        suggestedScore = Math.round(question.points * scorePercentage)
+        confidence = 0.75 // Higher confidence when using rubrics
+        
+        const metCriteria = criteriaResults.filter(r => r.met).length
+        const totalCriteria = criteriaResults.length
+        
+        rationale = `Baserat på bedömningskriterier: ${metCriteria} av ${totalCriteria} kriterier uppfyllda. ` +
+                   `Viktad poäng: ${totalWeightedScore}/${maxPossibleScore}.`
+
+        rubricEvaluation = {
+          criteriaResults,
+          overallJustification: `Svaret utvärderades mot ${totalCriteria} definierade kriterier. ` +
+                               `${metCriteria} kriterier uppfylldes, vilket ger en bedömning på ${Math.round(scorePercentage * 100)}% av maxpoäng.`
+        }
       } else {
-        suggestedScore = 0
-        confidence = 0.6
-        rationale = 'Svaret är för kort eller verkar inte svara på frågan.'
+        // Fall back to original keyword matching if no rubric
+        const expectedAnswers = question.expectedAnswer ? [question.expectedAnswer.toLowerCase()] : []
+        const acceptedAnswers = question.acceptedAnswers?.map(a => a.toLowerCase()) || []
+        const allAccepted = [...expectedAnswers, ...acceptedAnswers]
+
+        const hasKeywords = allAccepted.some(expected => 
+          trimmedAnswer.includes(expected) || expected.includes(trimmedAnswer)
+        )
+
+        if (hasKeywords) {
+          suggestedScore = question.points
+          confidence = 0.8
+          rationale = 'Svaret innehåller förväntade nyckelord och verkar korrekt.'
+        } else if (trimmedAnswer.length > 10) {
+          suggestedScore = Math.floor(question.points * 0.5)
+          confidence = 0.5
+          rationale = 'Svaret är genomtänkt men kanske inte helt korrekt. Behöver manuell granskning.'
+        } else {
+          suggestedScore = 0
+          confidence = 0.6
+          rationale = 'Svaret är för kort eller verkar inte svara på frågan.'
+        }
       }
     }
 
@@ -62,17 +116,50 @@ export class LocalDemoAdapter implements AIGradingAdapter {
       rationale,
       confidence,
       timestamp: new Date(),
-      aiModel: 'local-demo-v1'
+      aiModel: 'local-demo-v1',
+      rubricEvaluation
     }
   }
 
-  async gradeImage(imageRef: string, question: Question, rubric?: string): Promise<AIAssessment> {
+  async gradeImage(imageRef: string, question: Question, rubric?: Rubric): Promise<AIAssessment> {
     // Simulate processing delay for image analysis
     await new Promise(resolve => setTimeout(resolve, 1200 + Math.random() * 800))
 
-    // Simple mock image analysis
-    const confidence = 0.4 // Lower confidence for demo image analysis
-    const suggestedScore = Math.random() > 0.5 ? question.points : 0
+    // Simple mock image analysis with rubric consideration
+    let confidence = 0.4 // Lower confidence for demo image analysis
+    let suggestedScore = Math.random() > 0.5 ? question.points : 0
+    let rubricEvaluation: RubricEvaluation | undefined
+    
+    // If rubric exists, simulate rubric-based evaluation
+    if (rubric && rubric.criteria.length > 0) {
+      const criteriaResults = rubric.criteria.map(criterion => {
+        // For demo purposes, randomly determine if image meets criterion
+        const met = Math.random() > 0.4
+        const score = met ? criterion.weight : 0
+        
+        return {
+          criterionId: criterion.id,
+          met,
+          score,
+          explanation: met 
+            ? `Bilden verkar uppfylla detta kriterium (demo-bedömning).`
+            : `Bilden verkar inte uppfylla detta kriterium (demo-bedömning).`
+        }
+      })
+
+      const totalWeightedScore = criteriaResults.reduce((sum, result) => sum + result.score, 0)
+      const maxPossibleScore = rubric.criteria.reduce((sum, criterion) => sum + criterion.weight, 0)
+      const scorePercentage = totalWeightedScore / Math.max(maxPossibleScore, 1)
+      
+      suggestedScore = Math.round(question.points * scorePercentage)
+      confidence = 0.3 // Still low confidence for demo image analysis
+
+      rubricEvaluation = {
+        criteriaResults,
+        overallJustification: `Bildanalys utförd mot ${rubric.criteria.length} kriterier. ` +
+                             `Låg säkerhet - kontrollera manuellt.`
+      }
+    }
     
     return {
       id: `ai_assessment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -81,12 +168,15 @@ export class LocalDemoAdapter implements AIGradingAdapter {
       questionType: question.type,
       suggestedScore,
       maxScore: question.points,
-      rationale: suggestedScore > 0 
-        ? 'Bilden verkar visa rätt innehåll, men låg säkerhet - kontrollera manuellt.'
-        : 'Bilden verkar inte visa förväntat innehåll, men låg säkerhet - kontrollera manuellt.',
+      rationale: rubricEvaluation 
+        ? `Bildanalys baserad på bedömningskriterier. ${rubricEvaluation.overallJustification}`
+        : (suggestedScore > 0 
+          ? 'Bilden verkar visa rätt innehåll, men låg säkerhet - kontrollera manuellt.'
+          : 'Bilden verkar inte visa förväntat innehåll, men låg säkerhet - kontrollera manuellt.'),
       confidence,
       timestamp: new Date(),
-      aiModel: 'local-demo-image-v1'
+      aiModel: 'local-demo-image-v1',
+      rubricEvaluation
     }
   }
 
@@ -120,12 +210,12 @@ export class CloudLLMAdapter implements AIGradingAdapter {
   requiresExternalAPI = true
   supportedQuestionTypes: QuestionType[] = ['free-text', 'image']
 
-  async gradeText(answer: string, question: Question, rubric?: string): Promise<AIAssessment> {
+  async gradeText(answer: string, question: Question, rubric?: Rubric): Promise<AIAssessment> {
     // This would integrate with external LLM service
     throw new Error('Cloud LLM adapter not implemented in MVP - endast för långtidsläge med samtycke')
   }
 
-  async gradeImage(imageRef: string, question: Question, rubric?: string): Promise<AIAssessment> {
+  async gradeImage(imageRef: string, question: Question, rubric?: Rubric): Promise<AIAssessment> {
     throw new Error('Cloud LLM adapter not implemented in MVP - endast för långtidsläge med samtycke')
   }
 
@@ -167,11 +257,13 @@ export class AIGradingClient {
   async gradeAnswer(
     answer: string | string[],
     question: Question,
-    rubric?: string,
     imageRef?: string
   ): Promise<AIAssessment> {
     // Anonymize answer if needed (remove student identifiers)
     const anonymizedAnswer = this.anonymizeAnswer(answer)
+
+    // Extract rubric from question if available
+    const rubric = question.rubric
 
     if (question.type === 'image' && imageRef) {
       return this.adapter.gradeImage(imageRef, question, rubric)

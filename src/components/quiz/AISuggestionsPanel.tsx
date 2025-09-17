@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
-import { AIAssessment, TeacherDecision, Question, QuizResult } from '@/types/quiz'
+import { RubricDisplay } from './RubricDisplay'
+import { EditRubricModal } from './EditRubricModal'
+import { AIAssessment, TeacherDecision, Question, QuizResult, Rubric } from '@/types/quiz'
 import { createAIGradingClient } from '@/lib/ai-grading'
 import { aiGradingAuditService } from '@/lib/ai-grading-audit'
 import { type User } from '@/types/auth'
@@ -15,6 +17,7 @@ interface AISuggestionsPanel {
   currentQuestionIndex: number
   user?: User
   onClose: () => void
+  onQuizUpdate?: (questionId: string, rubric: Rubric | undefined) => void
   className?: string
 }
 
@@ -33,12 +36,14 @@ export function AISuggestionsPanel({
   currentQuestionIndex,
   user,
   onClose,
+  onQuizUpdate,
   className = ''
 }: AISuggestionsPanel) {
   const [studentAnswers, setStudentAnswers] = useState<StudentAnswerWithAssessment[]>([])
   const [isLoadingAssessments, setIsLoadingAssessments] = useState(false)
   const [selectedBatchThreshold, setSelectedBatchThreshold] = useState(0.8)
   const [showWarning, setShowWarning] = useState(true)
+  const [showEditRubric, setShowEditRubric] = useState(false)
 
   const currentQuestion = quiz.questions[currentQuestionIndex]
   const aiClient = createAIGradingClient(user, user?.dataRetentionMode || 'korttid')
@@ -123,6 +128,38 @@ export function AISuggestionsPanel({
     } finally {
       setIsLoadingAssessments(false)
     }
+  }
+
+  const handleRubricUpdate = (questionId: string, rubric: Rubric | undefined) => {
+    // Update the local quiz state
+    quiz.questions[currentQuestionIndex] = {
+      ...currentQuestion,
+      rubric
+    }
+
+    // Clear existing assessments so they can be regenerated with new rubric
+    setStudentAnswers(prev => prev.map(sa => ({
+      ...sa,
+      assessment: undefined,
+      decision: undefined
+    })))
+
+    // Notify parent component if provided
+    if (onQuizUpdate) {
+      onQuizUpdate(questionId, rubric)
+    }
+  }
+
+  const regenerateWithNewRubric = async () => {
+    // Clear existing assessments and regenerate
+    setStudentAnswers(prev => prev.map(sa => ({
+      ...sa,
+      assessment: undefined,
+      decision: undefined
+    })))
+    
+    // Start fresh generation
+    await generateAIAssessments()
   }
 
   const handleTeacherDecision = (
@@ -260,6 +297,63 @@ export function AISuggestionsPanel({
           </div>
         )}
 
+        {/* Rubric display */}
+        {currentQuestion.rubric && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <Typography variant="body2" className="font-medium text-neutral-700">
+                Bedömningskriterier för denna fråga
+              </Typography>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEditRubric(true)}
+              >
+                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Redigera kriterier
+              </Button>
+            </div>
+            <RubricDisplay
+              rubric={currentQuestion.rubric}
+              className="mb-4"
+            />
+            <Typography variant="caption" className="text-neutral-600">
+              AI kommer att använda dessa kriterier för att bedöma elevernas svar.
+            </Typography>
+          </div>
+        )}
+
+        {/* Add rubric button if no rubric exists */}
+        {!currentQuestion.rubric && (
+          <div className="mb-6">
+            <div className="bg-neutral-50 p-4 rounded-lg border border-dashed border-neutral-300">
+              <div className="text-center">
+                <svg className="h-8 w-8 text-neutral-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <Typography variant="body2" className="text-neutral-600 mb-3">
+                  Inga bedömningskriterier definierade för denna fråga
+                </Typography>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowEditRubric(true)}
+                >
+                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Lägg till kriterier
+                </Button>
+              </div>
+            </div>
+            <Typography variant="caption" className="text-neutral-600 mt-2">
+              Bedömningskriterier hjälper AI:n att ge mer träffsäkra förslag.
+            </Typography>
+          </div>
+        )}
+
         {/* Generate AI assessments button */}
         {studentAnswers.length > 0 && !studentAnswers.some(sa => sa.assessment) && (
           <div className="mb-6">
@@ -285,6 +379,38 @@ export function AISuggestionsPanel({
                 </>
               )}
             </Button>
+          </div>
+        )}
+
+        {/* Regenerate AI assessments button */}
+        {studentAnswers.length > 0 && studentAnswers.some(sa => sa.assessment) && (
+          <div className="mb-6">
+            <Button
+              onClick={regenerateWithNewRubric}
+              disabled={isLoadingAssessments}
+              variant="outline"
+              className="w-full"
+            >
+              {isLoadingAssessments ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Genererar om...
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Generera AI-förslag igen
+                </>
+              )}
+            </Button>
+            <Typography variant="caption" className="text-neutral-600 mt-2 block text-center">
+              Alla tidigare bedömningar och lärarbeslut kommer att tas bort
+            </Typography>
           </div>
         )}
 
@@ -383,6 +509,15 @@ export function AISuggestionsPanel({
                         </Typography>
                       </div>
 
+                      {/* Rubric evaluation if available */}
+                      {studentAnswer.assessment.rubricEvaluation && currentQuestion.rubric && (
+                        <RubricDisplay
+                          rubric={currentQuestion.rubric}
+                          evaluation={studentAnswer.assessment.rubricEvaluation}
+                          className="mt-3"
+                        />
+                      )}
+
                       {/* Teacher decision */}
                       {studentAnswer.decision ? (
                         <div className={`border rounded p-3 ${
@@ -461,6 +596,15 @@ export function AISuggestionsPanel({
           </Typography>
         </div>
       </div>
+
+      {/* Edit Rubric Modal */}
+      {showEditRubric && (
+        <EditRubricModal
+          question={currentQuestion}
+          onSave={handleRubricUpdate}
+          onClose={() => setShowEditRubric(false)}
+        />
+      )}
     </div>
   )
 }

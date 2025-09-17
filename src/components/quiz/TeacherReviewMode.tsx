@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
-import { Quiz, Question, MultipleChoiceQuestion, QuizResult, Student } from '@/types/quiz'
+import { Quiz, Question, MultipleChoiceQuestion, QuizResult, Student, Rubric } from '@/types/quiz'
 import { AISuggestionsPanel } from './AISuggestionsPanel'
 import { type User } from '@/types/auth'
 import { isAIGradingSupported } from '@/lib/ai-grading'
@@ -16,6 +16,7 @@ interface TeacherReviewModeProps {
   students?: Student[]
   showStudentResponses?: boolean
   user?: User
+  onQuizUpdate?: (quiz: Quiz) => void
 }
 
 export function TeacherReviewMode({ 
@@ -24,7 +25,8 @@ export function TeacherReviewMode({
   results = [], 
   students = [], 
   showStudentResponses = false,
-  user
+  user,
+  onQuizUpdate
 }: TeacherReviewModeProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
@@ -32,9 +34,25 @@ export function TeacherReviewMode({
   const [anonymizeNames, setAnonymizeNames] = useState(false)
   const [showResponses, setShowResponses] = useState(showStudentResponses)
   const [showAIPanel, setShowAIPanel] = useState(false)
+  const [localQuiz, setLocalQuiz] = useState(quiz)
 
-  const currentQuestion = quiz.questions[currentQuestionIndex]
-  const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
+  const currentQuestion = localQuiz.questions[currentQuestionIndex]
+  const isLastQuestion = currentQuestionIndex === localQuiz.questions.length - 1
+
+  const handleQuizUpdate = (questionId: string, rubric: Rubric | undefined) => {
+    const updatedQuiz = {
+      ...localQuiz,
+      questions: localQuiz.questions.map(q => 
+        q.id === questionId ? { ...q, rubric } : q
+      )
+    }
+    setLocalQuiz(updatedQuiz)
+    
+    // Notify parent component
+    if (onQuizUpdate) {
+      onQuizUpdate(updatedQuiz)
+    }
+  }
 
   // Helper functions for student response analysis
   const getStudentName = (studentId: string) => {
@@ -106,7 +124,7 @@ export function TeacherReviewMode({
   }, [currentQuestionIndex, showAnswer, isLastQuestion, isFullscreen])
 
   const nextQuestion = () => {
-    if (currentQuestionIndex < quiz.questions.length - 1) {
+    if (currentQuestionIndex < localQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
       setShowAnswer(false)
     }
@@ -451,11 +469,12 @@ export function TeacherReviewMode({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <AISuggestionsPanel
-              quiz={{ id: quiz.id, questions: quiz.questions }}
+              quiz={{ id: localQuiz.id, questions: localQuiz.questions }}
               results={results}
               currentQuestionIndex={currentQuestionIndex}
               user={user}
               onClose={() => setShowAIPanel(false)}
+              onQuizUpdate={handleQuizUpdate}
               className="w-full h-full"
             />
           </div>
