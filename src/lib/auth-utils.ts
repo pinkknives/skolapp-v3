@@ -1,6 +1,6 @@
 // Authentication utilities and helpers
 
-import { type User, type UserRole, type SubscriptionPlan, ROLE_PERMISSIONS, SUBSCRIPTION_LIMITS } from '@/types/auth'
+import { type User, type UserRole, type SubscriptionPlan, type DataRetentionMode, type ConsentRecord, type SchoolAccount, ROLE_PERMISSIONS, SUBSCRIPTION_LIMITS, DATA_RETENTION_FEATURES } from '@/types/auth'
 
 /**
  * Check if user has specific permission based on role
@@ -166,6 +166,7 @@ export function getSubscriptionFeatures(plan: SubscriptionPlan): string[] {
       'Upp till 3 quiz',
       'Upp till 30 elever per quiz',
       'Grundläggande statistik',
+      'Korttidsläge (data raderas efter session)',
       'E-postsupport'
     ],
     premium: [
@@ -173,6 +174,7 @@ export function getSubscriptionFeatures(plan: SubscriptionPlan): string[] {
       'Upp till 100 elever per quiz',
       'Detaljerad statistik och analys',
       'AI-hjälp för quizskapande',
+      'Långtidsläge med föräldrasamtycke',
       'Prioriterad support'
     ],
     skolplan: [
@@ -181,10 +183,97 @@ export function getSubscriptionFeatures(plan: SubscriptionPlan): string[] {
       'Avancerad analys och rapporter',
       'AI-hjälp för quizskapande',
       'Klasshantering och progression',
+      'Skoladministration',
+      'Flexibel datalagring',
       'Dedikerad support',
       'GDPR-kompatibel datahantering'
     ]
   }
   
   return features[plan] || features.gratis
+}
+
+/**
+ * Check if user can access long-term data storage
+ */
+export function canAccessLongTermData(user: User | null): boolean {
+  return hasPermission(user, 'canAccessLongTermData')
+}
+
+/**
+ * Check if user can manage school account
+ */
+export function canManageSchoolAccount(user: User | null): boolean {
+  return hasPermission(user, 'canManageSchoolAccount')
+}
+
+/**
+ * Check if user can request parental consent
+ */
+export function canRequestParentalConsent(user: User | null): boolean {
+  return hasPermission(user, 'canRequestParentalConsent')
+}
+
+/**
+ * Get data retention mode display name in Swedish
+ */
+export function getDataRetentionDisplayName(mode: DataRetentionMode): string {
+  return DATA_RETENTION_FEATURES[mode].name
+}
+
+/**
+ * Get data retention mode description in Swedish
+ */
+export function getDataRetentionDescription(mode: DataRetentionMode): string {
+  return DATA_RETENTION_FEATURES[mode].description
+}
+
+/**
+ * Check if data retention mode requires parental consent
+ */
+export function requiresParentalConsent(mode: DataRetentionMode): boolean {
+  return DATA_RETENTION_FEATURES[mode].requiresConsent
+}
+
+/**
+ * Check if data retention mode is available for subscription plan
+ */
+export function isDataRetentionAvailable(mode: DataRetentionMode, plan: SubscriptionPlan): boolean {
+  return DATA_RETENTION_FEATURES[mode].availableForPlans.includes(plan)
+}
+
+/**
+ * Get available data retention modes for subscription plan
+ */
+export function getAvailableDataRetentionModes(plan: SubscriptionPlan): DataRetentionMode[] {
+  return Object.entries(DATA_RETENTION_FEATURES)
+    .filter(([, features]) => features.availableForPlans.includes(plan))
+    .map(([mode]) => mode as DataRetentionMode)
+}
+
+/**
+ * Validate if user settings are compatible
+ */
+export function validateUserDataSettings(
+  subscriptionPlan: SubscriptionPlan,
+  dataRetentionMode: DataRetentionMode,
+  hasParentalConsent?: boolean,
+  isMinor?: boolean
+): { isValid: boolean; errors: string[] } {
+  const errors: string[] = []
+
+  // Check if data retention mode is available for plan
+  if (!isDataRetentionAvailable(dataRetentionMode, subscriptionPlan)) {
+    errors.push(`${getDataRetentionDisplayName(dataRetentionMode)} är inte tillgängligt för ${getSubscriptionDisplayName(subscriptionPlan)}-plan`)
+  }
+
+  // Check consent requirements
+  if (requiresParentalConsent(dataRetentionMode) && isMinor && !hasParentalConsent) {
+    errors.push('Föräldrasamtycke krävs för långtidslagring')
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
 }
