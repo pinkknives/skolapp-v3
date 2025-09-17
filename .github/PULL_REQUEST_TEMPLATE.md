@@ -1,13 +1,17 @@
-Pull Request Checklist
+## Sammanfattning
+Beskriv vad PR:en gör och varför.
 
-Obligatoriskt att bocka av innan merge:
-	•	Designsystem: Endast tokens + kärnkomponenter används.
-	•	Typning: TypeScript strict → inga any, implicit types eller brutna builds.
-	•	Lint/Prettier: All kod passerar ESLint och är formaterad med Prettier.
-	•	Tillgänglighet: WCAG 2.1 AA → kontrast, ARIA, fokusordning testad.
-	•	Copy: Allt användargränssnitt är på svenska.
-	•	Prestanda: Lighthouse A11y ≥0.9, Perf ≥0.85, bundle-size inom budget.
-	•	GDPR: Ingen elevdata lagras utanför definierade datalägen.
-	•	Tests: Nya komponenter/flöden har grundläggande tester (Vitest/RTL eller Playwright).
-	•	Dokumentation: README/CONTRIBUTING/DESIGN_SYSTEM uppdaterade vid behov.
-	•	CI: Alla automatiska checks passerar (lint, typecheck, tests, Lighthouse).
+## Checklista
+- [ ] **Designsystem:** Endast tokens + kärnkomponenter (inga inline-stilar/hex)
+- [ ] **Svenska:** All UI/copy på svenska
+- [ ] **Tillgänglighet:** WCAG 2.1 AA (fokus, ARIA, kontrast)
+- [ ] **Prestanda:** A11y ≥ 0.9, Perf ≥ 0.85; initial JS < 200 kB
+- [ ] **GDPR:** Ingen otillåten elevdata; dataläge respekteras
+- [ ] **Tests:** Nya komponenter/flöden har tester
+- [ ] **CI:** Lint/Typecheck/Tests/Lighthouse grönt
+
+## Skärmdumpar (om UI)
+_Lägg till före/efter-bilder eller gif_
+
+## Övrigt
+_Notera breaking changes eller migrationer_
