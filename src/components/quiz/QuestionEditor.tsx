@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
+import { RubricEditor } from './RubricEditor'
 import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion, MultipleChoiceOption } from '@/types/quiz'
 
 interface QuestionEditorProps {
@@ -273,6 +274,15 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
               helperText="Används för automatisk rättning om implementerat"
             />
           </div>
+        )}
+
+        {/* Rubric Editor - Show for free-text and image questions */}
+        {(question.type === 'free-text' || question.type === 'image') && (
+          <RubricEditor
+            rubric={question.rubric}
+            questionId={question.id}
+            onChange={(rubric) => handleBasicChange({ rubric })}
+          />
         )}
       </CardContent>
     </Card>

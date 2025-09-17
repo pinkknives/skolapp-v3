@@ -12,12 +12,28 @@ export interface MultipleChoiceOption {
   isCorrect: boolean
 }
 
+export interface RubricCriterion {
+  id: string
+  text: string
+  weight: number // 1-5 scale
+  example?: string // Optional example of correct answer
+}
+
+export interface Rubric {
+  id: string
+  questionId: string
+  criteria: RubricCriterion[]
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface BaseQuestion {
   id: string
   type: QuestionType
   title: string
   points: number
   timeLimit?: number // in seconds
+  rubric?: Rubric // Optional rubric for AI grading
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
@@ -157,6 +173,17 @@ export interface AIAssessment {
   confidence: number // 0-1, where 1 is highest confidence
   timestamp: Date
   aiModel?: string // Which AI model was used
+  rubricEvaluation?: RubricEvaluation // How the answer matches each criterion
+}
+
+export interface RubricEvaluation {
+  criteriaResults: {
+    criterionId: string
+    met: boolean // Whether the criterion was met
+    score: number // 0-weight scale
+    explanation: string // AI explanation of how this criterion was evaluated
+  }[]
+  overallJustification: string // How the criteria combine to the final score
 }
 
 export interface TeacherDecision {
