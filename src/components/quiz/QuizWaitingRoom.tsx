@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
@@ -15,8 +16,18 @@ interface QuizWaitingRoomProps {
   onLeaveQuiz: () => void
 }
 
-export function QuizWaitingRoom({ quiz, student, onLeaveQuiz }: QuizWaitingRoomProps) {
+export function QuizWaitingRoom({ quiz, session, student, onLeaveQuiz }: QuizWaitingRoomProps) {
+  const router = useRouter()
   const executionModeText = formatExecutionMode(quiz.settings.executionMode)
+  const handleStartQuiz = () => {
+    // Store quiz data in session storage for the quiz taking page
+    sessionStorage.setItem('current_quiz', JSON.stringify(quiz))
+    sessionStorage.setItem('current_session', JSON.stringify(session))
+    sessionStorage.setItem('current_student', JSON.stringify(student))
+    
+    // Navigate to quiz taking page
+    router.push('/quiz/take')
+  }
   
   const getWaitingMessage = () => {
     switch (quiz.settings.executionMode) {
@@ -137,10 +148,7 @@ export function QuizWaitingRoom({ quiz, student, onLeaveQuiz }: QuizWaitingRoomP
               <Button
                 size="lg"
                 fullWidth
-                onClick={() => {
-                  // In a real app, this would navigate to the quiz taking interface
-                  alert('Quiz skulle starta här! (Inte implementerat ännu)')
-                }}
+                onClick={handleStartQuiz}
               >
                 Starta Quiz
               </Button>
