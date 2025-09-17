@@ -1,4 +1,6 @@
 import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession } from '@/types/quiz'
+import { dataRetentionService, createSessionWithRetention } from '@/lib/data-retention'
+import { type User } from '@/types/auth'
 
 // Generate a random 4-character share code
 export function generateShareCode(): string {
@@ -280,8 +282,8 @@ export function generateStudentId(): string {
   return `student_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
-// Join a quiz with guest flow
-export async function joinQuiz(request: QuizJoinRequest): Promise<QuizJoinResult> {
+// Join a quiz with guest flow and data retention
+export async function joinQuiz(request: QuizJoinRequest, user?: User | null): Promise<QuizJoinResult> {
   try {
     // Find the quiz by share code
     const quiz = await findQuizByShareCode(request.shareCode)
@@ -308,12 +310,15 @@ export async function joinQuiz(request: QuizJoinRequest): Promise<QuizJoinResult
       id: generateStudentId(),
       alias: request.studentAlias,
       joinedAt: new Date(),
-      isGuest: true
+      isGuest: !user
     }
+
+    // Create session with appropriate data retention
+    const sessionData = createSessionWithRetention(user || null, student.id)
 
     // Create or find quiz session
     const session: QuizSession = {
-      id: `session_${quiz.id}_${Date.now()}`,
+      id: sessionData.id,
       quizId: quiz.id,
       teacherId: quiz.createdBy,
       createdAt: new Date(),
@@ -322,10 +327,22 @@ export async function joinQuiz(request: QuizJoinRequest): Promise<QuizJoinResult
       shareCode: quiz.shareCode || request.shareCode
     }
 
-    // Store student data temporarily (in a real app, this would be in session storage or database)
+    // Store student data with proper retention handling
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(`student_${student.id}`, JSON.stringify(student))
+      // Use data retention service to store student data
+      dataRetentionService.updateSessionActivity(sessionData.id)
+      
+      // Store quiz session in sessionStorage for immediate access
       sessionStorage.setItem(`quiz_session_${session.id}`, JSON.stringify(session))
+      
+      // Store student data based on retention mode
+      if (sessionData.dataRetentionMode === 'korttid') {
+        // For short-term mode, use sessionStorage (auto-clears on browser close)
+        sessionStorage.setItem(`student_${student.id}`, JSON.stringify(student))
+      } else {
+        // For long-term mode with consent, use localStorage
+        localStorage.setItem(`student_${student.id}`, JSON.stringify(student))
+      }
     }
 
     return {
@@ -357,4 +374,117 @@ export function getJoinErrorMessage(errorCode: string): string {
     default:
       return 'Ett oväntat fel uppstod. Försök igen eller kontakta din lärare.'
   }
+}
+
+/**
+ * Submit quiz results with proper data retention handling
+ */
+export function submitQuizResult(
+  quizId: string,
+  studentId: string,
+  answers: { questionId: string; answer: string | string[] }[],
+  score: number,
+  totalPoints: number,
+  timeSpent: number,
+  sessionId?: string,
+  user?: User | null
+): void {
+  const result = {
+    id: `result_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    quizId,
+    studentId,
+    answers,
+    score,
+    totalPoints,
+    startedAt: new Date(Date.now() - timeSpent * 1000),
+    completedAt: new Date(),
+    timeSpent
+  }
+
+  // Add result to data retention service if session exists
+  if (sessionId) {
+    dataRetentionService.addQuizResult(sessionId, result)
+  }
+
+  // Also store in appropriate storage based on user/guest mode
+  if (typeof window !== 'undefined') {
+    const retentionMode = user?.dataRetentionMode || 'korttid'
+    
+    if (retentionMode === 'korttid' || !user) {
+      // Short-term mode or guest: use sessionStorage
+      sessionStorage.setItem(`quiz_result_${result.id}`, JSON.stringify(result))
+    } else {
+      // Long-term mode with user: use localStorage (will be cleaned up based on consent)
+      localStorage.setItem(`quiz_result_${result.id}`, JSON.stringify(result))
+    }
+  }
+
+  console.log(`[QuizUtils] Submitted quiz result for ${user?.dataRetentionMode || 'korttid'} storage:`, result)
+}
+
+/**
+ * Get quiz results for a student with respect to data retention
+ */
+export function getQuizResults(studentId: string, sessionId?: string): any[] {
+  if (typeof window === 'undefined') return []
+
+  const results: any[] = []
+
+  // Get results from data retention service session if available
+  if (sessionId) {
+    const session = dataRetentionService.getSession(sessionId)
+    if (session) {
+      results.push(...session.quizResults.filter(r => r.studentId === studentId))
+    }
+  }
+
+  // Also check storage directly
+  const storageKeys = [
+    ...Object.keys(sessionStorage).filter(key => key.startsWith('quiz_result_')),
+    ...Object.keys(localStorage).filter(key => key.startsWith('quiz_result_'))
+  ]
+
+  for (const key of storageKeys) {
+    try {
+      const storage = key.startsWith('quiz_result_') && sessionStorage.getItem(key) ? sessionStorage : localStorage
+      const result = JSON.parse(storage.getItem(key) || '{}')
+      if (result.studentId === studentId) {
+        results.push(result)
+      }
+    } catch (error) {
+      console.error('Error parsing quiz result:', error)
+    }
+  }
+
+  return results
+}
+
+/**
+ * Clean up session data manually (for immediate cleanup)
+ */
+export function cleanupSessionData(sessionId: string): void {
+  if (typeof window === 'undefined') return
+
+  // Clean up session-specific data
+  sessionStorage.removeItem(`quiz_session_${sessionId}`)
+  
+  // Get session data to clean up related data
+  const session = dataRetentionService.getSession(sessionId)
+  if (session) {
+    // Clean up student data if guest session
+    if (session.guestId) {
+      sessionStorage.removeItem(`student_${session.guestId}`)
+      localStorage.removeItem(`student_${session.guestId}`)
+    }
+
+    // Clean up quiz results for short-term sessions
+    if (session.dataRetentionMode === 'korttid') {
+      session.quizResults.forEach(result => {
+        sessionStorage.removeItem(`quiz_result_${result.id}`)
+        localStorage.removeItem(`quiz_result_${result.id}`)
+      })
+    }
+  }
+
+  console.log(`[QuizUtils] Manually cleaned up session data for ${sessionId}`)
 }
