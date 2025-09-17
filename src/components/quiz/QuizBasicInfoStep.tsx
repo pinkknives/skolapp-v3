@@ -108,13 +108,15 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
 
           {/* Description */}
           <div>
-            <Input
-              label="Beskrivning"
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Beskrivning
+            </label>
+            <textarea
               placeholder="Beskriv vad eleverna kommer att lära sig eller öva på"
               value={quiz.description || ''}
               onChange={(e) => onChange({ description: e.target.value })}
-              multiline
               rows={3}
+              className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm transition-all duration-200 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 hover:border-neutral-400 focus:border-primary-500 resize-y"
             />
           </div>
 
@@ -165,8 +167,24 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
               label="Tidsgräns (minuter)"
               type="number"
               placeholder="Lämna tomt för obegränsad tid"
-              value={quiz.timeLimit || ''}
-              onChange={(e) => onChange({ timeLimit: e.target.value ? parseInt(e.target.value) : undefined })}
+              value={quiz.settings?.timeLimit || ''}
+              onChange={(e) => {
+                const value = e.target.value ? parseInt(e.target.value) : undefined
+                const defaultSettings = {
+                  allowRetakes: false,
+                  shuffleQuestions: false,
+                  shuffleAnswers: false,
+                  showCorrectAnswers: true,
+                  executionMode: 'self-paced' as const
+                }
+                onChange({ 
+                  settings: { 
+                    ...defaultSettings,
+                    ...quiz.settings, 
+                    timeLimit: value 
+                  } 
+                })
+              }}
               min="1"
               max="180"
             />
@@ -190,8 +208,23 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
                     type="radio"
                     name="executionMode"
                     value={mode.value}
-                    checked={quiz.executionMode === mode.value}
-                    onChange={() => onChange({ executionMode: mode.value })}
+                    checked={quiz.settings?.executionMode === mode.value}
+                    onChange={() => {
+                      const defaultSettings = {
+                        allowRetakes: false,
+                        shuffleQuestions: false,
+                        shuffleAnswers: false,
+                        showCorrectAnswers: true,
+                        executionMode: 'self-paced' as const
+                      }
+                      onChange({ 
+                        settings: { 
+                          ...defaultSettings,
+                          ...quiz.settings, 
+                          executionMode: mode.value 
+                        } 
+                      })
+                    }}
                     className="mt-1"
                   />
                   <div>
