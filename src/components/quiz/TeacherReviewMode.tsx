@@ -15,6 +15,7 @@ interface TeacherReviewModeProps {
   results?: QuizResult[]
   students?: Student[]
   showStudentResponses?: boolean
+  user?: User
 }
 
 export function TeacherReviewMode({ 
@@ -22,13 +23,15 @@ export function TeacherReviewMode({
   onExit, 
   results = [], 
   students = [], 
-  showStudentResponses = false 
+  showStudentResponses = false,
+  user
 }: TeacherReviewModeProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [anonymizeNames, setAnonymizeNames] = useState(false)
   const [showResponses, setShowResponses] = useState(showStudentResponses)
+  const [showAIPanel, setShowAIPanel] = useState(false)
 
   const currentQuestion = quiz.questions[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
@@ -295,6 +298,21 @@ export function TeacherReviewMode({
           </div>
           
           <div className="flex items-center space-x-3">
+            {/* AI Suggestions toggle */}
+            {isAIGradingSupported(currentQuestion.type) && (
+              <Button 
+                variant={showAIPanel ? "primary" : "ghost"} 
+                size="sm" 
+                onClick={() => setShowAIPanel(!showAIPanel)}
+                className="text-white"
+              >
+                <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                AI-förslag
+              </Button>
+            )}
+            
             <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="text-white">
               {isFullscreen ? (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,6 +445,22 @@ export function TeacherReviewMode({
           </div>
         </div>
       </div>
+
+      {/* AI Suggestions Modal */}
+      {showAIPanel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <AISuggestionsPanel
+              quiz={{ id: quiz.id, questions: quiz.questions }}
+              results={results}
+              currentQuestionIndex={currentQuestionIndex}
+              user={user}
+              onClose={() => setShowAIPanel(false)}
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
