@@ -1,0 +1,40 @@
+name: 🐞 Buggrapport
+description: Rapportera ett fel som påverkar Skolapp
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: textarea
+    id: desc
+    attributes:
+      label: Beskrivning
+      description: Kort om vad som är fel och var det syns.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steg för att återskapa
+      placeholder: |
+        1) Gå till ...
+        2) Klicka på ...
+        3) Förväntat ...
+        4) Faktiskt ...
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Miljö
+      description: Ex. iOS/Android/Chrome/Edge + versionsinfo.
+      placeholder: "t.ex. iOS 17, Safari; Chrome 126, macOS"
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Påverkan
+      options:
+        - label: Blockerande
+        - label: Påverkar flera användare
+        - label: Bara kosmetiskt
