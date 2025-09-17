@@ -1,4 +1,4 @@
-import { Quiz, Question, QuizStatus, AIQuizDraft } from '@/types/quiz'
+import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession } from '@/types/quiz'
 
 // Generate a random 4-character share code
 export function generateShareCode(): string {
@@ -201,4 +201,160 @@ export async function generateAIQuizDraft(prompt: AIQuizDraft['prompt']): Promis
   }
 
   return questions
+}
+
+// Mock function to look up quiz by share code
+export async function findQuizByShareCode(shareCode: string): Promise<Quiz | null> {
+  // In a real app, this would query the database
+  // For now, we'll simulate some published quizzes
+  const mockQuizzes: Quiz[] = [
+    {
+      id: 'quiz_1',
+      title: 'Svenska Grammatik',
+      description: 'Test av svenska ordklasser',
+      tags: ['svenska', 'grammatik'],
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-01-15'),
+      createdBy: 'teacher_1',
+      status: 'published',
+      shareCode: 'ABC1',
+      settings: {
+        allowRetakes: false,
+        shuffleQuestions: false,
+        shuffleAnswers: false,
+        showCorrectAnswers: true,
+        executionMode: 'self-paced'
+      },
+      questions: [
+        {
+          id: 'q1',
+          type: 'multiple-choice',
+          title: 'Vilken ordklass är ordet "springa"?',
+          points: 2,
+          options: [
+            { id: 'opt1', text: 'Verb', isCorrect: true },
+            { id: 'opt2', text: 'Substantiv', isCorrect: false },
+            { id: 'opt3', text: 'Adjektiv', isCorrect: false },
+            { id: 'opt4', text: 'Adverb', isCorrect: false }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'quiz_2',
+      title: 'Matematik - Grundläggande räkning',
+      description: 'Test av addition och subtraktion',
+      tags: ['matematik', 'grundskola'],
+      createdAt: new Date('2024-01-16'),
+      updatedAt: new Date('2024-01-16'),
+      createdBy: 'teacher_2',
+      status: 'published',
+      shareCode: 'XYZ9',
+      settings: {
+        allowRetakes: true,
+        shuffleQuestions: true,
+        shuffleAnswers: true,
+        showCorrectAnswers: false,
+        executionMode: 'teacher-controlled'
+      },
+      questions: [
+        {
+          id: 'q2',
+          type: 'free-text',
+          title: 'Vad är 15 + 27?',
+          points: 1,
+          expectedAnswer: '42'
+        }
+      ]
+    }
+  ]
+
+  // Simulate database lookup delay
+  await new Promise(resolve => setTimeout(resolve, 500))
+  
+  return mockQuizzes.find(quiz => quiz.shareCode === shareCode) || null
+}
+
+// Generate a unique student ID
+export function generateStudentId(): string {
+  return `student_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+// Join a quiz with guest flow
+export async function joinQuiz(request: QuizJoinRequest): Promise<QuizJoinResult> {
+  try {
+    // Find the quiz by share code
+    const quiz = await findQuizByShareCode(request.shareCode)
+    
+    if (!quiz) {
+      return {
+        success: false,
+        error: 'Quiz hittades inte. Kontrollera att koden är korrekt.',
+        errorCode: 'QUIZ_NOT_FOUND'
+      }
+    }
+
+    // Check if quiz is published
+    if (quiz.status !== 'published') {
+      return {
+        success: false,
+        error: 'Detta quiz är inte aktivt just nu.',
+        errorCode: 'QUIZ_NOT_ACTIVE'
+      }
+    }
+
+    // Create a student record (in memory for guest mode)
+    const student: Student = {
+      id: generateStudentId(),
+      alias: request.studentAlias,
+      joinedAt: new Date(),
+      isGuest: true
+    }
+
+    // Create or find quiz session
+    const session: QuizSession = {
+      id: `session_${quiz.id}_${Date.now()}`,
+      quizId: quiz.id,
+      teacherId: quiz.createdBy,
+      createdAt: new Date(),
+      status: 'waiting',
+      participants: [student.id],
+      shareCode: quiz.shareCode || request.shareCode
+    }
+
+    // Store student data temporarily (in a real app, this would be in session storage or database)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(`student_${student.id}`, JSON.stringify(student))
+      sessionStorage.setItem(`quiz_session_${session.id}`, JSON.stringify(session))
+    }
+
+    return {
+      success: true,
+      quiz,
+      session
+    }
+  } catch (error) {
+    console.error('Error joining quiz:', error)
+    return {
+      success: false,
+      error: 'Ett fel uppstod när du försökte gå med i quizet. Försök igen.',
+      errorCode: 'QUIZ_NOT_FOUND'
+    }
+  }
+}
+
+// Get error message in Swedish based on error code
+export function getJoinErrorMessage(errorCode: string): string {
+  switch (errorCode) {
+    case 'INVALID_CODE':
+      return 'Ogiltig kod. Kontrollera att du har skrivit in rätt fyrteckenskod.'
+    case 'QUIZ_NOT_FOUND':
+      return 'Quiz hittades inte. Kontrollera att koden är korrekt.'
+    case 'QUIZ_NOT_ACTIVE':
+      return 'Detta quiz är inte aktivt just nu. Kontakta din lärare.'
+    case 'QUIZ_CLOSED':
+      return 'Detta quiz har stängts och tar inte emot fler deltagare.'
+    default:
+      return 'Ett oväntat fel uppstod. Försök igen eller kontakta din lärare.'
+  }
 }
