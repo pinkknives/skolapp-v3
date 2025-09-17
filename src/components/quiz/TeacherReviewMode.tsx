@@ -5,6 +5,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, Question, MultipleChoiceQuestion, QuizResult, Student } from '@/types/quiz'
+import { AISuggestionsPanel } from './AISuggestionsPanel'
+import { type User } from '@/types/auth'
+import { isAIGradingSupported } from '@/lib/ai-grading'
 
 interface TeacherReviewModeProps {
   quiz: Quiz

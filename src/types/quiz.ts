@@ -144,3 +144,45 @@ export interface QuizTakingState {
   progress: QuizProgress
   status: 'starting' | 'in-progress' | 'paused' | 'completed' | 'submitted'
 }
+
+// AI Assessment types for teacher review
+export interface AIAssessment {
+  id: string
+  answerId: string
+  questionId: string
+  questionType: QuestionType
+  suggestedScore: number
+  maxScore: number
+  rationale: string
+  confidence: number // 0-1, where 1 is highest confidence
+  timestamp: Date
+  aiModel?: string // Which AI model was used
+}
+
+export interface TeacherDecision {
+  id: string
+  assessmentId: string
+  answerId: string
+  decision: 'approve' | 'edit' | 'reject'
+  finalScore: number
+  finalRationale?: string
+  teacherNote?: string
+  timestamp: Date
+  teacherId: string
+}
+
+export interface AIGradingSession {
+  id: string
+  quizId: string
+  teacherId: string
+  createdAt: Date
+  assessments: AIAssessment[]
+  decisions: TeacherDecision[]
+  status: 'pending' | 'in-progress' | 'completed'
+  batchDecisions?: {
+    action: 'approve_high_confidence' | 'reject_low_confidence'
+    threshold: number
+    count: number
+    timestamp: Date
+  }[]
+}
