@@ -78,6 +78,9 @@ export interface Quiz {
   questions: Question[]
   shareCode?: string // 4-character code for sharing
   qrCodeUrl?: string
+  // Additional properties used in components
+  timeLimit?: number // Total quiz time in minutes
+  executionMode?: ExecutionMode
 }
 
 export interface AIQuizDraft {

@@ -110,7 +110,7 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
           <WizardSteps
             steps={steps}
             currentStep={currentStep}
-            onStepClick={setCurrentStep}
+            onStepClick={(step: string) => setCurrentStep(step as WizardStep)}
           />
         </CardContent>
       </Card>

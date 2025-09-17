@@ -46,6 +46,22 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
     setExpandedQuestion(null)
   }
 
+  const duplicateQuestion = (index: number) => {
+    if (!quiz.questions || !quiz.questions[index]) return
+    
+    const questionToDuplicate = quiz.questions[index]
+    const duplicatedQuestion = {
+      ...questionToDuplicate,
+      id: `question_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: `${questionToDuplicate.title} (kopia)`
+    }
+    
+    const updatedQuestions = [...quiz.questions]
+    updatedQuestions.splice(index + 1, 0, duplicatedQuestion)
+    onChange({ questions: updatedQuestions })
+    setExpandedQuestion(index + 1)
+  }
+
   const handleAIQuestionsGenerated = (aiQuestions: Question[]) => {
     onChange({
       questions: [...(quiz.questions || []), ...aiQuestions]
@@ -202,7 +218,10 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
                 <CardContent className="pt-0 border-t">
                   <QuestionEditor
                     question={question}
+                    questionIndex={index}
                     onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
+                    onDelete={() => removeQuestion(index)}
+                    onDuplicate={() => duplicateQuestion(index)}
                   />
                 </CardContent>
               )}

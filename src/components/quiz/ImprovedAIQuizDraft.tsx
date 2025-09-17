@@ -220,9 +220,9 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   <Typography variant="body2" className="font-medium mb-2">
                     Extra kontext (valfritt)
                   </Typography>
-                  <Input
-                    multiline
+                  <textarea
                     rows={3}
+                    className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="Beskriv eventuella speciella krav eller fokus för frågorna..."
                     value={formData.context}
                     onChange={(e) => setFormData(prev => ({ ...prev, context: e.target.value }))}
