@@ -1,7 +1,7 @@
 import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession } from '@/types/quiz'
 import { dataRetentionService, createSessionWithRetention } from '@/lib/data-retention'
 import { longTermDataService, canStoreLongTermData } from '@/lib/long-term-data'
-import { type User } from '@/types/auth'
+import { type User, type DataRetentionMode } from '@/types/auth'
 
 // Generate a random 4-character share code
 export function generateShareCode(): string {
@@ -576,4 +576,91 @@ export function cleanupSessionData(sessionId: string): void {
   }
 
   console.log(`[QuizUtils] Manually cleaned up session data for ${sessionId}`)
+}
+
+/**
+ * Trigger GDPR-compliant cleanup for short-term data
+ */
+export function triggerGDPRCleanup(sessionId?: string): void {
+  if (typeof window === 'undefined') return
+  
+  console.log('[GDPR] Triggering data cleanup for session:', sessionId || 'all short-term sessions')
+  
+  // Clean up session storage for short-term data
+  const sessionKeys = Object.keys(sessionStorage).filter(key => 
+    key.startsWith('quiz_') || key.startsWith('current_')
+  )
+  
+  for (const key of sessionKeys) {
+    try {
+      sessionStorage.removeItem(key)
+      console.log('[GDPR] Removed session data:', key)
+    } catch (error) {
+      console.error('[GDPR] Error removing session data:', key, error)
+    }
+  }
+  
+  // Also clean up specific session data if sessionId provided
+  if (sessionId) {
+    cleanupSessionData(sessionId)
+  }
+  
+  console.log('[GDPR] Short-term data cleanup completed')
+}
+
+/**
+ * Get all quiz results for teacher view (respects GDPR and subscription limits)
+ */
+export function getTeacherQuizResults(
+  quizId: string, 
+  teacherUser: User | null
+): { results: any[], students: any[], canViewIndividual: boolean } {
+  if (typeof window === 'undefined') {
+    return { results: [], students: [], canViewIndividual: false }
+  }
+  
+  const canViewIndividual = teacherUser?.subscriptionPlan !== 'gratis' && 
+                            teacherUser?.dataRetentionMode === 'långtid'
+  
+  let results: any[] = []
+  let students: any[] = []
+  
+  // Get results from appropriate storage based on teacher's plan
+  if (canViewIndividual && teacherUser) {
+    // Get from long-term storage
+    const longTermResults = longTermDataService.getLongTermQuizResults(teacherUser.id)
+    results = longTermResults.filter(r => r.quizId === quizId)
+    
+    // In a real app, this would fetch actual student data from the database
+    students = []
+  } else {
+    // Only aggregate data for free tier
+    console.log('[GDPR] Limited access: only aggregate data available for free tier')
+  }
+  
+  return {
+    results,
+    students,
+    canViewIndividual
+  }
+}
+
+/**
+ * Schedule automatic cleanup for quiz session data
+ */
+export function scheduleQuizSessionCleanup(sessionId: string, dataRetentionMode: DataRetentionMode): void {
+  if (typeof window === 'undefined') return
+  
+  const cleanupDelay = dataRetentionMode === 'korttid' 
+    ? 4 * 60 * 60 * 1000 // 4 hours for short-term
+    : 24 * 60 * 60 * 1000 // 24 hours for long-term session data
+  
+  setTimeout(() => {
+    console.log(`[GDPR] Auto-cleanup triggered for session ${sessionId} (${dataRetentionMode})`)
+    if (dataRetentionMode === 'korttid') {
+      triggerGDPRCleanup(sessionId)
+    }
+  }, cleanupDelay)
+  
+  console.log(`[GDPR] Scheduled cleanup for session ${sessionId} in ${cleanupDelay / (60 * 1000)} minutes`)
 }
