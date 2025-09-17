@@ -13,7 +13,7 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
       </svg>
     ),
-    href: '/teacher/quiz/create',
+    href: '/quiz/new',
     buttonText: 'Skapa nytt quiz'
   },
   {
@@ -76,7 +76,7 @@ export default function TeacherPage() {
                 </Typography>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" asChild>
-                    <Link href="/teacher/quiz/create">
+                    <Link href="/quiz/new">
                       <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>

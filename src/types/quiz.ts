@@ -69,6 +69,8 @@ export interface Quiz {
   id: string
   title: string
   description: string
+  subject?: string // Subject/course name
+  gradeLevel?: string // Grade level or age group
   tags: string[]
   createdAt: Date
   updatedAt: Date
