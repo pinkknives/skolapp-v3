@@ -41,9 +41,18 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
 
   const [selectedAnswer, setSelectedAnswer] = useState<string | string[]>('')
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
+  const [showFeedback, setShowFeedback] = useState(false)
 
-  const currentQuestion = quiz.questions[quizState.progress.currentQuestionIndex]
-  const isLastQuestion = quizState.progress.currentQuestionIndex === quiz.questions.length - 1
+  // Handle teacher-controlled mode
+  const isTeacherControlled = quiz.settings.executionMode === 'teacher-controlled'
+
+  // In teacher-controlled mode, questions are synced with the session
+  const currentQuestionIndex = isTeacherControlled 
+    ? (session.currentQuestionIndex ?? 0) 
+    : quizState.progress.currentQuestionIndex
+
+  const currentQuestion = quiz.questions[currentQuestionIndex]
+  const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
 
   // Timer for tracking time spent
   useEffect(() => {
@@ -89,6 +98,21 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
       }
     }))
 
+    // Show immediate feedback if configured
+    if (quiz.settings.showCorrectAnswers && currentQuestion.type === 'multiple-choice') {
+      setShowFeedback(true)
+      
+      // Hide feedback after 2 seconds
+      setTimeout(() => {
+        setShowFeedback(false)
+        proceedToNextQuestion(updatedAnswers, questionTimeSpent)
+      }, 2000)
+    } else {
+      proceedToNextQuestion(updatedAnswers, questionTimeSpent)
+    }
+  }, [currentQuestion.id, selectedAnswer, questionStartTime, quizState.progress, quiz.settings.showCorrectAnswers, currentQuestion.type])
+
+  const proceedToNextQuestion = useCallback((updatedAnswers: StudentAnswer[], questionTimeSpent: number) => {
     if (isLastQuestion) {
       // Quiz completed
       setQuizState(prev => ({ ...prev, status: 'completed' }))
@@ -96,8 +120,8 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
         answers: updatedAnswers,
         timeSpent: quizState.progress.timeElapsed + questionTimeSpent
       })
-    } else {
-      // Move to next question
+    } else if (!isTeacherControlled) {
+      // Move to next question (only in self-paced mode)
       setQuizState(prev => ({
         ...prev,
         progress: {
@@ -107,8 +131,12 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
       }))
       setSelectedAnswer('')
       setQuestionStartTime(Date.now())
+    } else {
+      // In teacher-controlled mode, just wait for teacher to advance
+      setSelectedAnswer('')
+      setQuestionStartTime(Date.now())
     }
-  }, [currentQuestion.id, selectedAnswer, questionStartTime, quizState.progress, isLastQuestion, onComplete])
+  }, [isLastQuestion, isTeacherControlled, onComplete, quizState.progress])
 
   // Handle multiple choice selection
   const handleMultipleChoiceSelect = (optionId: string) => {
@@ -144,6 +172,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
           question={currentQuestion as MultipleChoiceQuestion | ImageQuestion}
           selectedAnswer={selectedAnswer as string}
           onAnswerSelect={handleMultipleChoiceSelect}
+          showFeedback={showFeedback}
         />
       
       case 'free-text':
@@ -195,7 +224,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
           </div>
           <div className="text-right">
             <Typography variant="body2" className="text-neutral-600">
-              Fråga {quizState.progress.currentQuestionIndex + 1} av {quizState.progress.totalQuestions}
+              Fråga {currentQuestionIndex + 1} av {quizState.progress.totalQuestions}
             </Typography>
             <Typography variant="caption" className="text-neutral-500">
               Tid: {formatTime(quizState.progress.timeElapsed)}
@@ -218,7 +247,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
               className="bg-primary-500 h-2 rounded-full"
               initial={{ width: 0 }}
               animate={{ 
-                width: `${(quizState.progress.currentQuestionIndex / quizState.progress.totalQuestions) * 100}%` 
+                width: `${(currentQuestionIndex / quizState.progress.totalQuestions) * 100}%` 
               }}
               transition={{ duration: 0.3 }}
             />
@@ -266,7 +295,12 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
                     disabled={!isAnswerValid()}
                     size="lg"
                   >
-                    {isLastQuestion ? 'Slutför Quiz' : 'Nästa Fråga'}
+                    {isTeacherControlled 
+                      ? 'Skicka svar' 
+                      : isLastQuestion 
+                        ? 'Slutför Quiz' 
+                        : 'Nästa Fråga'
+                    }
                   </Button>
                 </div>
               </CardContent>
@@ -282,11 +316,13 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
 function MultipleChoiceQuestionView({ 
   question, 
   selectedAnswer, 
-  onAnswerSelect 
+  onAnswerSelect,
+  showFeedback = false
 }: {
   question: MultipleChoiceQuestion | ImageQuestion
   selectedAnswer: string
   onAnswerSelect: (optionId: string) => void
+  showFeedback?: boolean
 }) {
   return (
     <div className="space-y-6">
@@ -311,17 +347,38 @@ function MultipleChoiceQuestionView({
           >
             <button
               onClick={() => onAnswerSelect(option.id)}
+              disabled={showFeedback}
               className={`w-full p-6 rounded-lg border-2 transition-all duration-300 text-left ${
-                selectedAnswer === option.id
+                showFeedback && option.isCorrect
+                  ? 'border-success-500 bg-success-50 text-success-800'
+                  : showFeedback && selectedAnswer === option.id && !option.isCorrect
+                  ? 'border-error-500 bg-error-50 text-error-800'
+                  : selectedAnswer === option.id
                   ? 'border-primary-500 bg-primary-50 text-primary-800'
                   : 'border-neutral-300 bg-white hover:border-primary-300'
               }`}
             >
               <div className="flex items-center space-x-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                  selectedAnswer === option.id ? 'bg-primary-500' : 'bg-neutral-400'
+                  showFeedback && option.isCorrect
+                    ? 'bg-success-500'
+                    : showFeedback && selectedAnswer === option.id && !option.isCorrect
+                    ? 'bg-error-500'
+                    : selectedAnswer === option.id 
+                    ? 'bg-primary-500' 
+                    : 'bg-neutral-400'
                 }`}>
-                  {String.fromCharCode(65 + index)}
+                  {showFeedback && option.isCorrect && (
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {showFeedback && selectedAnswer === option.id && !option.isCorrect && (
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                  {!showFeedback && String.fromCharCode(65 + index)}
                 </div>
                 <Typography variant="h6" className="flex-1">
                   {option.text}
