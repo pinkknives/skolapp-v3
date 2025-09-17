@@ -1,5 +1,6 @@
 import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession } from '@/types/quiz'
 import { dataRetentionService, createSessionWithRetention } from '@/lib/data-retention'
+import { longTermDataService, canStoreLongTermData } from '@/lib/long-term-data'
 import { type User } from '@/types/auth'
 
 // Generate a random 4-character share code
@@ -406,6 +407,34 @@ export function submitQuizResult(
     dataRetentionService.addQuizResult(sessionId, result)
   }
 
+  // Handle long-term storage for authenticated users
+  if (user && canStoreLongTermData(user)) {
+    longTermDataService.storeLongTermQuizResult(user.id, result, sessionId)
+    
+    // Also store analytics data for long-term users
+    const analyticsData = {
+      id: `analytics_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      userId: user.id,
+      sessionId: sessionId || 'unknown',
+      quizId,
+      metrics: {
+        timeSpent,
+        questionsAnswered: answers.length,
+        correctAnswers: score,
+        incorrectAnswers: answers.length - score,
+        averageResponseTime: timeSpent / answers.length
+      },
+      progressData: {
+        skillsImproved: [], // Would be calculated based on quiz content
+        strugglingAreas: [], // Would be calculated based on incorrect answers
+        overallProgress: (score / totalPoints) * 100
+      },
+      timestamp: new Date()
+    }
+    
+    longTermDataService.storeAnalyticsData(analyticsData)
+  }
+
   // Also store in appropriate storage based on user/guest mode
   if (typeof window !== 'undefined') {
     const retentionMode = user?.dataRetentionMode || 'korttid'
@@ -425,10 +454,16 @@ export function submitQuizResult(
 /**
  * Get quiz results for a student with respect to data retention
  */
-export function getQuizResults(studentId: string, sessionId?: string): any[] {
+export function getQuizResults(studentId: string, sessionId?: string, user?: User | null): any[] {
   if (typeof window === 'undefined') return []
 
   const results: any[] = []
+
+  // Get results from long-term storage if user has long-term mode
+  if (user && canStoreLongTermData(user)) {
+    const longTermResults = longTermDataService.getLongTermQuizResults(user.id)
+    results.push(...longTermResults.filter(r => r.studentId === studentId))
+  }
 
   // Get results from data retention service session if available
   if (sessionId) {
@@ -438,7 +473,7 @@ export function getQuizResults(studentId: string, sessionId?: string): any[] {
     }
   }
 
-  // Also check storage directly
+  // Also check storage directly for any remaining data
   const storageKeys = [
     ...Object.keys(sessionStorage).filter(key => key.startsWith('quiz_result_')),
     ...Object.keys(localStorage).filter(key => key.startsWith('quiz_result_'))
@@ -448,7 +483,7 @@ export function getQuizResults(studentId: string, sessionId?: string): any[] {
     try {
       const storage = key.startsWith('quiz_result_') && sessionStorage.getItem(key) ? sessionStorage : localStorage
       const result = JSON.parse(storage.getItem(key) || '{}')
-      if (result.studentId === studentId) {
+      if (result.studentId === studentId && !results.find(r => r.id === result.id)) {
         results.push(result)
       }
     } catch (error) {
@@ -457,6 +492,60 @@ export function getQuizResults(studentId: string, sessionId?: string): any[] {
   }
 
   return results
+}
+
+/**
+ * Get analytics data for a user (long-term mode only)
+ */
+export function getUserAnalytics(userId: string): any[] {
+  return longTermDataService.getAnalyticsData(userId)
+}
+
+/**
+ * Get progress summary for a user
+ */
+export function getUserProgressSummary(userId: string) {
+  const analyticsData = longTermDataService.getAnalyticsData(userId)
+  
+  if (analyticsData.length === 0) {
+    return {
+      totalQuizzes: 0,
+      averageScore: 0,
+      totalTimeSpent: 0,
+      skillsImproved: [],
+      strugglingAreas: [],
+      overallProgress: 0
+    }
+  }
+
+  const totalQuizzes = analyticsData.length
+  const averageScore = analyticsData.reduce((sum, data) => 
+    sum + data.progressData.overallProgress, 0) / totalQuizzes
+  const totalTimeSpent = analyticsData.reduce((sum, data) => 
+    sum + data.metrics.timeSpent, 0)
+
+  // Aggregate skills and struggling areas
+  const allSkills = analyticsData.flatMap(data => data.progressData.skillsImproved)
+  const allStrugglingAreas = analyticsData.flatMap(data => data.progressData.strugglingAreas)
+  
+  const skillCounts = allSkills.reduce((acc, skill) => {
+    acc[skill] = (acc[skill] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  
+  const strugglingCounts = allStrugglingAreas.reduce((acc, area) => {
+    acc[area] = (acc[area] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  return {
+    totalQuizzes,
+    averageScore,
+    totalTimeSpent,
+    skillsImproved: Object.keys(skillCounts).sort((a, b) => skillCounts[b] - skillCounts[a]).slice(0, 5),
+    strugglingAreas: Object.keys(strugglingCounts).sort((a, b) => strugglingCounts[b] - strugglingCounts[a]).slice(0, 5),
+    overallProgress: averageScore
+  }
 }
 
 /**
