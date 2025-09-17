@@ -1,0 +1,4 @@
+# UI-komponenter kräver granskning av design/system-ansvarig
+/src/components/ui/*    @pinkknives
+/src/components/layout/* @pinkknives
+/src/lib/design-tokens.ts @pinkknives
