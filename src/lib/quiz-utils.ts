@@ -1,4 +1,4 @@
-import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession } from '@/types/quiz'
+import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession, QuizAnalytics, QuestionAnalytics, ParticipantResult } from '@/types/quiz'
 import { dataRetentionService, createSessionWithRetention } from '@/lib/data-retention'
 import { longTermDataService, canStoreLongTermData } from '@/lib/long-term-data'
 import { type User } from '@/types/auth'
@@ -492,6 +492,178 @@ export function getQuizResults(studentId: string, sessionId?: string, user?: Use
   }
 
   return results
+}
+
+/**
+ * Get analytics data for a quiz (teacher view)
+ */
+export async function getQuizAnalytics(quizId: string): Promise<QuizAnalytics> {
+  // Simulate API call - in real app this would fetch from database
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
+  // Mock analytics data
+  const mockResults: ParticipantResult[] = [
+    {
+      studentId: 'student_1',
+      studentAlias: 'Anna L.',
+      score: 5,
+      totalPoints: 6,
+      accuracy: 83.3,
+      timeSpent: 180,
+      completedAt: new Date('2024-01-15T10:30:00'),
+      answers: [
+        { questionId: 'q1', answer: 'opt1', timeSpent: 45, answeredAt: new Date('2024-01-15T10:25:00') },
+        { questionId: 'q2', answer: 'Katten springer snabbt.', timeSpent: 90, answeredAt: new Date('2024-01-15T10:27:00') },
+        { questionId: 'q3', answer: 'opt2', timeSpent: 45, answeredAt: new Date('2024-01-15T10:29:00') }
+      ]
+    },
+    {
+      studentId: 'student_2',
+      studentAlias: 'Erik M.',
+      score: 4,
+      totalPoints: 6,
+      accuracy: 66.7,
+      timeSpent: 240,
+      completedAt: new Date('2024-01-15T10:35:00'),
+      answers: [
+        { questionId: 'q1', answer: 'opt2', timeSpent: 60, answeredAt: new Date('2024-01-15T10:26:00') },
+        { questionId: 'q2', answer: 'Jag såg en katt igår.', timeSpent: 120, answeredAt: new Date('2024-01-15T10:30:00') },
+        { questionId: 'q3', answer: 'opt2', timeSpent: 60, answeredAt: new Date('2024-01-15T10:34:00') }
+      ]
+    },
+    {
+      studentId: 'student_3',
+      studentAlias: 'Sofia K.',
+      score: 6,
+      totalPoints: 6,
+      accuracy: 100,
+      timeSpent: 150,
+      completedAt: new Date('2024-01-15T10:28:00'),
+      answers: [
+        { questionId: 'q1', answer: 'opt1', timeSpent: 30, answeredAt: new Date('2024-01-15T10:23:00') },
+        { questionId: 'q2', answer: 'Katten sitter på mattan.', timeSpent: 75, answeredAt: new Date('2024-01-15T10:25:00') },
+        { questionId: 'q3', answer: 'opt2', timeSpent: 45, answeredAt: new Date('2024-01-15T10:27:00') }
+      ]
+    }
+  ]
+
+  const questionAnalytics: QuestionAnalytics[] = [
+    {
+      questionId: 'q1',
+      questionTitle: 'Vilken ordklass är ordet "springa"?',
+      questionType: 'multiple-choice',
+      totalAnswers: 3,
+      correctAnswers: 2,
+      accuracy: 66.7,
+      averageTimeSpent: 45,
+      answerDistribution: [
+        { answer: 'Verb', count: 2, percentage: 66.7, isCorrect: true },
+        { answer: 'Substantiv', count: 1, percentage: 33.3, isCorrect: false },
+        { answer: 'Adjektiv', count: 0, percentage: 0, isCorrect: false },
+        { answer: 'Adverb', count: 0, percentage: 0, isCorrect: false }
+      ]
+    },
+    {
+      questionId: 'q2',
+      questionTitle: 'Skriv en mening med ordet "katt".',
+      questionType: 'free-text',
+      totalAnswers: 3,
+      correctAnswers: 3, // Assume all are acceptable
+      accuracy: 100,
+      averageTimeSpent: 95,
+      answerDistribution: []
+    },
+    {
+      questionId: 'q3',
+      questionTitle: 'Vad ser du på bilden?',
+      questionType: 'image',
+      totalAnswers: 3,
+      correctAnswers: 3,
+      accuracy: 100,
+      averageTimeSpent: 50,
+      answerDistribution: [
+        { answer: 'En hund', count: 0, percentage: 0, isCorrect: false },
+        { answer: 'En katt', count: 3, percentage: 100, isCorrect: true },
+        { answer: 'En fågel', count: 0, percentage: 0, isCorrect: false }
+      ]
+    }
+  ]
+
+  return {
+    quizId,
+    totalParticipants: 3,
+    completedResponses: 3,
+    averageScore: 83.3,
+    averageTimeSpent: 190,
+    questionAnalytics,
+    participantResults: mockResults
+  }
+}
+
+/**
+ * Get quiz by ID
+ */
+export async function getQuizById(quizId: string): Promise<Quiz | null> {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  // Return mock quiz - in real app this would fetch from database
+  if (quizId === 'quiz_1') {
+    return {
+      id: 'quiz_1',
+      title: 'Svenska - Ordklasser',
+      description: 'Test av grundläggande ordklasser',
+      tags: ['svenska', 'språk'],
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-01-15'),
+      createdBy: 'teacher_1',
+      status: 'published',
+      shareCode: 'ABC1',
+      settings: {
+        allowRetakes: false,
+        shuffleQuestions: false,
+        shuffleAnswers: false,
+        showCorrectAnswers: true,
+        executionMode: 'self-paced'
+      },
+      questions: [
+        {
+          id: 'q1',
+          type: 'multiple-choice',
+          title: 'Vilken ordklass är ordet "springa"?',
+          points: 2,
+          options: [
+            { id: 'opt1', text: 'Verb', isCorrect: true },
+            { id: 'opt2', text: 'Substantiv', isCorrect: false },
+            { id: 'opt3', text: 'Adjektiv', isCorrect: false },
+            { id: 'opt4', text: 'Adverb', isCorrect: false }
+          ]
+        },
+        {
+          id: 'q2',
+          type: 'free-text',
+          title: 'Skriv en mening med ordet "katt".',
+          points: 3,
+          expectedAnswer: 'En mening som innehåller ordet "katt"'
+        },
+        {
+          id: 'q3',
+          type: 'image',
+          title: 'Vad ser du på bilden?',
+          points: 1,
+          imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&h=200&fit=crop',
+          imageAlt: 'En orange katt',
+          options: [
+            { id: 'opt1', text: 'En hund', isCorrect: false },
+            { id: 'opt2', text: 'En katt', isCorrect: true },
+            { id: 'opt3', text: 'En fågel', isCorrect: false }
+          ]
+        }
+      ]
+    }
+  }
+  
+  return null
 }
 
 /**

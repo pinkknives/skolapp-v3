@@ -11,6 +11,14 @@ export function hasPermission(user: User | null, permission: keyof typeof ROLE_P
 }
 
 /**
+ * Check if user can access premium features
+ */
+export function canAccessPremiumFeatures(user: any): boolean {
+  if (!user) return false
+  return user.accountType === 'premium' || user.accountType === 'skolplan'
+}
+
+/**
  * Check if user can access teacher portal
  */
 export function canAccessTeacherPortal(user: User | null): boolean {

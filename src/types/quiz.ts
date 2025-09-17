@@ -121,6 +121,47 @@ export interface QuizJoinRequest {
   studentAlias: string
 }
 
+// Types for teacher analytics and results
+export interface QuizAnalytics {
+  quizId: string
+  totalParticipants: number
+  completedResponses: number
+  averageScore: number
+  averageTimeSpent: number // in seconds
+  questionAnalytics: QuestionAnalytics[]
+  participantResults: ParticipantResult[]
+}
+
+export interface QuestionAnalytics {
+  questionId: string
+  questionTitle: string
+  questionType: QuestionType
+  totalAnswers: number
+  correctAnswers: number
+  accuracy: number // percentage
+  averageTimeSpent: number // in seconds
+  answerDistribution: AnswerDistribution[]
+}
+
+export interface AnswerDistribution {
+  answer: string
+  count: number
+  percentage: number
+  isCorrect: boolean
+}
+
+export interface ParticipantResult {
+  studentId: string
+  studentAlias: string
+  score: number
+  totalPoints: number
+  accuracy: number // percentage
+  timeSpent: number // in seconds
+  completedAt: Date | null
+  answers: StudentAnswer[]
+  isAnonymized?: boolean
+}
+
 // Types for quiz-taking experience
 export interface StudentAnswer {
   questionId: string
