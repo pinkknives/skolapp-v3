@@ -10,7 +10,7 @@ import { motion } from 'framer-motion'
 const teacherFeatures = [
   {
     title: 'Skapa Quiz',
-    description: 'Enkelt verktyg för att skapa interaktiva quiz med olika frågetyper och anpassningsbara inställningar.',
+    description: 'Skapa quiz, dela via QR eller kod, rätta snabbt med stöd av AI (alltid under din kontroll).',
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -40,7 +40,7 @@ const teacherFeatures = [
 const studentFeatures = [
   {
     title: 'Gå med i Quiz',
-    description: 'Delta i quiz genom att ange en enkel kod och visa upp dina kunskaper på ett roligt sätt.',
+    description: 'Gå med i klassens quiz på sekunder med QR-kod eller fyrteckenskod.',
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -83,8 +83,8 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      duration: 0.6,
-      ease: [0, 0, 0.2, 1] as [number, number, number, number],
+      duration: 0.15, // 150ms, within 120-200ms range
+      ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number], // swift-in-out
     },
   },
 }
@@ -115,17 +115,16 @@ export default function HomePage() {
                 variant="subtitle1" 
                 className="mx-auto max-w-2xl mb-8 text-neutral-600"
               >
-                En modern plattform för interaktivt lärande som gör undervisning och kunskapsutveckling 
-                roligt och tillgängligt för alla. Skapa quiz, delta i utmaningar och följ framsteg.
+                Skapa engagerande quiz, följ elevers utveckling och arbeta smartare – snabbt och enkelt.
               </Typography>
             </motion.div>
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg">
-                <Link href="/quiz/join">Gå med i Quiz</Link>
+                <Link href="/quiz/join">Prova som gäst</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link href="/teacher">För Lärare</Link>
+                <Link href="/teacher">Skapa lärarkonto</Link>
               </Button>
             </motion.div>
           </motion.div>
