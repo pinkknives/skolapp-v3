@@ -32,7 +32,10 @@ export default function QuizResultPage() {
         parsed.completedAt = new Date(parsed.completedAt)
         setResult(parsed)
       } catch (err) {
-        console.error('Error parsing result data:', err)
+        // Log error for debugging in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error parsing result data:', err)
+        }
       }
     }
     

@@ -99,12 +99,15 @@ export default function CreateQuizPage() {
       setQuiz(updatedQuiz)
       
       // In a real app, you would save to a database
-      console.log('Draft saved:', updatedQuiz)
+      // Draft saved successfully
       
       // Show success message (in a real app, use a toast notification)
       alert('Utkast sparat!')
     } catch (error) {
-      console.error('Error saving draft:', error)
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error saving draft:', error)
+      }
       alert('Fel vid sparande av utkast')
     } finally {
       setIsSaving(false)
@@ -137,12 +140,15 @@ export default function CreateQuizPage() {
       setQuiz(publishedQuiz)
       
       // In a real app, you would save to a database
-      console.log('Quiz published:', publishedQuiz)
+      // Quiz published successfully
       
       // Redirect to quiz dashboard or show success
       router.push(`/teacher/quiz/${publishedQuiz.id}?published=true`)
     } catch (error) {
-      console.error('Error publishing quiz:', error)
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error publishing quiz:', error)
+      }
       alert('Fel vid publicering av quiz')
     } finally {
       setIsSaving(false)

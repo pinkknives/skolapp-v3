@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { useAuth } from '@/contexts/AuthContext'
-import { longTermDataService, canStoreLongTermData } from '@/lib/long-term-data'
+import { longTermDataService } from '@/lib/long-term-data'
 import { 
   getDataRetentionDisplayName, 
   getDataRetentionDescription,

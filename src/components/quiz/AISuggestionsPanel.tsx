@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { RubricDisplay } from './RubricDisplay'
@@ -49,11 +49,7 @@ export function AISuggestionsPanel({
   const aiClient = createAIGradingClient(user, user?.dataRetentionMode || 'korttid')
   const sessionId = `grading_session_${quiz.id}_${Date.now()}`
 
-  useEffect(() => {
-    loadStudentAnswers()
-  }, [currentQuestionIndex, results])
-
-  const loadStudentAnswers = () => {
+  const loadStudentAnswers = useCallback(() => {
     const answersForQuestion = results.map((result, index) => {
       const answer = result.answers.find(a => a.questionId === currentQuestion.id)
       return {
@@ -65,7 +61,11 @@ export function AISuggestionsPanel({
     }).filter(item => item.answer !== '')
 
     setStudentAnswers(answersForQuestion)
-  }
+  }, [results, currentQuestion.id])
+
+  useEffect(() => {
+    loadStudentAnswers()
+  }, [loadStudentAnswers, currentQuestionIndex])
 
   const generateAIAssessments = async () => {
     if (currentQuestion.type === 'multiple-choice') {

@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
-import { Quiz, Question, MultipleChoiceQuestion, QuizResult, Student, Rubric } from '@/types/quiz'
+import { Quiz, Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion, QuizResult, Student, Rubric } from '@/types/quiz'
 import { AISuggestionsPanel } from './AISuggestionsPanel'
+import { ProgressBar } from '@/components/ui/ProgressBar'
 import { type User } from '@/types/auth'
 import { isAIGradingSupported } from '@/lib/ai-grading'
 
@@ -88,6 +89,42 @@ export function TeacherReviewMode({
     return { count, percentage }
   }
 
+  const nextQuestion = useCallback(() => {
+    if (currentQuestionIndex < localQuiz.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
+      setShowAnswer(false)
+    }
+  }, [currentQuestionIndex, localQuiz.questions.length])
+
+  const previousQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1)
+      setShowAnswer(false)
+    }
+  }, [currentQuestionIndex])
+
+  const goToQuestion = useCallback((index: number) => {
+    setCurrentQuestionIndex(index)
+    setShowAnswer(false)
+  }, [])
+
+  const toggleFullscreen = useCallback(() => {
+    if (!isFullscreen) {
+      document.documentElement.requestFullscreen?.()
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen?.()
+      setIsFullscreen(false)
+    }
+  }, [isFullscreen])
+
+  const exitFullscreen = useCallback(() => {
+    if (isFullscreen) {
+      document.exitFullscreen?.()
+      setIsFullscreen(false)
+    }
+  }, [isFullscreen])
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -121,43 +158,7 @@ export function TeacherReviewMode({
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentQuestionIndex, showAnswer, isLastQuestion, isFullscreen])
-
-  const nextQuestion = () => {
-    if (currentQuestionIndex < localQuiz.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1)
-      setShowAnswer(false)
-    }
-  }
-
-  const previousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1)
-      setShowAnswer(false)
-    }
-  }
-
-  const goToQuestion = (index: number) => {
-    setCurrentQuestionIndex(index)
-    setShowAnswer(false)
-  }
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      document.documentElement.requestFullscreen?.()
-      setIsFullscreen(true)
-    } else {
-      document.exitFullscreen?.()
-      setIsFullscreen(false)
-    }
-  }
-
-  const exitFullscreen = () => {
-    if (isFullscreen) {
-      document.exitFullscreen?.()
-      setIsFullscreen(false)
-    }
-  }
+  }, [currentQuestionIndex, showAnswer, isLastQuestion, isFullscreen, nextQuestion, previousQuestion, toggleFullscreen, exitFullscreen])
 
   const renderQuestion = (question: Question) => {
     switch (question.type) {
@@ -166,11 +167,11 @@ export function TeacherReviewMode({
         const mcQuestion = question as MultipleChoiceQuestion
         return (
           <div className="space-y-6">
-            {question.type === 'image' && (question as any).imageUrl && (
+            {question.type === 'image' && (question as ImageQuestion).imageUrl && (
               <div className="flex justify-center">
                 <img
-                  src={(question as any).imageUrl}
-                  alt={(question as any).imageAlt || 'Question image'}
+                  src={(question as ImageQuestion).imageUrl}
+                  alt={(question as ImageQuestion).imageAlt || 'Question image'}
                   className="max-w-full max-h-96 rounded-lg shadow-md"
                 />
               </div>
@@ -221,14 +222,10 @@ export function TeacherReviewMode({
                     {/* Response bar */}
                     {showResponses && results.length > 0 && (
                       <div className="mt-3">
-                        <div className="w-full bg-neutral-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-500 ${
-                              option.isCorrect ? 'bg-success-500' : 'bg-primary-500'
-                            }`}
-                            style={{ width: `${optionStats.percentage}%` }}
-                          ></div>
-                        </div>
+                        <ProgressBar 
+                          value={optionStats.percentage}
+                          variant={option.isCorrect ? 'success' : 'primary'}
+                        />
                       </div>
                     )}
                   </div>
@@ -282,13 +279,13 @@ export function TeacherReviewMode({
               <Typography variant="body1" className="text-neutral-600 mb-2">
                 Denna fråga kräver fritextsvar från eleverna.
               </Typography>
-              {showAnswer && (question as any).expectedAnswer && (
+              {showAnswer && (question as FreeTextQuestion).expectedAnswer && (
                 <div className="mt-4 p-4 bg-success-50 border border-success-200 rounded-md">
                   <Typography variant="body2" className="font-medium text-success-800 mb-1">
                     Förväntat svar:
                   </Typography>
                   <Typography variant="body1" className="text-success-700">
-                    {(question as any).expectedAnswer}
+                    {(question as FreeTextQuestion).expectedAnswer}
                   </Typography>
                 </div>
               )}

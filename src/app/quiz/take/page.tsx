@@ -26,7 +26,10 @@ export default function QuizTakePage() {
         setSession(JSON.parse(sessionData))
         setStudent(JSON.parse(studentData))
       } catch (err) {
-        console.error('Error parsing stored data:', err)
+        // Log error for debugging in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error parsing stored data:', err)
+        }
         setError('Fel vid laddning av quizdata. Försök gå med i quizet igen.')
       }
     } else {

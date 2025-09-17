@@ -62,7 +62,10 @@ export default function QuizJoinPage() {
         setError(errorMessage)
       }
     } catch (err) {
-      console.error('Error joining quiz:', err)
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error joining quiz:', err)
+      }
       setError('Ett oväntat fel uppstod. Försök igen.')
     } finally {
       setIsLoading(false)

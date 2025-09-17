@@ -8,7 +8,7 @@ import { type SubscriptionPlan, type DataRetentionMode } from '@/types/auth'
 export function PricingContent() {
   const handlePlanSelect = (plan: SubscriptionPlan, dataMode: DataRetentionMode) => {
     // This would redirect to signup/login or subscription management
-    console.log('Selected plan:', plan, 'Data mode:', dataMode)
+    // Selected plan: plan, Data mode: dataMode
     // In a real app, this would redirect to auth or subscription management
     // window.location.href = `/auth/register?plan=${plan}&dataMode=${dataMode}`
   }
