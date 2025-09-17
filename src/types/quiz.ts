@@ -120,3 +120,27 @@ export interface QuizJoinRequest {
   shareCode: string
   studentAlias: string
 }
+
+// Types for quiz-taking experience
+export interface StudentAnswer {
+  questionId: string
+  answer: string | string[]
+  timeSpent: number // in seconds
+  answeredAt: Date
+}
+
+export interface QuizProgress {
+  currentQuestionIndex: number
+  totalQuestions: number
+  answers: StudentAnswer[]
+  startedAt: Date
+  timeElapsed: number // in seconds
+}
+
+export interface QuizTakingState {
+  quiz: Quiz
+  session: QuizSession
+  student: Student
+  progress: QuizProgress
+  status: 'starting' | 'in-progress' | 'paused' | 'completed' | 'submitted'
+}
