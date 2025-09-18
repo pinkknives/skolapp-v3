@@ -13,7 +13,7 @@ test.describe('Performance Tests', () => {
     
     // Check for Core Web Vitals
     const lcp = await page.evaluate(() => {
-      return new Promise((resolve) => {
+      return new Promise<number | null>((resolve) => {
         new PerformanceObserver((list) => {
           const entries = list.getEntries();
           if (entries.length > 0) {
@@ -81,22 +81,22 @@ test.describe('Performance Tests', () => {
     await page.goto('/');
     
     const resourceSizes = await page.evaluate(() => {
-      return performance.getEntriesByType('resource').map((entry: any) => ({
+      return performance.getEntriesByType('resource').map((entry) => ({
         name: entry.name,
-        transferSize: entry.transferSize,
-        encodedBodySize: entry.encodedBodySize
+        transferSize: (entry as PerformanceResourceTiming).transferSize,
+        encodedBodySize: (entry as PerformanceResourceTiming).encodedBodySize
       }));
     });
     
     // Find main JavaScript bundle
-    const jsBundles = resourceSizes.filter(resource => 
+    const jsBundles = resourceSizes.filter((resource: any) => 
       resource.name.includes('.js') && 
-      resource.name.includes('_app') ||
-      resource.name.includes('main')
+      (resource.name.includes('_app') ||
+       resource.name.includes('main'))
     );
     
     // Check that main bundle is reasonable size (uncompressed)
-    jsBundles.forEach(bundle => {
+    jsBundles.forEach((bundle: any) => {
       expect(bundle.encodedBodySize).toBeLessThan(400 * 1024); // 400KB uncompressed
     });
   });
@@ -106,16 +106,16 @@ test.describe('Performance Tests', () => {
     
     const imageResources = await page.evaluate(() => {
       return performance.getEntriesByType('resource')
-        .filter((entry: any) => entry.name.match(/\.(jpg|jpeg|png|webp|avif)$/i))
-        .map((entry: any) => ({
+        .filter((entry) => entry.name.match(/\.(jpg|jpeg|png|webp|avif)$/i))
+        .map((entry) => ({
           name: entry.name,
-          transferSize: entry.transferSize,
-          encodedBodySize: entry.encodedBodySize
+          transferSize: (entry as PerformanceResourceTiming).transferSize,
+          encodedBodySize: (entry as PerformanceResourceTiming).encodedBodySize
         }));
     });
     
     // Images should be reasonably sized
-    imageResources.forEach(image => {
+    imageResources.forEach((image: any) => {
       // No single image should be larger than 500KB
       expect(image.encodedBodySize).toBeLessThan(500 * 1024);
     });
@@ -126,7 +126,7 @@ test.describe('Performance Tests', () => {
     
     // Measure Cumulative Layout Shift
     const cls = await page.evaluate(() => {
-      return new Promise((resolve) => {
+      return new Promise<number>((resolve) => {
         let clsValue = 0;
         
         new PerformanceObserver((list) => {
