@@ -25,7 +25,7 @@ const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQu
   loading: () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl p-8 text-center">
-        <div className="animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div className="motion-safe:animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full mx-auto mb-4"></div>
         <Typography variant="body2">Laddar AI-assistent...</Typography>
       </div>
     </div>

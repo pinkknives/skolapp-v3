@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
@@ -110,6 +110,7 @@ interface AIFormData {
 }
 
 export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }: ImprovedAIQuizDraftProps) {
+  const modalRef = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState<'form' | 'generating' | 'preview' | 'error'>('form')
   const [formData, setFormData] = useState<AIFormData>({
     subject: '',
@@ -123,6 +124,13 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
+
+  // Focus management for accessibility
+  useEffect(() => {
+    if (modalRef.current) {
+      modalRef.current.focus()
+    }
+  }, [])
 
   // Load saved draft from localStorage
   useEffect(() => {
@@ -199,7 +207,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
         setSelectedQuestions(new Set((questions as Question[]).map(q => q.id)))
         setStep('preview')
       })
-    } catch (error) {
+    } catch {
       setErrorMessage('Kunde inte generera frågor just nu. Kontrollera din internetanslutning och försök igen.')
       setStep('error')
     }
@@ -246,8 +254,16 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
   const isFormValid = formData.subject && formData.gradeLevel && formData.questionCount > 0
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ai-quiz-title"
+    >
+      <div 
+        ref={modalRef}
+        tabIndex={-1}
+        className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl focus:outline-none">
         <Card className="border-0">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
@@ -258,7 +274,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   </svg>
                 </div>
                 <div>
-                  <CardTitle className="text-xl">AI Quiz-assistent</CardTitle>
+                  <CardTitle id="ai-quiz-title" className="text-xl">AI Quiz-assistent</CardTitle>
                   <Typography variant="caption" className="text-neutral-600">
                     Generera frågor automatiskt baserat på dina inställningar
                   </Typography>
@@ -392,7 +408,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
             {step === 'generating' && (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+                  <svg className="motion-safe:animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -440,7 +456,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   {generatedQuestions.map((question, index) => (
                     <div
                       key={question.id}
-                      className={`p-4 border rounded-lg transition-all ${
+                      className={`p-4 border rounded-lg motion-safe:transition-all duration-200 ${
                         selectedQuestions.has(question.id)
                           ? 'border-primary-300 bg-primary-50'
                           : 'border-neutral-200 hover:border-neutral-300'
