@@ -1,14 +1,39 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, Question, QuestionType } from '@/types/quiz'
 import { QuestionEditor } from './QuestionEditor'
-import { ImprovedAIQuizDraft } from './ImprovedAIQuizDraft'
-import { QuizPreviewModal } from './preview/QuizPreviewModal'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
+
+// Dynamically import AI components for better performance
+const ImprovedAIQuizDraft = dynamic(() => import('./ImprovedAIQuizDraft').then(mod => ({ default: mod.ImprovedAIQuizDraft })), {
+  loading: () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl p-8 text-center">
+        <div className="animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <Typography variant="body2">Laddar AI-assistent...</Typography>
+      </div>
+    </div>
+  ),
+  ssr: false
+})
+
+// Dynamically import preview modal for better performance
+const QuizPreviewModal = dynamic(() => import('./preview/QuizPreviewModal').then(mod => ({ default: mod.QuizPreviewModal })), {
+  loading: () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl p-8 text-center">
+        <div className="animate-spin w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <Typography variant="body2">Laddar förhandsvisning...</Typography>
+      </div>
+    </div>
+  ),
+  ssr: false
+})
 
 interface QuizQuestionsStepProps {
   quiz: Partial<Quiz>
