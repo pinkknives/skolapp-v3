@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Layout, Container, Section } from '@/components/layout/Layout'
@@ -33,7 +33,7 @@ const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQu
   ssr: false
 })
 
-export default function CreateQuizPage() {
+function CreateQuizPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1')) // Mock teacher ID
@@ -371,3 +371,26 @@ export default function CreateQuizPage() {
     </Layout>
   )
 }
+
+function CreateQuizPageWrapper() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <Section>
+          <Container>
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <Typography variant="body2">Laddar quiz-skapare...</Typography>
+              </div>
+            </div>
+          </Container>
+        </Section>
+      </Layout>
+    }>
+      <CreateQuizPage />
+    </Suspense>
+  )
+}
+
+export default CreateQuizPageWrapper

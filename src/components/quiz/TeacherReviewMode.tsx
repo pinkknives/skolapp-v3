@@ -2,14 +2,27 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion, QuizResult, Student, Rubric } from '@/types/quiz'
-import { AISuggestionsPanel } from './AISuggestionsPanel'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { type User } from '@/types/auth'
 import { isAIGradingSupported } from '@/lib/ai-grading'
+
+// Dynamically import AI components for better performance
+const AISuggestionsPanel = dynamic(() => import('./AISuggestionsPanel').then(mod => ({ default: mod.AISuggestionsPanel })), {
+  loading: () => (
+    <div className="fixed right-4 top-20 w-96 bg-white rounded-xl shadow-xl border p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="animate-spin w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full"></div>
+        <Typography variant="body2">Laddar AI-bedömning...</Typography>
+      </div>
+    </div>
+  ),
+  ssr: false
+})
 
 interface TeacherReviewModeProps {
   quiz: Quiz
