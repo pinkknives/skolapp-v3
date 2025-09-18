@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { Question } from '@/types/quiz'
+import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion } from '@/types/quiz'
 
 interface ImprovedAIQuizDraftProps {
   quizTitle?: string
@@ -23,21 +23,43 @@ interface QuestionEditFormProps {
 function QuestionEditForm({ question, onSave, onCancel }: QuestionEditFormProps) {
   const [title, setTitle] = useState(question.title)
   const [options, setOptions] = useState(
-    question.type === 'multiple-choice' ? question.options || [] : []
+    question.type === 'multiple-choice' ? question.options || [] : 
+    question.type === 'image' ? question.options || [] : []
+  )
+  const [expectedAnswer, setExpectedAnswer] = useState(
+    question.type === 'free-text' ? question.expectedAnswer || '' : ''
+  )
+  const [imageAlt, setImageAlt] = useState(
+    question.type === 'image' ? question.imageAlt || '' : ''
   )
 
-  const handleSave = () => {
-    if (question.type === 'multiple-choice') {
-      onSave({
-        ...question,
-        title,
-        options
-      })
-    } else {
-      onSave({
-        ...question,
-        title
-      })
+  const handleSave = () => {    
+    switch (question.type) {
+      case 'multiple-choice':
+        onSave({
+          ...question,
+          title,
+          options
+        } as MultipleChoiceQuestion)
+        break
+      
+      case 'free-text':
+        onSave({
+          ...question,
+          title,
+          expectedAnswer: expectedAnswer || undefined,
+          acceptedAnswers: expectedAnswer ? [expectedAnswer] : undefined
+        } as FreeTextQuestion)
+        break
+      
+      case 'image':
+        onSave({
+          ...question,
+          title,
+          imageAlt: imageAlt || undefined,
+          options: options.length > 0 ? options : undefined
+        } as ImageQuestion)
+        break
     }
   }
 
@@ -55,8 +77,23 @@ function QuestionEditForm({ question, onSave, onCancel }: QuestionEditFormProps)
     setOptions(newOptions)
   }
 
+  const addOption = () => {
+    const newOption = {
+      id: `option-${Date.now()}-${options.length + 1}`,
+      text: '',
+      isCorrect: false
+    }
+    setOptions([...options, newOption])
+  }
+
+  const removeOption = (index: number) => {
+    if (options.length > 2) { // Keep at least 2 options
+      setOptions(options.filter((_, i) => i !== index))
+    }
+  }
+
   return (
-    <div className="space-y-3 bg-white p-3 border rounded-lg">
+    <div className="space-y-4 bg-white p-4 border rounded-lg">
       <Input
         label="Frågetext"
         value={title}
@@ -65,8 +102,16 @@ function QuestionEditForm({ question, onSave, onCancel }: QuestionEditFormProps)
       />
       
       {question.type === 'multiple-choice' && (
-        <div className="space-y-2">
-          <Typography variant="body2" className="font-medium">Svarsalternativ</Typography>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Typography variant="body2" className="font-medium">Svarsalternativ</Typography>
+            <Button onClick={addOption} size="sm" variant="outline">
+              <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Lägg till
+            </Button>
+          </div>
           {options.map((option, index) => (
             <div key={option.id} className="flex gap-2 items-center">
               <input
@@ -83,12 +128,95 @@ function QuestionEditForm({ question, onSave, onCancel }: QuestionEditFormProps)
                 placeholder={`Alternativ ${index + 1}`}
                 className="flex-1"
               />
+              {options.length > 2 && (
+                <Button
+                  onClick={() => removeOption(index)}
+                  size="sm"
+                  variant="outline"
+                  className="text-error-600 hover:text-error-700"
+                  aria-label={`Ta bort alternativ ${index + 1}`}
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </Button>
+              )}
             </div>
           ))}
         </div>
       )}
+
+      {question.type === 'free-text' && (
+        <div className="space-y-2">
+          <Input
+            label="Förväntat svar (valfritt)"
+            value={expectedAnswer}
+            onChange={(e) => setExpectedAnswer(e.target.value)}
+            placeholder="Exempel på korrekt svar..."
+          />
+          <Typography variant="caption" className="text-neutral-500">
+            Detta hjälper AI-bedömning att ge bättre förslag
+          </Typography>
+        </div>
+      )}
+
+      {question.type === 'image' && (
+        <div className="space-y-3">
+          <Input
+            label="Bildbeskrivning"
+            value={imageAlt}
+            onChange={(e) => setImageAlt(e.target.value)}
+            placeholder="Beskriv bilden för tillgänglighet..."
+          />
+          <Typography variant="caption" className="text-neutral-500">
+            Bilden skulle genereras av AI. Lägg till svarsalternativ om det behövs.
+          </Typography>
+          
+          {/* Options for image questions */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Typography variant="body2" className="font-medium">Svarsalternativ (valfritt)</Typography>
+              <Button onClick={addOption} size="sm" variant="outline">
+                <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Lägg till
+              </Button>
+            </div>
+            {options.map((option, index) => (
+              <div key={option.id} className="flex gap-2 items-center">
+                <input
+                  type="radio"
+                  name={`correct-${question.id}`}
+                  checked={option.isCorrect}
+                  onChange={() => toggleCorrectAnswer(index)}
+                  className="h-4 w-4 text-primary-600"
+                  aria-label={`Markera alternativ ${index + 1} som korrekt`}
+                />
+                <Input
+                  value={option.text}
+                  onChange={(e) => updateOption(index, e.target.value)}
+                  placeholder={`Alternativ ${index + 1}`}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => removeOption(index)}
+                  size="sm"
+                  variant="outline"
+                  className="text-error-600 hover:text-error-700"
+                  aria-label={`Ta bort alternativ ${index + 1}`}
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-2 border-t">
         <Button onClick={handleSave} size="sm" disabled={!title.trim()}>
           Spara
         </Button>
@@ -105,6 +233,7 @@ interface AIFormData {
   gradeLevel: string
   questionCount: number
   difficulty: string
+  questionType: 'multiple-choice' | 'free-text' | 'image' | 'mixed'
   topics: string
   context: string
 }
@@ -116,6 +245,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
     gradeLevel: '',
     questionCount: 5,
     difficulty: 'medel',
+    questionType: 'multiple-choice',
     topics: '',
     context: quizTitle || ''
   })
@@ -138,7 +268,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
             setStep('preview')
           }
         }
-      } catch (error) {
+      } catch {
         // Failed to load from localStorage, continue with empty draft
       }
     }
@@ -179,18 +309,73 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
             return
           }
           
-          const mockQuestions: Question[] = Array.from({ length: formData.questionCount }, (_, i) => ({
-            id: `ai-question-${Date.now()}-${i + 1}`,
-            type: 'multiple-choice' as const,
-            title: `AI-genererad fråga ${i + 1} om ${formData.subject.toLowerCase()}`,
-            points: 1,
-            options: [
-              { id: `option-${i}-1`, text: 'Alternativ A', isCorrect: true },
-              { id: `option-${i}-2`, text: 'Alternativ B', isCorrect: false },
-              { id: `option-${i}-3`, text: 'Alternativ C', isCorrect: false },
-              { id: `option-${i}-4`, text: 'Alternativ D', isCorrect: false }
-            ]
-          }))
+          const mockQuestions: Question[] = Array.from({ length: formData.questionCount }, (_, i) => {
+            const questionNumber = i + 1
+            let questionType: 'multiple-choice' | 'free-text' | 'image'
+            
+            // Determine question type based on selection
+            if (formData.questionType === 'mixed') {
+              const types: ('multiple-choice' | 'free-text' | 'image')[] = ['multiple-choice', 'free-text', 'image']
+              questionType = types[i % types.length]
+            } else {
+              questionType = formData.questionType as 'multiple-choice' | 'free-text' | 'image'
+            }
+
+            const baseQuestion = {
+              id: `ai-question-${Date.now()}-${questionNumber}`,
+              type: questionType,
+              title: `AI-genererad fråga ${questionNumber} om ${formData.subject.toLowerCase()}`,
+              points: 1,
+            }
+
+            switch (questionType) {
+              case 'multiple-choice':
+                return {
+                  ...baseQuestion,
+                  type: 'multiple-choice' as const,
+                  options: [
+                    { id: `option-${i}-1`, text: 'Alternativ A', isCorrect: true },
+                    { id: `option-${i}-2`, text: 'Alternativ B', isCorrect: false },
+                    { id: `option-${i}-3`, text: 'Alternativ C', isCorrect: false },
+                    { id: `option-${i}-4`, text: 'Alternativ D', isCorrect: false }
+                  ]
+                }
+              
+              case 'free-text':
+                return {
+                  ...baseQuestion,
+                  type: 'free-text' as const,
+                  expectedAnswer: `Exempelsvar för fråga ${questionNumber}`,
+                  acceptedAnswers: [`Exempelsvar för fråga ${questionNumber}`, `Alternativt svar ${questionNumber}`]
+                }
+              
+              case 'image':
+                return {
+                  ...baseQuestion,
+                  type: 'image' as const,
+                  imageUrl: undefined, // Would be generated by AI
+                  imageAlt: `Bildfråga ${questionNumber}`,
+                  options: [
+                    { id: `img-option-${i}-1`, text: 'Alternativ A', isCorrect: true },
+                    { id: `img-option-${i}-2`, text: 'Alternativ B', isCorrect: false },
+                    { id: `img-option-${i}-3`, text: 'Alternativ C', isCorrect: false },
+                    { id: `img-option-${i}-4`, text: 'Alternativ D', isCorrect: false }
+                  ]
+                }
+              
+              default:
+                return {
+                  ...baseQuestion,
+                  type: 'multiple-choice' as const,
+                  options: [
+                    { id: `option-${i}-1`, text: 'Alternativ A', isCorrect: true },
+                    { id: `option-${i}-2`, text: 'Alternativ B', isCorrect: false },
+                    { id: `option-${i}-3`, text: 'Alternativ C', isCorrect: false },
+                    { id: `option-${i}-4`, text: 'Alternativ D', isCorrect: false }
+                  ]
+                }
+            }
+          })
           
           resolve(mockQuestions)
         }, 2000)
@@ -199,7 +384,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
         setSelectedQuestions(new Set((questions as Question[]).map(q => q.id)))
         setStep('preview')
       })
-    } catch (error) {
+    } catch {
       setErrorMessage('Kunde inte generera frågor just nu. Kontrollera din internetanslutning och försök igen.')
       setStep('error')
     }
@@ -342,6 +527,25 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                     />
                   </div>
 
+                  {/* Question Type */}
+                  <div>
+                    <Typography variant="body2" className="font-medium mb-2">
+                      Frågetyp
+                    </Typography>
+                    <select
+                      value={formData.questionType}
+                      onChange={(e) => setFormData(prev => ({ ...prev, questionType: e.target.value as 'multiple-choice' | 'free-text' | 'image' | 'mixed' }))}
+                      className="w-full p-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="multiple-choice">Flerval</option>
+                      <option value="free-text">Fritext</option>
+                      <option value="image">Bild</option>
+                      <option value="mixed">Blandade typer</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Difficulty */}
                   <div>
                     <Typography variant="body2" className="font-medium mb-2">
@@ -465,9 +669,20 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                             />
                           ) : (
                             <>
-                              <Typography variant="body2" className="font-medium mb-2">
-                                {index + 1}. {question.title}
-                              </Typography>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Typography variant="body2" className="font-medium">
+                                  {index + 1}. {question.title}
+                                </Typography>
+                                <span className={`text-xs px-2 py-1 rounded-full border ${
+                                  question.type === 'multiple-choice' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                  question.type === 'free-text' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  'bg-purple-50 text-purple-700 border-purple-200'
+                                }`}>
+                                  {question.type === 'multiple-choice' ? 'Flerval' :
+                                   question.type === 'free-text' ? 'Fritext' : 'Bild'}
+                                </span>
+                              </div>
+                              
                               {question.type === 'multiple-choice' && question.options && (
                                 <div className="space-y-1 mb-3">
                                   {question.options.map((option) => (
@@ -479,6 +694,39 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                                   ))}
                                 </div>
                               )}
+
+                              {question.type === 'free-text' && (
+                                <div className="mb-3">
+                                  <Typography variant="caption" className="text-neutral-600 bg-neutral-50 px-2 py-1 rounded">
+                                    Fritextsvar: {question.expectedAnswer || 'Öppet svar'}
+                                  </Typography>
+                                </div>
+                              )}
+
+                              {question.type === 'image' && (
+                                <div className="mb-3 space-y-2">
+                                  <div className="bg-neutral-100 border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center">
+                                    <svg className="h-8 w-8 mx-auto mb-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <Typography variant="caption" className="text-neutral-500">
+                                      {question.imageAlt || 'AI-genererad bild skulle visas här'}
+                                    </Typography>
+                                  </div>
+                                  {question.options && question.options.length > 0 && (
+                                    <div className="space-y-1">
+                                      {question.options.map((option) => (
+                                        <div key={option.id} className="flex items-center gap-2">
+                                          <span className={`text-sm ${option.isCorrect ? 'text-success-600 font-medium' : 'text-neutral-600'}`}>
+                                            {option.isCorrect && '✓'} {option.text}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
                               <div className="flex gap-2">
                                 <Button
                                   variant="outline"
