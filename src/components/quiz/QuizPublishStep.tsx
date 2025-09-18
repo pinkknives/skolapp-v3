@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz } from '@/types/quiz'
+import { QuizPreviewModal } from './preview/QuizPreviewModal'
 import { calculateTotalPoints, estimateCompletionTime, formatExecutionMode } from '@/lib/quiz-utils'
 
 interface QuizPublishStepProps {
@@ -15,6 +16,7 @@ interface QuizPublishStepProps {
 
 export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPublishStepProps) {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [showPreview, setShowPreview] = useState(false)
   const [isValidated, setIsValidated] = useState(false)
 
   // Validate on mount and changes
@@ -71,33 +73,47 @@ export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPubl
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Förhandsgranskning</CardTitle>
-            <div className="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-              <button
-                onClick={() => setPreviewMode('desktop')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  previewMode === 'desktop'
-                    ? 'bg-white text-neutral-900 shadow-sm'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowPreview(true)}
+                className="border-primary-300 text-primary-700 hover:bg-primary-50"
               >
-                <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                Klassvy
-              </button>
-              <button
-                onClick={() => setPreviewMode('mobile')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  previewMode === 'mobile'
-                    ? 'bg-white text-neutral-900 shadow-sm'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
-                </svg>
-                Mobilvy
-              </button>
+                Förhandsgranska
+              </Button>
+              
+              <div className="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
+                <button
+                  onClick={() => setPreviewMode('desktop')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    previewMode === 'desktop'
+                      ? 'bg-white text-neutral-900 shadow-sm'
+                      : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+                >
+                  <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Klassvy
+                </button>
+                <button
+                  onClick={() => setPreviewMode('mobile')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    previewMode === 'mobile'
+                      ? 'bg-white text-neutral-900 shadow-sm'
+                      : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+                >
+                  <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z" />
+                  </svg>
+                  Mobilvy
+                </button>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -320,6 +336,15 @@ export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPubl
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <QuizPreviewModal
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          quiz={quiz}
+        />
       )}
     </div>
   )

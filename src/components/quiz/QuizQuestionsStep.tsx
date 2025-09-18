@@ -7,6 +7,7 @@ import { Typography } from '@/components/ui/Typography'
 import { Quiz, Question, QuestionType } from '@/types/quiz'
 import { QuestionEditor } from './QuestionEditor'
 import { ImprovedAIQuizDraft } from './ImprovedAIQuizDraft'
+import { QuizPreviewModal } from './preview/QuizPreviewModal'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
 
 interface QuizQuestionsStepProps {
@@ -17,6 +18,7 @@ interface QuizQuestionsStepProps {
 
 export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQuestionsStepProps) {
   const [showAIModal, setShowAIModal] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null)
 
   // Validate on changes
@@ -123,15 +125,31 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
               </Typography>
               
               {/* AI Quick Start */}
-              <Button
-                onClick={() => setShowAIModal(true)}
-                className="bg-primary-600 hover:bg-primary-700 text-white"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Skapa frågor med AI
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={() => setShowAIModal(true)}
+                  className="bg-primary-600 hover:bg-primary-700 text-white"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Skapa frågor med AI
+                </Button>
+                
+                {quiz.questions && quiz.questions.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPreview(true)}
+                    className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Förhandsgranska
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -271,6 +289,15 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
           quizTitle={quiz.title}
           onQuestionsGenerated={handleAIQuestionsGenerated}
           onClose={() => setShowAIModal(false)}
+        />
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <QuizPreviewModal
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          quiz={quiz}
         />
       )}
 
