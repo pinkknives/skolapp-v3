@@ -1,349 +1,138 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Button } from '@/components/ui/Button'
 import { Typography, Heading } from '@/components/ui/Typography'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { QuizBasicInfo } from '@/components/quiz/QuizBasicInfo'
-import { QuestionEditor } from '@/components/quiz/QuestionEditor'
-import { AIQuizDraft } from '@/components/quiz/AIQuizDraft'
-import { Quiz, Question, QuestionType } from '@/types/quiz'
-import { 
-  createDefaultQuiz, 
-  createDefaultQuestion, 
-  validateQuiz, 
-  generateShareCode,
-  generateQuizId,
-  calculateTotalPoints,
-  estimateCompletionTime
-} from '@/lib/quiz-utils'
 import { useRouter } from 'next/navigation'
 
 export default function CreateQuizPage() {
   const router = useRouter()
-  const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1')) // Mock teacher ID
-  const [showAIDraft, setShowAIDraft] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [validationErrors, setValidationErrors] = useState<string[]>([])
 
-  const updateQuiz = (updates: Partial<Quiz>) => {
-    setQuiz(prev => ({ ...prev, ...updates }))
-    // Clear validation errors when user makes changes
-    if (validationErrors.length > 0) {
-      setValidationErrors([])
-    }
+  const handleCreateEmpty = () => {
+    router.push('/teacher/quiz/create-wizard?type=empty')
   }
 
-  const addQuestion = (type: QuestionType) => {
-    const newQuestion = createDefaultQuestion(type) as Question
-    setQuiz(prev => ({
-      ...prev,
-      questions: [...(prev.questions || []), newQuestion]
-    }))
+  const handleCreateFromTemplate = () => {
+    router.push('/teacher/quiz/create-wizard?type=template')
   }
 
-  const updateQuestion = (index: number, updatedQuestion: Question) => {
-    setQuiz(prev => ({
-      ...prev,
-      questions: prev.questions?.map((q, i) => i === index ? updatedQuestion : q) || []
-    }))
+  const handleCreateWithAI = () => {
+    router.push('/teacher/quiz/create-wizard?type=ai-draft')
   }
-
-  const deleteQuestion = (index: number) => {
-    setQuiz(prev => ({
-      ...prev,
-      questions: prev.questions?.filter((_, i) => i !== index) || []
-    }))
-  }
-
-  const duplicateQuestion = (index: number) => {
-    const questionToDuplicate = quiz.questions?.[index]
-    if (questionToDuplicate) {
-      const duplicatedQuestion = {
-        ...questionToDuplicate,
-        id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        title: `${questionToDuplicate.title} (kopia)`
-      }
-      setQuiz(prev => ({
-        ...prev,
-        questions: [
-          ...(prev.questions?.slice(0, index + 1) || []),
-          duplicatedQuestion,
-          ...(prev.questions?.slice(index + 1) || [])
-        ]
-      }))
-    }
-  }
-
-  const handleAIQuestionsGenerated = (questions: Question[]) => {
-    setQuiz(prev => ({
-      ...prev,
-      questions: [...(prev.questions || []), ...questions]
-    }))
-  }
-
-  const saveDraft = async () => {
-    setIsSaving(true)
-    try {
-      // Mock save operation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const updatedQuiz = {
-        ...quiz,
-        id: quiz.id || generateQuizId(),
-        updatedAt: new Date(),
-        status: 'draft' as const
-      }
-      
-      setQuiz(updatedQuiz)
-      
-      // In a real app, you would save to a database
-      // Draft saved successfully
-      
-      // Show success message (in a real app, use a toast notification)
-      alert('Utkast sparat!')
-    } catch (error) {
-      // Log error for debugging in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error saving draft:', error)
-      }
-      alert('Fel vid sparande av utkast')
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const publishQuiz = async () => {
-    const validation = validateQuiz(quiz)
-    
-    if (!validation.isValid) {
-      setValidationErrors(validation.errors)
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      const shareCode = generateShareCode()
-      const publishedQuiz = {
-        ...quiz,
-        id: quiz.id || generateQuizId(),
-        createdAt: quiz.createdAt || new Date(),
-        updatedAt: new Date(),
-        status: 'published' as const,
-        shareCode
-      }
-
-      // Mock save operation
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      setQuiz(publishedQuiz)
-      
-      // In a real app, you would save to a database
-      // Quiz published successfully
-      
-      // Redirect to quiz dashboard or show success
-      router.push(`/teacher/quiz/${publishedQuiz.id}?published=true`)
-    } catch (error) {
-      // Log error for debugging in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error publishing quiz:', error)
-      }
-      alert('Fel vid publicering av quiz')
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const totalPoints = calculateTotalPoints(quiz.questions || [])
-  const estimatedTime = estimateCompletionTime(quiz.questions || [])
 
   return (
     <Layout>
       <Section spacing="lg">
         <Container>
-          <div className="mb-8">
-            <Heading level={1} className="mb-2">
+          <div className="mb-8 text-center">
+            <Heading level={1} className="mb-4">
               Skapa nytt quiz
             </Heading>
             <Typography variant="subtitle1" className="text-neutral-600">
-              Skapa engagerande quiz för dina elever med hjälp av AI eller manuellt.
+              Välj hur du vill skapa ditt quiz. Du kan alltid ändra och anpassa efter att du har börjat.
             </Typography>
           </div>
 
-          {/* Validation Errors */}
-          {validationErrors.length > 0 && (
-            <Card className="mb-6 border-error-200 bg-error-50">
-              <CardContent>
-                <Typography variant="body2" className="font-medium text-error-800 mb-2">
-                  Åtgärda följande fel innan publicering:
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Empty Quiz Option */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group" onClick={handleCreateEmpty}>
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-neutral-200 transition-colors">
+                  <svg className="w-8 h-8 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <CardTitle className="text-lg">Tomt quiz</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Typography variant="body2" className="text-neutral-600 mb-4">
+                  Börja från början och bygg ditt quiz steg för steg. Ger dig full kontroll över innehållet.
                 </Typography>
-                <ul className="list-disc list-inside space-y-1">
-                  {validationErrors.map((error, index) => (
-                    <li key={index} className="text-sm text-error-700">{error}</li>
-                  ))}
-                </ul>
+                <Typography variant="caption" className="text-neutral-500">
+                  Rekommenderat för erfarna användare
+                </Typography>
               </CardContent>
             </Card>
-          )}
 
-          {/* Quiz Statistics */}
-          <Card className="mb-6">
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-6 text-sm text-neutral-600">
-                <div>
-                  <span className="font-medium">{quiz.questions?.length || 0}</span> frågor
+            {/* Template Option */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group" onClick={handleCreateFromTemplate}>
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-200 transition-colors">
+                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
                 </div>
-                <div>
-                  <span className="font-medium">{totalPoints}</span> poäng totalt
+                <CardTitle className="text-lg">Mall</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Typography variant="body2" className="text-neutral-600 mb-4">
+                  Använd en förberedd mall med vanliga frågetyper och strukturer för ditt ämne.
+                </Typography>
+                <Typography variant="caption" className="text-neutral-500">
+                  Snabb start med beprövade strukturer
+                </Typography>
+              </CardContent>
+            </Card>
+
+            {/* AI Draft Option */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-success-200 bg-success-50" onClick={handleCreateWithAI}>
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-success-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-success-200 transition-colors">
+                  <svg className="w-8 h-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                 </div>
-                <div>
-                  <span className="font-medium">{estimatedTime}</span> min uppskattat
+                <CardTitle className="text-lg">AI-utkast</CardTitle>
+                <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success-600 text-white">
+                  Rekommenderat
                 </div>
-                <div>
-                  Status: <span className="font-medium">{quiz.status === 'draft' ? 'Utkast' : 'Publicerad'}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Typography variant="body2" className="text-neutral-600 mb-4">
+                  Låt AI:n skapa ett komplett quiz baserat på dina inställningar. Du kan sedan redigera och anpassa.
+                </Typography>
+                <Typography variant="caption" className="text-neutral-500">
+                  Snabbast väg till ett färdigt quiz
+                </Typography>
+              </CardContent>
+            </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Basic Info */}
-              <QuizBasicInfo quiz={quiz} onChange={updateQuiz} />
-
-              {/* Questions Section */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Frågor</CardTitle>
-                    <Button onClick={() => setShowAIDraft(true)} variant="outline">
-                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      AI-utkast
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Question Type Selector */}
-                  <div className="mb-6">
-                    <Typography variant="body2" className="mb-3 font-medium text-neutral-700">
-                      Lägg till fråga:
-                    </Typography>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addQuestion('multiple-choice')}
-                      >
-                        <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Flerval
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addQuestion('free-text')}
-                      >
-                        <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Fritext
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addQuestion('image')}
-                      >
-                        <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Bild
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Questions List */}
-                  {quiz.questions && quiz.questions.length > 0 ? (
-                    <div>
-                      {quiz.questions.map((question, index) => (
-                        <QuestionEditor
-                          key={question.id}
-                          question={question}
-                          questionIndex={index}
-                          onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
-                          onDelete={() => deleteQuestion(index)}
-                          onDuplicate={() => duplicateQuestion(index)}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-neutral-500">
-                      <svg className="h-12 w-12 mx-auto mb-4 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <Typography variant="body1" className="mb-2">Inga frågor ännu</Typography>
-                      <Typography variant="caption">
-                        Lägg till din första fråga genom att klicka på en av knapparna ovan eller använd AI-utkast.
-                      </Typography>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-4">
-              {/* Action Buttons */}
-              <Card>
-                <CardContent className="space-y-3">
-                  <Button
-                    fullWidth
-                    onClick={saveDraft}
-                    loading={isSaving && quiz.status === 'draft'}
-                    variant="outline"
-                  >
-                    Spara utkast
-                  </Button>
-                  
-                  <Button
-                    fullWidth
-                    onClick={publishQuiz}
-                    loading={isSaving && quiz.status !== 'draft'}
-                    disabled={!quiz.title || !quiz.questions?.length}
-                  >
-                    Publicera quiz
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Help */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Tips</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-neutral-600">
-                    <li>• Använd tydliga och enkla formuleringar</li>
-                    <li>• Testa ditt quiz innan du publicerar</li>
-                    <li>• AI-utkast kan hjälpa dig komma igång snabbt</li>
-                    <li>• Lägg till bilder för att göra quizet mer engagerande</li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
           </div>
 
-          {/* AI Draft Modal */}
-          {showAIDraft && (
-            <AIQuizDraft
-              onQuestionsGenerated={handleAIQuestionsGenerated}
-              onClose={() => setShowAIDraft(false)}
-            />
-          )}
+          {/* Help Section */}
+          <div className="max-w-2xl mx-auto mt-12">
+            <Card className="bg-neutral-50">
+              <CardHeader>
+                <CardTitle className="text-base text-center">Behöver du hjälp att välja?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <Typography variant="body2" className="font-medium mb-1">Tomt quiz</Typography>
+                    <Typography variant="caption" className="text-neutral-600">
+                      Bäst när du vet exakt vad du vill ha och har tid att bygga från grunden.
+                    </Typography>
+                  </div>
+                  <div className="text-center">
+                    <Typography variant="body2" className="font-medium mb-1">Mall</Typography>
+                    <Typography variant="caption" className="text-neutral-600">
+                      Perfekt när du vill ha en beprövad struktur att utgå från.
+                    </Typography>
+                  </div>
+                  <div className="text-center">
+                    <Typography variant="body2" className="font-medium mb-1">AI-utkast</Typography>
+                    <Typography variant="caption" className="text-neutral-600">
+                      Idealiskt när du vill spara tid och få förslag på innehåll.
+                    </Typography>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
         </Container>
       </Section>
     </Layout>

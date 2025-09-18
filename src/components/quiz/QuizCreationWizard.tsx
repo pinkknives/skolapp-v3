@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Typography, Heading } from '@/components/ui/Typography'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface QuizCreationWizardProps {
   initialQuiz: Partial<Quiz>
   onComplete: (quiz: Quiz) => void
+  creationType?: string
 }
 
 type WizardStep = 'info' | 'questions' | 'publish'
@@ -24,10 +25,38 @@ const steps: { key: WizardStep; label: string; number: number }[] = [
   { key: 'publish', label: 'Granska och publicera', number: 3 },
 ]
 
-export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWizardProps) {
+export function QuizCreationWizard({ initialQuiz, onComplete, creationType = 'empty' }: QuizCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState<WizardStep>('info')
   const [quiz, setQuiz] = useState<Partial<Quiz>>(initialQuiz)
   const [isValid, setIsValid] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Auto-save functionality
+  const autoSave = useCallback(async () => {
+    if (isSaving) return
+    
+    setIsSaving(true)
+    try {
+      // Mock auto-save operation
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setLastSaved(new Date())
+    } catch (error) {
+      console.error('Auto-save failed:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [isSaving])
+
+  useEffect(() => {
+    if (!quiz.title) return // Don't auto-save empty quiz
+    
+    const saveTimeout = setTimeout(async () => {
+      await autoSave()
+    }, 2000) // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(saveTimeout)
+  }, [quiz, autoSave])
 
   const updateQuiz = (updates: Partial<Quiz>) => {
     const updatedQuiz = { ...quiz, ...updates }
@@ -107,6 +136,28 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
       {/* Header with steps */}
       <Card className="mb-8">
         <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div></div>
+            {/* Auto-save status */}
+            <div className="flex items-center text-sm text-neutral-500">
+              {isSaving ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Sparar...
+                </>
+              ) : lastSaved ? (
+                <>
+                  <svg className="h-4 w-4 mr-2 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Sparad {lastSaved.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
+                </>
+              ) : null}
+            </div>
+          </div>
           <WizardSteps
             steps={steps}
             currentStep={currentStep}
