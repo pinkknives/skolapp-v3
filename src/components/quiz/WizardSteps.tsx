@@ -51,7 +51,7 @@ export function WizardSteps({ steps, currentStep, onStepClick }: WizardStepsProp
                 className={`
                   w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200
                   ${isActive 
-                    ? 'bg-primary-600 text-white border-primary-600 shadow-md' 
+                    ? 'bg-primary-700 text-white border-primary-700 shadow-md' 
                     : isCompleted
                     ? 'bg-success-600 text-white border-success-600'
                     : 'bg-neutral-100 text-neutral-500 border-neutral-300'
