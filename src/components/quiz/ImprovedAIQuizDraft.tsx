@@ -1,16 +1,103 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
 import { Question } from '@/types/quiz'
 
 interface ImprovedAIQuizDraftProps {
   quizTitle?: string
   onQuestionsGenerated: (questions: Question[]) => void
   onClose: () => void
+}
+
+interface QuestionEditFormProps {
+  question: Question
+  onSave: (question: Question) => void
+  onCancel: () => void
+}
+
+function QuestionEditForm({ question, onSave, onCancel }: QuestionEditFormProps) {
+  const [title, setTitle] = useState(question.title)
+  const [options, setOptions] = useState(
+    question.type === 'multiple-choice' ? question.options || [] : []
+  )
+
+  const handleSave = () => {
+    if (question.type === 'multiple-choice') {
+      onSave({
+        ...question,
+        title,
+        options
+      })
+    } else {
+      onSave({
+        ...question,
+        title
+      })
+    }
+  }
+
+  const updateOption = (index: number, text: string) => {
+    const newOptions = [...options]
+    newOptions[index] = { ...newOptions[index], text }
+    setOptions(newOptions)
+  }
+
+  const toggleCorrectAnswer = (index: number) => {
+    const newOptions = options.map((option, i) => ({
+      ...option,
+      isCorrect: i === index
+    }))
+    setOptions(newOptions)
+  }
+
+  return (
+    <div className="space-y-3 bg-white p-3 border rounded-lg">
+      <Input
+        label="Frågetext"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Skriv din fråga här..."
+      />
+      
+      {question.type === 'multiple-choice' && (
+        <div className="space-y-2">
+          <Typography variant="body2" className="font-medium">Svarsalternativ</Typography>
+          {options.map((option, index) => (
+            <div key={option.id} className="flex gap-2 items-center">
+              <input
+                type="radio"
+                name={`correct-${question.id}`}
+                checked={option.isCorrect}
+                onChange={() => toggleCorrectAnswer(index)}
+                className="h-4 w-4 text-primary-600"
+                aria-label={`Markera alternativ ${index + 1} som korrekt`}
+              />
+              <Input
+                value={option.text}
+                onChange={(e) => updateOption(index, e.target.value)}
+                placeholder={`Alternativ ${index + 1}`}
+                className="flex-1"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <div className="flex gap-2 pt-2">
+        <Button onClick={handleSave} size="sm" disabled={!title.trim()}>
+          Spara
+        </Button>
+        <Button onClick={onCancel} variant="outline" size="sm">
+          Avbryt
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 interface AIFormData {
@@ -23,7 +110,7 @@ interface AIFormData {
 }
 
 export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }: ImprovedAIQuizDraftProps) {
-  const [step, setStep] = useState<'form' | 'generating' | 'preview'>('form')
+  const [step, setStep] = useState<'form' | 'generating' | 'preview' | 'error'>('form')
   const [formData, setFormData] = useState<AIFormData>({
     subject: '',
     gradeLevel: '',
@@ -34,6 +121,39 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
   })
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([])
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string>('')
+
+  // Load saved draft from localStorage
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('ai-quiz-draft')
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft)
+        if (parsed.formData) setFormData(parsed.formData)
+        if (parsed.generatedQuestions) {
+          setGeneratedQuestions(parsed.generatedQuestions)
+          setSelectedQuestions(new Set(parsed.selectedQuestions || []))
+          if (parsed.generatedQuestions.length > 0) {
+            setStep('preview')
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load AI draft from localStorage:', error)
+      }
+    }
+  }, [])
+
+  // Save draft to localStorage
+  useEffect(() => {
+    const draftData = {
+      formData,
+      generatedQuestions,
+      selectedQuestions: Array.from(selectedQuestions),
+      timestamp: Date.now()
+    }
+    localStorage.setItem('ai-quiz-draft', JSON.stringify(draftData))
+  }, [formData, generatedQuestions, selectedQuestions])
 
   const subjectOptions = [
     'Matematik', 'Svenska', 'Engelska', 'Naturkunskap', 'Biologi', 'Fysik', 'Kemi',
@@ -47,31 +167,49 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
   const handleGenerate = async () => {
     setStep('generating')
+    setErrorMessage('')
     
-    // Simulate AI generation with mock data
-    setTimeout(() => {
-      const mockQuestions: Question[] = Array.from({ length: formData.questionCount }, (_, i) => ({
-        id: `ai-question-${i + 1}`,
-        type: 'multiple-choice' as const,
-        title: `AI-genererad fråga ${i + 1} om ${formData.subject.toLowerCase()}`,
-        points: 1,
-        options: [
-          { id: `option-${i}-1`, text: 'Alternativ A', isCorrect: true },
-          { id: `option-${i}-2`, text: 'Alternativ B', isCorrect: false },
-          { id: `option-${i}-3`, text: 'Alternativ C', isCorrect: false },
-          { id: `option-${i}-4`, text: 'Alternativ D', isCorrect: false }
-        ]
-      }))
-      
-      setGeneratedQuestions(mockQuestions)
-      setSelectedQuestions(new Set(mockQuestions.map(q => q.id)))
-      setStep('preview')
-    }, 2000)
+    try {
+      // Simulate AI generation with mock data
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate occasional failures for demo
+          if (Math.random() < 0.1) {
+            reject(new Error('AI service temporarily unavailable'))
+            return
+          }
+          
+          const mockQuestions: Question[] = Array.from({ length: formData.questionCount }, (_, i) => ({
+            id: `ai-question-${Date.now()}-${i + 1}`,
+            type: 'multiple-choice' as const,
+            title: `AI-genererad fråga ${i + 1} om ${formData.subject.toLowerCase()}`,
+            points: 1,
+            options: [
+              { id: `option-${i}-1`, text: 'Alternativ A', isCorrect: true },
+              { id: `option-${i}-2`, text: 'Alternativ B', isCorrect: false },
+              { id: `option-${i}-3`, text: 'Alternativ C', isCorrect: false },
+              { id: `option-${i}-4`, text: 'Alternativ D', isCorrect: false }
+            ]
+          }))
+          
+          resolve(mockQuestions)
+        }, 2000)
+      }).then((questions) => {
+        setGeneratedQuestions(questions as Question[])
+        setSelectedQuestions(new Set((questions as Question[]).map(q => q.id)))
+        setStep('preview')
+      })
+    } catch (error) {
+      setErrorMessage('Kunde inte generera frågor just nu. Kontrollera din internetanslutning och försök igen.')
+      setStep('error')
+    }
   }
 
   const handleAcceptQuestions = () => {
     const questionsToAdd = generatedQuestions.filter(q => selectedQuestions.has(q.id))
     onQuestionsGenerated(questionsToAdd)
+    // Clear the draft after successful addition
+    localStorage.removeItem('ai-quiz-draft')
   }
 
   const toggleQuestionSelection = (questionId: string) => {
@@ -82,6 +220,27 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
       newSelection.add(questionId)
     }
     setSelectedQuestions(newSelection)
+  }
+
+  const editQuestion = (questionId: string, updatedQuestion: Question) => {
+    setGeneratedQuestions(prev => 
+      prev.map(q => q.id === questionId ? updatedQuestion : q)
+    )
+    setEditingQuestion(null)
+  }
+
+  const deleteQuestion = (questionId: string) => {
+    setGeneratedQuestions(prev => prev.filter(q => q.id !== questionId))
+    setSelectedQuestions(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(questionId)
+      return newSet
+    })
+  }
+
+  const retryGeneration = () => {
+    setStep('form')
+    setErrorMessage('')
   }
 
   const isFormValid = formData.subject && formData.gradeLevel && formData.questionCount > 0
@@ -115,7 +274,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
           <CardContent className="space-y-6">
             {/* AI Disclaimer */}
-            <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+            <div id="ai-form-disclaimer" className="bg-warning-50 border border-warning-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-warning-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -220,8 +379,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   <Typography variant="body2" className="font-medium mb-2">
                     Extra kontext (valfritt)
                   </Typography>
-                  <Input
-                    multiline
+                  <Textarea
                     rows={3}
                     placeholder="Beskriv eventuella speciella krav eller fokus för frågorna..."
                     value={formData.context}
@@ -248,6 +406,25 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
               </div>
             )}
 
+            {step === 'error' && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="h-8 w-8 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <Typography variant="h6" className="mb-2 text-error-800">
+                  Något gick fel
+                </Typography>
+                <Typography variant="body2" className="text-neutral-600 mb-4">
+                  {errorMessage}
+                </Typography>
+                <Button onClick={retryGeneration} variant="outline">
+                  Försök igen
+                </Button>
+              </div>
+            )}
+
             {step === 'preview' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -263,12 +440,11 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   {generatedQuestions.map((question, index) => (
                     <div
                       key={question.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      className={`p-4 border rounded-lg transition-all ${
                         selectedQuestions.has(question.id)
                           ? 'border-primary-300 bg-primary-50'
                           : 'border-neutral-200 hover:border-neutral-300'
                       }`}
-                      onClick={() => toggleQuestionSelection(question.id)}
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex items-center h-5">
@@ -277,22 +453,64 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                             checked={selectedQuestions.has(question.id)}
                             onChange={() => toggleQuestionSelection(question.id)}
                             className="h-4 w-4 text-primary-600 rounded"
+                            aria-label={`Välj fråga ${index + 1}`}
                           />
                         </div>
                         <div className="flex-1">
-                          <Typography variant="body2" className="font-medium mb-2">
-                            {index + 1}. {question.title}
-                          </Typography>
-                          {question.type === 'multiple-choice' && question.options && (
-                            <div className="space-y-1">
-                              {question.options.map((option) => (
-                                <div key={option.id} className="flex items-center gap-2">
-                                  <span className={`text-sm ${option.isCorrect ? 'text-success-600 font-medium' : 'text-neutral-600'}`}>
-                                    {option.isCorrect && '✓'} {option.text}
-                                  </span>
+                          {editingQuestion === question.id ? (
+                            <QuestionEditForm
+                              question={question}
+                              onSave={(updatedQuestion) => editQuestion(question.id, updatedQuestion)}
+                              onCancel={() => setEditingQuestion(null)}
+                            />
+                          ) : (
+                            <>
+                              <Typography variant="body2" className="font-medium mb-2">
+                                {index + 1}. {question.title}
+                              </Typography>
+                              {question.type === 'multiple-choice' && question.options && (
+                                <div className="space-y-1 mb-3">
+                                  {question.options.map((option) => (
+                                    <div key={option.id} className="flex items-center gap-2">
+                                      <span className={`text-sm ${option.isCorrect ? 'text-success-600 font-medium' : 'text-neutral-600'}`}>
+                                        {option.isCorrect && '✓'} {option.text}
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
+                              )}
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditingQuestion(question.id)
+                                  }}
+                                  aria-label={`Redigera fråga ${index + 1}`}
+                                >
+                                  <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  Redigera
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    deleteQuestion(question.id)
+                                  }}
+                                  className="text-error-600 hover:text-error-700 hover:border-error-300"
+                                  aria-label={`Ta bort fråga ${index + 1}`}
+                                >
+                                  <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  Ta bort
+                                </Button>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
@@ -320,8 +538,18 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   onClick={handleGenerate}
                   disabled={!isFormValid}
                   className="bg-primary-600 hover:bg-primary-700"
+                  aria-describedby="ai-form-disclaimer"
                 >
                   Generera frågor
+                </Button>
+              )}
+
+              {step === 'error' && (
+                <Button
+                  onClick={retryGeneration}
+                  className="bg-primary-600 hover:bg-primary-700"
+                >
+                  Försök igen
                 </Button>
               )}
 
@@ -353,3 +581,5 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
     </div>
   )
 }
+
+export default ImprovedAIQuizDraft

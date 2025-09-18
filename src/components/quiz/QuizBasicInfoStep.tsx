@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, ExecutionMode } from '@/types/quiz'
@@ -108,12 +109,11 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
 
           {/* Description */}
           <div>
-            <Input
+            <Textarea
               label="Beskrivning"
               placeholder="Beskriv vad eleverna kommer att lära sig eller öva på"
               value={quiz.description || ''}
               onChange={(e) => onChange({ description: e.target.value })}
-              multiline
               rows={3}
             />
           </div>
@@ -165,8 +165,21 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
               label="Tidsgräns (minuter)"
               type="number"
               placeholder="Lämna tomt för obegränsad tid"
-              value={quiz.timeLimit || ''}
-              onChange={(e) => onChange({ timeLimit: e.target.value ? parseInt(e.target.value) : undefined })}
+              value={quiz.settings?.timeLimit || ''}
+              onChange={(e) => {
+                const timeLimit = e.target.value ? parseInt(e.target.value) : undefined
+                onChange({ 
+                  settings: { 
+                    allowRetakes: true,
+                    shuffleQuestions: false,
+                    shuffleAnswers: false,
+                    showCorrectAnswers: false,
+                    executionMode: 'self-paced',
+                    ...quiz.settings,
+                    timeLimit 
+                  } 
+                })
+              }}
               min="1"
               max="180"
             />
@@ -190,8 +203,17 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
                     type="radio"
                     name="executionMode"
                     value={mode.value}
-                    checked={quiz.executionMode === mode.value}
-                    onChange={() => onChange({ executionMode: mode.value })}
+                    checked={quiz.settings?.executionMode === mode.value}
+                    onChange={() => onChange({ 
+                      settings: { 
+                        allowRetakes: true,
+                        shuffleQuestions: false,
+                        shuffleAnswers: false,
+                        showCorrectAnswers: false,
+                        ...quiz.settings,
+                        executionMode: mode.value 
+                      } 
+                    })}
                     className="mt-1"
                   />
                   <div>
