@@ -180,7 +180,7 @@ export function EnhancedSubscriptionPlanSelector({
               transition={{ delay: index * 0.1 }}
             >
               <Card 
-                variant={isSelected ? 'primary' : 'default'}
+                variant={isSelected ? 'elevated' : 'default'}
                 className={`relative h-full ${isSelected ? 'ring-2 ring-primary-500' : ''} ${
                   plan === 'premium' ? 'border-primary-300 shadow-lg' : ''
                 }`}
