@@ -108,3 +108,5 @@ public/worker-*.js.map
 # Test artifacts
 coverage/
 .nyc_output/
+test-results/
+playwright-report/

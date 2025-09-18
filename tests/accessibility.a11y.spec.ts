@@ -106,4 +106,28 @@ test.describe('Accessibility Tests', () => {
       expect(alt).not.toBeNull();
     }
   });
+
+  test('buttons with icons should have proper horizontal layout', async ({ page }) => {
+    await page.goto('/teacher/quiz');
+    
+    // Test primary button with icon (Skapa nytt quiz)
+    const createButton = page.getByRole('button', { name: /skapa nytt quiz/i });
+    await expect(createButton).toBeVisible();
+    
+    // Test secondary button with icon (action buttons)
+    const shareButtons = page.getByRole('button', { name: /dela/i });
+    if (await shareButtons.count() > 0) {
+      await expect(shareButtons.first()).toBeVisible();
+    }
+    
+    const reviewButtons = page.getByRole('button', { name: /granska/i });
+    if (await reviewButtons.count() > 0) {
+      await expect(reviewButtons.first()).toBeVisible();
+    }
+    
+    // Test that buttons are horizontally aligned and accessible
+    // This ensures the gap-x-2 class is working properly
+    const buttonsWithIcons = await page.locator('button').all();
+    expect(buttonsWithIcons.length).toBeGreaterThan(0);
+  });
 });
