@@ -1,10 +1,11 @@
 'use client'
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import { type User, type AuthState, type LoginCredentials, type RegisterData, type GuestSession } from '@/types/auth'
+import { type User, type AuthState, type LoginCredentials, type RegisterData, type GuestSession, type UserRole } from '@/types/auth'
+import { supabaseBrowser } from '@/lib/supabase-browser'
+import type { Session } from '@supabase/supabase-js'
 
-// Mock storage for development - in production this would use real API calls
-const AUTH_STORAGE_KEY = 'skolapp_auth'
+// Storage keys
 const GUEST_STORAGE_KEY = 'skolapp_guest'
 
 interface AuthContextType extends AuthState {
@@ -55,148 +56,136 @@ const initialState: AuthState = {
   error: null
 }
 
-// Mock users for development
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    email: 'larare@skolapp.se',
-    firstName: 'Anna',
-    lastName: 'Andersson',
-    role: 'lärare',
-    subscriptionPlan: 'premium',
-    dataRetentionMode: 'långtid',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2', 
-    email: 'elev@skolapp.se',
-    firstName: 'Erik',
-    lastName: 'Eriksson',
-    role: 'elev',
-    subscriptionPlan: 'premium',
-    dataRetentionMode: 'långtid',
-    isMinor: true,
-    hasParentalConsent: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+// Helper function to convert Supabase user to app User type
+function convertSupabaseUser(session: Session, profile: Record<string, any> | null): User {
+  // Map database role to UI role
+  let role: UserRole = 'lärare' // default
+  if (profile?.role) {
+    if (profile.role === 'teacher') role = 'lärare'
+    else if (profile.role === 'student') role = 'elev'
   }
-]
+  
+  return {
+    id: session.user.id,
+    email: session.user.email!,
+    firstName: profile?.display_name?.split(' ')[0] || 'Användare',
+    lastName: profile?.display_name?.split(' ').slice(1).join(' ') || '',
+    role,
+    subscriptionPlan: 'gratis', // Default subscription
+    dataRetentionMode: 'korttid', // Default retention mode
+    createdAt: new Date(session.user.created_at!),
+    updatedAt: new Date(),
+    lastLoginAt: new Date()
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
-  // Initialize auth state from storage
+  // Initialize auth state from Supabase
   useEffect(() => {
-    try {
-      const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY)
-      if (storedAuth) {
-        const user = JSON.parse(storedAuth) as User
-        dispatch({ type: 'SET_USER', payload: user })
+    const supabase = supabaseBrowser()
+
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        try {
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single()
+          
+          const user = convertSupabaseUser(session, profile)
+          dispatch({ type: 'SET_USER', payload: user })
+        } catch {
+          // Profile not found, create with defaults
+          const user = convertSupabaseUser(session, null)
+          dispatch({ type: 'SET_USER', payload: user })
+        }
       } else {
         dispatch({ type: 'SET_LOADING', payload: false })
       }
-    } catch (error) {
-      console.error('Error loading auth state:', error)
-      dispatch({ type: 'SET_LOADING', payload: false })
-    }
+    })
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single()
+          
+          const user = convertSupabaseUser(session, profile)
+          dispatch({ type: 'SET_USER', payload: user })
+        } else if (event === 'SIGNED_OUT') {
+          dispatch({ type: 'SET_USER', payload: null })
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
+  const login = async (): Promise<{ success: boolean; error?: string }> => {
     dispatch({ type: 'SET_LOADING', payload: true })
     dispatch({ type: 'SET_ERROR', payload: null })
 
     try {
-      // Mock login - in production this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
-
-      const user = MOCK_USERS.find(u => u.email === credentials.email)
+      // For now, we'll redirect to the login page for magic link auth
+      // This function is kept for compatibility but should redirect to /login
+      window.location.href = '/login'
       
-      if (!user) {
-        dispatch({ type: 'SET_ERROR', payload: 'E-postadress eller lösenord är felaktigt' })
-        return { success: false, error: 'E-postadress eller lösenord är felaktigt' }
-      }
-
-      // Mock password validation (in production, this would be done securely on the server)
-      if (credentials.password !== 'password') {
-        dispatch({ type: 'SET_ERROR', payload: 'E-postadress eller lösenord är felaktigt' })
-        return { success: false, error: 'E-postadress eller lösenord är felaktigt' }
-      }
-
-      const userWithLogin = { 
-        ...user, 
-        lastLoginAt: new Date() 
-      }
-
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userWithLogin))
-      dispatch({ type: 'SET_USER', payload: userWithLogin })
-      
-      return { success: true }
-    } catch {
-      const errorMessage = 'Ett fel uppstod vid inloggning. Försök igen.'
+      return { success: false, error: 'Redirecting to login page...' }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed'
       dispatch({ type: 'SET_ERROR', payload: errorMessage })
       return { success: false, error: errorMessage }
     }
   }
 
-  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
+  const register = async (): Promise<{ success: boolean; error?: string }> => {
     dispatch({ type: 'SET_LOADING', payload: true })
     dispatch({ type: 'SET_ERROR', payload: null })
 
     try {
-      // Mock registration - in production this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1500)) // Simulate network delay
-
-      // Check if email already exists
-      if (MOCK_USERS.some(u => u.email === data.email)) {
-        dispatch({ type: 'SET_ERROR', payload: 'En användare med denna e-postadress finns redan' })
-        return { success: false, error: 'En användare med denna e-postadress finns redan' }
-      }
-
-      const newUser: User = {
-        id: String(Date.now()),
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-        subscriptionPlan: data.subscriptionPlan || (data.role === 'lärare' ? 'gratis' : 'premium'),
-        dataRetentionMode: data.dataRetentionMode || 'korttid',
-        schoolAccountId: data.schoolAccountId,
-        isMinor: data.dateOfBirth ? calculateAge(data.dateOfBirth) < 18 : undefined,
-        hasParentalConsent: data.hasParentalConsent,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      // Add to mock storage
-      MOCK_USERS.push(newUser)
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser))
-      dispatch({ type: 'SET_USER', payload: newUser })
+      // For now, redirect to login page for registration too
+      // Magic link auth doesn't require separate registration
+      window.location.href = '/login'
       
-      return { success: true }
-    } catch {
-      const errorMessage = 'Ett fel uppstod vid registrering. Försök igen.'
+      return { success: false, error: 'Redirecting to login page...' }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed'
       dispatch({ type: 'SET_ERROR', payload: errorMessage })
       return { success: false, error: errorMessage }
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-    dispatch({ type: 'SET_USER', payload: null })
+  const logout = async () => {
+    try {
+      const supabase = supabaseBrowser()
+      await supabase.auth.signOut()
+      dispatch({ type: 'SET_USER', payload: null })
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   const loginAsGuest = (nickname?: string): GuestSession => {
-    const guestSession: GuestSession = {
-      id: String(Date.now()),
-      nickname,
-      joinedQuizId: '', // Will be set when joining a quiz
+    const session: GuestSession = {
+      id: `guest_${Date.now()}`,
+      nickname: nickname || `Gäst ${Math.floor(Math.random() * 1000)}`,
+      joinedQuizId: '', // Required field, empty string for new sessions
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000) // 4 hours
+      expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours
     }
-    
-    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guestSession))
-    return guestSession
+
+    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(session))
+    return session
   }
 
   const getCurrentGuestSession = (): GuestSession | null => {
@@ -205,9 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!stored) return null
       
       const session = JSON.parse(stored) as GuestSession
-      
-      // Check if session has expired
-      if (new Date(session.expiresAt) < new Date()) {
+      if (new Date() > new Date(session.expiresAt)) {
         localStorage.removeItem(GUEST_STORAGE_KEY)
         return null
       }
@@ -219,11 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const updateUser = (updates: Partial<User>) => {
-    if (state.user) {
-      const updatedUser = { ...state.user, ...updates, updatedAt: new Date() }
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser))
-      dispatch({ type: 'UPDATE_USER', payload: updates })
-    }
+    dispatch({ type: 'UPDATE_USER', payload: updates })
   }
 
   const contextValue: AuthContextType = {
@@ -249,18 +232,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-}
-
-// Helper function for age calculation
-function calculateAge(dateOfBirth: string): number {
-  const today = new Date()
-  const birthDate = new Date(dateOfBirth)
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const monthDiff = today.getMonth() - birthDate.getMonth()
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-  
-  return age
 }
