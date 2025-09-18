@@ -65,6 +65,7 @@ const MOCK_USERS: User[] = [
     role: 'lärare',
     subscriptionPlan: 'premium',
     dataRetentionMode: 'långtid',
+    schoolAccountId: 'school_1',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
