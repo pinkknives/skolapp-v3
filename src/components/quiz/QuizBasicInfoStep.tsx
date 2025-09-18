@@ -149,7 +149,9 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
                     {tag}
                     <button
                       onClick={() => handleRemoveTag(tag)}
-                      className="ml-2 text-primary-600 hover:text-primary-800"
+                      className="ml-2 text-primary-600 hover:text-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 rounded"
+                      aria-label={`Ta bort taggen ${tag}`}
+                      type="button"
                     >
                       ×
                     </button>

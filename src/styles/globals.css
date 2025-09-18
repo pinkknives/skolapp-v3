@@ -217,7 +217,7 @@
     position: absolute;
     top: -40px;
     left: 6px;
-    background: rgb(var(--color-primary-600));
+    background: rgb(var(--color-primary-700));
     color: white;
     padding: 8px;
     text-decoration: none;
