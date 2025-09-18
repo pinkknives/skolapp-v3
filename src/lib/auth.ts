@@ -5,6 +5,11 @@ export type Profile = {
   role: 'teacher' | 'student'
   display_name: string | null
   created_at: string
+  verification_status?: 'pending' | 'verified' | 'rejected'
+  school_name?: string | null
+  school_email?: string | null
+  verification_requested_at?: string | null
+  verified_at?: string | null
 }
 
 // Map between Supabase roles and Swedish UI roles
@@ -38,7 +43,7 @@ export async function getCurrentUser(): Promise<UserWithProfile | null> {
     // Get profile data
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, verification_status, school_name, school_email, verification_requested_at, verified_at')
       .eq('user_id', user.id)
       .single()
 
