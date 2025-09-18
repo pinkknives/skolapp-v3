@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { cn } from '@/lib/utils'
+import { QrCode } from 'lucide-react'
 
 interface QuizJoinFormProps {
   onJoinQuiz: (code: string, alias: string) => Promise<void>
@@ -208,10 +209,7 @@ export function QuizJoinForm({ onJoinQuiz, isLoading = false, error, prefilledCo
               fullWidth
               size="lg"
               leftIcon={
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 16h4.01M4 7V4a1 1 0 011-1h3M4 17v3a1 1 0 001 1h3m10-18h3a1 1 0 011 1v3m0 10v3a1 1 0 01-1 1h-3" />
-                </svg>
+                <QrCode size={20} strokeWidth={2} />
               }
             >
               Skanna QR-kod

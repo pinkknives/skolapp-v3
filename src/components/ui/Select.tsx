@@ -10,12 +10,19 @@ const selectVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-neutral-300 focus-visible:ring-primary-500',
-        error: 'border-error-300 focus-visible:ring-error-500',
+        default: 'border-neutral-300 hover:border-neutral-400 focus:border-primary-500 focus-visible:ring-primary-500',
+        error: 'border-error-500 focus:border-error-600 focus-visible:ring-error-500',
+        success: 'border-success-500 focus:border-success-600 focus-visible:ring-success-500',
+      },
+      size: {
+        sm: 'h-8 px-2 text-xs',
+        md: 'h-10 px-3 text-sm',
+        lg: 'h-12 px-4 text-base',
       },
     },
     defaultVariants: {
       variant: 'default',
+      size: 'md',
     },
   }
 )
@@ -34,6 +41,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ 
     className,
     variant,
+    size,
     label,
     helperText,
     errorMessage,
@@ -67,7 +75,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </label>
         )}
         <select
-          className={cn(selectVariants({ variant: actualVariant }), className)}
+          className={cn(selectVariants({ variant: actualVariant, size }), className)}
           ref={ref}
           id={selectId}
           aria-describedby={describedBy || undefined}

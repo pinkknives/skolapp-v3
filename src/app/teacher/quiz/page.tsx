@@ -10,6 +10,7 @@ import { TeacherReviewMode } from '@/components/quiz/TeacherReviewMode'
 import { Quiz, QuizStatus } from '@/types/quiz'
 import { formatExecutionMode, calculateTotalPoints, estimateCompletionTime } from '@/lib/quiz-utils'
 import Link from 'next/link'
+import { Plus, Share2, Play, BarChart3, HelpCircle, Edit, Copy, Archive } from 'lucide-react'
 
 // Mock data - in a real app this would come from a database
 const mockQuizzes: Quiz[] = [
@@ -198,11 +199,7 @@ export default function QuizManagementPage() {
               </div>
               <Button 
                 asChild 
-                leftIcon={
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                }
+                leftIcon={<Plus size={16} strokeWidth={2} />}
               >
                 <Link href="/teacher/quiz/create">
                   Skapa nytt quiz
@@ -318,11 +315,7 @@ export default function QuizManagementPage() {
                           size="sm"
                           fullWidth
                           onClick={() => handleShareQuiz(quiz)}
-                          leftIcon={
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                            </svg>
-                          }
+                          leftIcon={<Share2 size={16} strokeWidth={2} />}
                         >
                           Dela
                         </Button>
@@ -331,11 +324,7 @@ export default function QuizManagementPage() {
                           size="sm"
                           fullWidth
                           onClick={() => handleReviewMode(quiz)}
-                          leftIcon={
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          }
+                          leftIcon={<Play size={16} strokeWidth={2} />}
                         >
                           Granska
                         </Button>
@@ -350,10 +339,8 @@ export default function QuizManagementPage() {
                           fullWidth
                           asChild
                         >
-                          <Link href={`/quiz/${quiz.id}/results`}>
-                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
+                          <Link href={`/quiz/${quiz.id}/results`} className="flex items-center gap-x-2">
+                            <BarChart3 size={16} strokeWidth={2} />
                             Visa resultat
                           </Link>
                         </Button>
@@ -365,10 +352,8 @@ export default function QuizManagementPage() {
                         fullWidth
                         asChild
                       >
-                        <Link href={`/teacher/quiz/edit/${quiz.id}`}>
-                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                        <Link href={`/teacher/quiz/edit/${quiz.id}`} className="flex items-center gap-x-2">
+                          <Edit size={16} strokeWidth={2} />
                           Redigera
                         </Link>
                       </Button>
@@ -378,10 +363,8 @@ export default function QuizManagementPage() {
                         size="sm"
                         fullWidth
                         onClick={() => handleDuplicateQuiz(quiz)}
+                        leftIcon={<Copy size={16} strokeWidth={2} />}
                       >
-                        <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
                         Duplicera
                       </Button>
                       
@@ -391,10 +374,8 @@ export default function QuizManagementPage() {
                           size="sm"
                           onClick={() => handleArchiveQuiz(quiz)}
                           className="text-neutral-500 hover:text-warning-600"
+                          leftIcon={<Archive size={16} strokeWidth={2} />}
                         >
-                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14l-1 9a2 2 0 01-2 2H8a2 2 0 01-2-2L5 8zM9 12h6M3 8l1-4h16l1 4" />
-                          </svg>
                           Arkivera
                         </Button>
                       )}
@@ -406,9 +387,7 @@ export default function QuizManagementPage() {
           ) : (
             <Card className="text-center py-12">
               <CardContent>
-                <svg className="h-16 w-16 mx-auto mb-4 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <HelpCircle size={64} strokeWidth={1.5} className="mx-auto mb-4 text-neutral-300" />
                 <Heading level={3} className="mb-2">
                   {filterStatus === 'all' ? 'Inga quiz skapade än' : `Inga ${getStatusText(filterStatus as QuizStatus).toLowerCase()} quiz`}
                 </Heading>
