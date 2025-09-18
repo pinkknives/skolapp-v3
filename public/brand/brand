@@ -1,0 +1,8 @@
+public/
+  brand/
+    Skolapp.png                  # liggande logotyp (ljus)
+    Skolapp_icon.png             # “stack of books” ikon (ljus)
+    Skolapp-symbol.png           # endast symbol (ljus)
+    Skolapp-Color.png            # symbol på solid teal bakgrund
+    Skolapp-Color-Gradiant.png   # symbol på gradient bakgrund
+    Skolapp.jpeg                 # ev. hero/press
