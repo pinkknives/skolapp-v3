@@ -10,6 +10,9 @@ Beskriv vad PR:en gör och varför.
 - [ ] **GDPR:** Ingen otillåten elevdata; dataläge respekteras
 - [ ] **Tester:** Nya/ändrade komponenter/flöden har tester
 - [ ] **CI:** Lint/Typecheck/Tests/Lighthouse grönt
+- [ ] **Ikoner:** All icons come from `lucide-react` (eller approved lib)
+- [ ] Icons aligned with text (gap-x-2)
+- [ ] No emoji/icons mixed in unless specified
 
 ## Skärmdumpar (om UI)
 _(före/efter)_
