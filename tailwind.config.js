@@ -8,9 +8,29 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Design tokens will be defined here
+        /**
+         * Skolapp brand — TEAL
+         * Vi mappas till `primary` så existerande klasser fortsätter fungera.
+         * (Tidigare blå palett flyttas till `info` nedan.)
+         */
         primary: {
-          50: '#f0f9ff',
+          50:  '#e6f0ef',
+          100: '#cde0df',
+          200: '#9bbfc0',
+          300: '#6a9ea1',
+          400: '#477f84',
+          500: '#377b7b', // huvudton
+          600: '#2f6767',
+          700: '#275353',
+          800: '#1f3f3f',
+          900: '#182f2f',
+        },
+
+        /**
+         * Behåll din tidigare blå som "info" om du vill använda den ibland.
+         */
+        info: {
+          50:  '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
           300: '#7dd3fc',
@@ -21,8 +41,12 @@ module.exports = {
           800: '#075985',
           900: '#0c4a6e',
         },
+
+        /**
+         * Neutrala – du kan låta dessa vara, eller fintrimma för din visuella stil.
+         */
         neutral: {
-          50: '#fafafa',
+          50:  '#fafafa',
           100: '#f5f5f5',
           200: '#e5e5e5',
           300: '#d4d4d4',
@@ -33,9 +57,20 @@ module.exports = {
           800: '#262626',
           900: '#171717',
         },
+
+        // Praktiska alias för ljus logotypfärg och ev. mörk bakgrund om du vill:
+        'brand-fg': '#f7f6f0',
+        'brand-bg': '#0e2f31',
       },
+
+      /**
+       * Gradient för hero/ytor/knappar: `bg-brand-gradient`
+       */
+      backgroundImage: {
+        'brand-gradient': 'linear-gradient(135deg, #2a6d70, #477f84)',
+      },
+
       spacing: {
-        // Design system spacing tokens
         'xs': '0.25rem',
         'sm': '0.5rem',
         'md': '1rem',
@@ -45,7 +80,6 @@ module.exports = {
         '3xl': '4rem',
       },
       fontFamily: {
-        // Typography tokens
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'sans-serif'],
         mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'monospace'],
       },
@@ -60,7 +94,6 @@ module.exports = {
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
       },
       boxShadow: {
-        // Shadow tokens
         'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
         'sm': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
         'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
@@ -68,7 +101,6 @@ module.exports = {
         'xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
       },
       animation: {
-        // Motion tokens
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'slide-down': 'slideDown 0.3s ease-out',
