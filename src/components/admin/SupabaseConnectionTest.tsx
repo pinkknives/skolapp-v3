@@ -176,7 +176,7 @@ export function SupabaseConnectionTest() {
           ) : (
             <div className="text-center py-8">
               <Typography variant="body2" className="text-neutral-500">
-                Klicka på "Testa" för att köra anslutningstester
+                Klicka på &quot;Testa&quot; för att köra anslutningstester
               </Typography>
             </div>
           )}
