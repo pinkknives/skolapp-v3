@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
+  'inline-flex items-center justify-center gap-x-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
   {
     variants: {
       variant: {
@@ -70,18 +70,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           <Loader2 
             size={16} 
             strokeWidth={2}
-            className="animate-spin mr-2" 
+            className="animate-spin" 
             aria-hidden="true"
           />
         )}
         {!loading && leftIcon && (
-          <span className="mr-2 flex-shrink-0" aria-hidden="true">
+          <span className="flex-shrink-0" aria-hidden="true">
             {leftIcon}
           </span>
         )}
         <span className="truncate">{children}</span>
         {!loading && rightIcon && (
-          <span className="ml-2 flex-shrink-0" aria-hidden="true">
+          <span className="flex-shrink-0" aria-hidden="true">
             {rightIcon}
           </span>
         )}

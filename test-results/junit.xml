@@ -1,0 +1,481 @@
+<testsuites id="" name="" tests="9" failures="9" skipped="0" errors="0" time="25.71685">
+<testsuite name="accessibility.a11y.spec.ts" timestamp="2025-09-18T22:23:30.637Z" hostname="accessibility" tests="9" failures="9" skipped="0" time="0.14" errors="0">
+<testcase name="Accessibility Tests › homepage should meet WCAG 2.1 AA standards" classname="accessibility.a11y.spec.ts" time="0.02">
+<failure message="accessibility.a11y.spec.ts:4:7 homepage should meet WCAG 2.1 AA standards" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:4:7 › Accessibility Tests › homepage should meet WCAG 2.1 AA standards 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-0f19d--meet-WCAG-2-1-AA-standards-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-0f19d--meet-WCAG-2-1-AA-standards-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-0f19d--meet-WCAG-2-1-AA-standards-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › quiz creation page should be accessible" classname="accessibility.a11y.spec.ts" time="0.016">
+<failure message="accessibility.a11y.spec.ts:20:7 quiz creation page should be accessible" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:20:7 › Accessibility Tests › quiz creation page should be accessible 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-999d0-n-page-should-be-accessible-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-999d0-n-page-should-be-accessible-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-999d0-n-page-should-be-accessible-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › quiz join page should be accessible" classname="accessibility.a11y.spec.ts" time="0.013">
+<failure message="accessibility.a11y.spec.ts:31:7 quiz join page should be accessible" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:31:7 › Accessibility Tests › quiz join page should be accessible 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-e4fb6-n-page-should-be-accessible-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-e4fb6-n-page-should-be-accessible-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-e4fb6-n-page-should-be-accessible-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › should have proper focus management" classname="accessibility.a11y.spec.ts" time="0.017">
+<failure message="accessibility.a11y.spec.ts:41:7 should have proper focus management" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:41:7 › Accessibility Tests › should have proper focus management 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-219b7-ave-proper-focus-management-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-219b7-ave-proper-focus-management-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-219b7-ave-proper-focus-management-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › AI panel should have proper modal focus management" classname="accessibility.a11y.spec.ts" time="0.013">
+<failure message="accessibility.a11y.spec.ts:57:7 AI panel should have proper modal focus management" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:57:7 › Accessibility Tests › AI panel should have proper modal focus management 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-7b8b2-oper-modal-focus-management-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-7b8b2-oper-modal-focus-management-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-7b8b2-oper-modal-focus-management-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › forms should have proper labels and error states" classname="accessibility.a11y.spec.ts" time="0.015">
+<failure message="accessibility.a11y.spec.ts:70:7 forms should have proper labels and error states" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:70:7 › Accessibility Tests › forms should have proper labels and error states 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-15303-per-labels-and-error-states-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-15303-per-labels-and-error-states-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-15303-per-labels-and-error-states-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › color contrast should meet standards" classname="accessibility.a11y.spec.ts" time="0.014">
+<failure message="accessibility.a11y.spec.ts:87:7 color contrast should meet standards" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:87:7 › Accessibility Tests › color contrast should meet standards 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-57c56-trast-should-meet-standards-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-57c56-trast-should-meet-standards-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-57c56-trast-should-meet-standards-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › images should have alt text" classname="accessibility.a11y.spec.ts" time="0.017">
+<failure message="accessibility.a11y.spec.ts:99:7 images should have alt text" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:99:7 › Accessibility Tests › images should have alt text 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-52c3a-images-should-have-alt-text-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-52c3a-images-should-have-alt-text-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-52c3a-images-should-have-alt-text-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Accessibility Tests › buttons with icons should have proper horizontal layout" classname="accessibility.a11y.spec.ts" time="0.015">
+<failure message="accessibility.a11y.spec.ts:110:7 buttons with icons should have proper horizontal layout" type="FAILURE">
+<![CDATA[  [accessibility] › accessibility.a11y.spec.ts:110:7 › Accessibility Tests › buttons with icons should have proper horizontal layout 
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../test-results/accessibility.a11y-Accessi-46fd6-ve-proper-horizontal-layout-accessibility-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../test-results/accessibility.a11y-Accessi-46fd6-ve-proper-horizontal-layout-accessibility-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium_headless_shell-1187/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|accessibility.a11y-Accessi-46fd6-ve-proper-horizontal-layout-accessibility-retry1/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
