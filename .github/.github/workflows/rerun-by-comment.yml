@@ -1,0 +1,101 @@
+name: Re-run Actions by Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write          # krävs för att re-runna
+  issues: write           # för att svara med en bekräftelsekommentar
+  pull-requests: read
+
+jobs:
+  rerun:
+    # kör bara när det är en kommentar i en PR och kommandot matchar
+    if: >
+      github.event.issue.pull_request &&
+      (
+        contains(github.event.comment.body, '/rerun') ||
+        contains(github.event.comment.body, '/rerun all') ||
+        contains(github.event.comment.body, '/rerun failed')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Parse command & find latest workflow run for this PR
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const cmd = context.payload.comment.body.toLowerCase().trim();
+            const mode = cmd.includes('/rerun failed') ? 'failed' : 'all';
+
+            const {owner, repo} = context.repo;
+            const prNumber = context.payload.issue.number;
+
+            // Hämta PR info (branch + head SHA)
+            const pr = await github.rest.pulls.get({owner, repo, pull_number: prNumber});
+            const branch = pr.data.head.ref;
+            const headSha = pr.data.head.sha;
+
+            // Hämta senaste workflow-körningar på PR-branch (exkludera denna workflow)
+            const runsRes = await github.rest.actions.listWorkflowRunsForRepo({
+              owner, repo, branch, per_page: 50, event: 'pull_request'
+            });
+
+            // Välj senaste run på exakt samma headSha, som INTE är den här workflowen
+            const runs = runsRes.data.workflow_runs.filter(r =>
+              r.head_sha === headSha && r.name !== process.env.GITHUB_WORKFLOW
+            );
+
+            if (!runs.length) {
+              core.setFailed(`Hittade ingen workflow-körning att köra om för branch '${branch}' (sha ${headSha}). Har du kört Actions på den här PR:en?`);
+              return;
+            }
+
+            // Senaste körningen (index 0 är nyast i API-svaret)
+            const target = runs[0];
+
+            core.info(`Target workflow run: id=${target.id}, name=${target.name}, status=${target.status}, conclusion=${target.conclusion}`);
+            core.setOutput('run_id', String(target.id));
+            core.setOutput('mode', mode);
+
+      - name: Re-run (failed jobs)
+        if: steps.find.outputs.mode == 'failed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const run_id = Number(core.getInput('run_id'));
+            await github.rest.actions.reRunFailedJobs({owner, repo, run_id});
+            core.notice(`Triggat re-run av *misslyckade* jobb för run_id ${run_id}`);
+          result-encoding: string
+        env:
+          run_id: ${{ steps.find.outputs.run_id }}
+
+      - name: Re-run (all jobs)
+        if: steps.find.outputs.mode == 'all'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const run_id = Number(core.getInput('run_id'));
+            await github.rest.actions.reRunWorkflow({owner, repo, run_id});
+            core.notice(`Triggat re-run av *alla* jobb för run_id ${run_id}`);
+          result-encoding: string
+        env:
+          run_id: ${{ steps.find.outputs.run_id }}
+
+      - name: Confirm in thread
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.comment.body.toLowerCase().includes('failed')
+              ? '🔁 Startade om **misslyckade** jobb på senaste körningen för den här PR:en.'
+              : '🔁 Startade om **alla** jobb på senaste körningen för den här PR:en.';
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.issue.number,
+              body
+            })
