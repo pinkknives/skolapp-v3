@@ -2,15 +2,23 @@
 
 import React from 'react'
 import { Typography } from '@/components/ui/Typography'
-import { SubscriptionPlanSelector } from '@/components/auth/SubscriptionPlanSelector'
+import { EnhancedSubscriptionPlanSelector } from '@/components/auth/EnhancedSubscriptionPlanSelector'
 import { type SubscriptionPlan, type DataRetentionMode } from '@/types/auth'
 
 export function PricingContent() {
-  const handlePlanSelect = (plan: SubscriptionPlan, dataMode: DataRetentionMode) => {
+  const handlePlanSelect = (
+    plan: SubscriptionPlan, 
+    dataMode: DataRetentionMode,
+    options?: {
+      isYearly?: boolean
+      numberOfTeachers?: number
+      paymentProvider?: any
+    }
+  ) => {
     // This would redirect to signup/login or subscription management
-    // Selected plan: plan, Data mode: dataMode
+    console.log('Plan selected:', { plan, dataMode, options })
     // In a real app, this would redirect to auth or subscription management
-    // window.location.href = `/auth/register?plan=${plan}&dataMode=${dataMode}`
+    // window.location.href = `/auth/register?plan=${plan}&dataMode=${dataMode}&yearly=${options?.isYearly}`
   }
 
   return (
@@ -25,20 +33,13 @@ export function PricingContent() {
         </Typography>
       </div>
 
-      {/* Competitive comparison callout */}
-      <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 mb-12 text-center">
-        <Typography variant="h6" className="text-primary-800 mb-2">
-          Marknadsförd prissättning
-        </Typography>
-        <Typography variant="body2" className="text-primary-700">
-          Våra priser är alltid konkurrensmässiga jämfört med Kahoot! (139 kr/månad), 
-          Socrative (69 kr/månad) och Quizlet Teacher (199 kr/månad).
-        </Typography>
-      </div>
-
-      <SubscriptionPlanSelector
+      {/* Enhanced Plan Selector */}
+      <EnhancedSubscriptionPlanSelector
         onPlanSelect={handlePlanSelect}
         className="max-w-6xl mx-auto"
+        showComparison={true}
+        showTeacherSlider={true}
+        platform="web"
       />
 
       {/* FAQ Section */}
@@ -63,18 +64,38 @@ export function PricingContent() {
               Vad händer med elevdata om jag byter från långtids- till korttidsläge?
             </Typography>
             <Typography variant="body2" className="text-neutral-600">
-              Befintlig data påverkas inte omedelbart. Du får en 30-dagars övergångsperiod 
-              för att exportera eller migrera data enligt GDPR-kraven.
+              All befintlig data behålls tills dess att föräldrasamtycken går ut eller återkallas. 
+              Ny data kommer endast att lagras temporärt enligt korttidsläge.
             </Typography>
           </div>
           
           <div className="bg-neutral-50 rounded-lg p-6">
             <Typography variant="h6" className="mb-2">
-              Hur funkar föräldrasamtycke för långtidslagring?
+              Hur fungerar föräldrasamtycket?
             </Typography>
             <Typography variant="body2" className="text-neutral-600">
-              Vi tillhandahåller enkla verktyg för att skicka samtyckesförfrågningar via e-post, 
-              QR-koder eller digitala formulär. Allt dokumenteras automatiskt för GDPR-efterlevnad.
+              För elever under 18 år krävs föräldrasamtycke för långtidslagring. Vi skickar en säker länk 
+              via e-post eller SMS där föräldern enkelt kan godkänna eller neka. Samtycket kan återkallas när som helst.
+            </Typography>
+          </div>
+
+          <div className="bg-neutral-50 rounded-lg p-6">
+            <Typography variant="h6" className="mb-2">
+              Vilka betalmetoder accepteras?
+            </Typography>
+            <Typography variant="body2" className="text-neutral-600">
+              Vi accepterar kort via Stripe på webben, App Store-betalningar på iOS och Google Play-betalningar 
+              på Android. För skolor erbjuder vi även fakturering.
+            </Typography>
+          </div>
+
+          <div className="bg-neutral-50 rounded-lg p-6">
+            <Typography variant="h6" className="mb-2">
+              Finns det volymrabatter för skolor?
+            </Typography>
+            <Typography variant="body2" className="text-neutral-600">
+              Ja! Skolplanen har automatiska volymrabatter. Ju fler lärare, desto lägre pris per lärare. 
+              Från 6 lärare får ni 13% rabatt, från 16 lärare 25% rabatt, och så vidare.
             </Typography>
           </div>
           
@@ -84,7 +105,7 @@ export function PricingContent() {
             </Typography>
             <Typography variant="body2" className="text-neutral-600">
               Skolplanen inkluderar en administratörspanel för att hantera lärarkonton, 
-              centralised fakturering, användningsstatistik och GDPR-rapporter för hela skolan.
+              centraliserad fakturering, användningsstatistik och GDPR-rapporter för hela skolan.
             </Typography>
           </div>
         </div>

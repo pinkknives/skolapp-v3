@@ -313,8 +313,6 @@ export class ParentalConsentService {
     try {
       const qrCodeDataUrl = await QRCode.toDataURL(consentUrl, {
         errorCorrectionLevel: 'M',
-        type: 'image/png',
-        quality: 0.92,
         margin: 2,
         color: {
           dark: '#1f2937', // Dark gray

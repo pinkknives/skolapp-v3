@@ -308,7 +308,7 @@ export class SchoolAdministrationService {
   ): Promise<SchoolUsageStatistics> {
     const now = new Date()
     let startDate: Date
-    let endDate = now
+    const endDate = now
 
     switch (period) {
       case 'month':
