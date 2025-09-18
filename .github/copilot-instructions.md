@@ -26,6 +26,12 @@
 - Provide light/dark parity via tokens.
 - Motion defaults: **120–200ms, swift-in-out**, respect `prefers-reduced-motion`.
 
+- ## Icons
+- Always import icons from `lucide-react` (preferred) or Heroicons.
+- Never use emoji or custom SVG inline unless explicitly asked.
+- All icons must be consistent in stroke (1.5–2px) and align with text baseline.
+- Place icons **before text** in buttons, with spacing token `gap-x-2`.
+
 ## Language rules
 - All user-facing text **in Swedish** (sv-SE).
 - Strings centralized for i18n (`/locales/sv`).
