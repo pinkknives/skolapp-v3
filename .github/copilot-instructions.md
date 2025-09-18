@@ -26,6 +26,12 @@
 - Provide light/dark parity via tokens.
 - Motion defaults: **120–200ms, swift-in-out**, respect `prefers-reduced-motion`.
 
+- ### Brand rules
+- Use the Tailwind `primary` palette (teal) for main actions. Do not introduce new hex colors.
+- Prefer `bg-primary-500 hover:bg-primary-600 text-white` for primary buttons.
+- For sections/hero, consider `bg-brand-gradient` + white text.
+- Use `info` palette only for informational accents (not primary actions).
+
 - ## Icons
 - Always import icons from `lucide-react` (preferred) or Heroicons.
 - Never use emoji or custom SVG inline unless explicitly asked.
