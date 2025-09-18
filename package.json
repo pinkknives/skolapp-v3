@@ -9,7 +9,16 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:accessibility": "playwright test --project=accessibility",
+    "test:performance": "playwright test --project=performance",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:cross-browser": "playwright test --project=chromium --project=firefox --project=webkit",
+    "lighthouse": "lhci autorun",
+    "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.5",
@@ -24,11 +33,14 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@next/bundle-analyzer": "^15.5.3",
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.9.6",
     "@types/react": "^18.3.13",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
+    "axe-playwright": "^2.2.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.3",
     "postcss": "^8.5.4",

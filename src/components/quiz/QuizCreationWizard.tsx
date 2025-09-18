@@ -3,9 +3,9 @@
 import React, { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
-import { Typography, Heading } from '@/components/ui/Typography'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Quiz, Question } from '@/types/quiz'
+import { Typography } from '@/components/ui/Typography'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Quiz } from '@/types/quiz'
 import { WizardSteps } from './WizardSteps'
 import { motion, AnimatePresence } from 'framer-motion'
 
