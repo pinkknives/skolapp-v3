@@ -52,8 +52,8 @@ export function UserMenu({ onLogin }: UserMenuProps) {
         </Button>
 
         {isOpen && (
-          <Card className="absolute right-0 top-full mt-2 w-64 z-50 shadow-lg">
-            <CardContent className="p-4">
+          <Card className="absolute right-0 top-full mt-2 w-64 z-50 shadow-lg" padding="sm">
+            <CardContent>
               <div className="text-center mb-4">
                 <Typography variant="body2" className="font-medium">
                   {guestSession.nickname || 'Gäst'}
@@ -95,19 +95,23 @@ export function UserMenu({ onLogin }: UserMenuProps) {
           variant="outline" 
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
+          leftIcon={
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          }
+          rightIcon={
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          }
         >
-          <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
           {user.firstName}
-          <svg className="h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
         </Button>
 
         {isOpen && (
-          <Card className="absolute right-0 top-full mt-2 w-72 z-50 shadow-lg">
-            <CardContent className="p-4">
+          <Card className="absolute right-0 top-full mt-2 w-72 z-50 shadow-lg" padding="sm">
+            <CardContent>
               <div className="text-center mb-4">
                 <Typography variant="body1" className="font-medium">
                   {getUserDisplayName(user)}
