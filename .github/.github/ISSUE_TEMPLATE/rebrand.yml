@@ -1,0 +1,49 @@
+name: "🎨 Rebrand / Design Update"
+description: Uppdatera logotyper, primärfärg och designsystem
+title: "[Rebrand] "
+labels: [design, rebrand, frontend]
+assignees: [copilot]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ladda upp/logga vägar och ange ny primärfärg. Copilot uppdaterar tokens, Tailwind och UI.
+
+  - type: checkboxes
+    id: assets
+    attributes:
+      label: Assets finns i `/public/brand`
+      options:
+        - label: Skolapp.png (huvudlogotyp)
+        - label: Skolapp-symbol.png (ikon/app-icon)
+        - label: Skolapp.jpeg (fallback)
+        - label: Skolapp-color.png + Skolapp-color-gradiant.png
+    validations:
+      required: false
+
+  - type: input
+    id: primary
+    attributes:
+      label: Primärfärg (hex eller Tailwind-token)
+      placeholder: "#2A6F73 eller primary.500"
+    validations:
+      required: true
+
+  - type: textarea
+    id: usage
+    attributes:
+      label: Var ska loggan synas?
+      placeholder: Navbar, Footer, favicon, PWA icons, delningsbild (OG)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance
+      options:
+        - label: Navbar/footer visar Skolapp.png
+        - label: Favicon/app-icon = Skolapp-symbol.png
+        - label: Primärfärg används konsekvent via tokens
+        - label: Lighthouse A11y ≥ 0.9 och Perf ≥ 0.85
+        - label: Skärmdumpar från web + mobil bifogade
