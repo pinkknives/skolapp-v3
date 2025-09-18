@@ -29,7 +29,8 @@ Modern Progressive Web App for school management with accessibility, design syst
 ### Prerequisites
 
 - Node.js 18 or later
-- npm or yarn
+- npm (comes with Node.js)
+- Git för version control
 
 ### Installation
 
@@ -43,22 +44,166 @@ cd skolapp-v3
 # Install dependencies
 npm install
 
+# Verify installation by running type-check and lint
+npm run type-check
+npm run lint
+
 # Start the development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Development Workflow
+
+Before committing changes, always run:
+
+```bash
+# Type checking
+npm run type-check
+
+# Linting (with auto-fix)
+npm run lint
+
+# Build verification
+npm run build
+
+# Performance analysis (optional)
+npm run analyze
+```
+
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
+- `npm run dev` - Start development server på port 3000
+- `npm run build` - Build för production
 - `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+- `npm run lint` - Run ESLint med auto-fix
 - `npm run type-check` - Run TypeScript compiler check
-- `npm run analyze` - Analyze bundle size
+- `npm run analyze` - Analyze bundle size och performance
+
+### Performance & Quality Tools
+
+#### Lighthouse Performance Testing
+
+Projektet inkluderar Lighthouse konfiguration för performance monitoring:
+
+```bash
+# Install Lighthouse CLI globally
+npm install -g @lhci/cli
+
+# Run performance tests (requires running dev server)
+npm run dev & 
+lhci autorun
+
+# Or run specific Lighthouse checks
+lighthouse http://localhost:3000 --preset=desktop --view
+```
+
+**Performance Budgets:**
+- JavaScript bundle: ≤200 kB
+- Total resources: ≤500 kB  
+- LCP: ≤2.5s
+- Performance score: ≥85%
+- Accessibility score: ≥90%
+
+## Quiz Creation Wizard
+
+Skolapp v3 inkluderar en förbättrad quiz-skapande upplevelse med 3-stegs wizard:
+
+### Flöde: Steg 1-3
+
+#### Steg 1: Grundläggande information
+- **Fokus**: Snabb start med minimal input
+- **Obligatoriskt**: Endast titel krävs för att fortsätta
+- **Svensk UI**: "Berätta om ditt quiz", "Grundläggande information"
+- **Validering**: Realtid feedback med visuella indikatorer
+- **Tips**: Inline-hjälp och rekommendationer för lärare
+
+#### Steg 2: Frågor och innehåll
+- **AI-integration**: Prominent "Skapa frågor med AI" knapp
+- **Manuella alternativ**: Stöd för olika frågetyper
+- **Svensk UI**: "Lägg till frågor", "Skapa frågor med AI"
+- **Redigering**: Alla AI-genererade frågor kan granskas/redigeras
+- **Progress**: Visuell indikator för antal frågor
+
+#### Steg 3: Granska och publicera  
+- **Förhandsgranskning**: Toggle mellan klassvy och mobilvy
+- **Validering**: Checklista med visuella checkmarks
+- **Sammanfattning**: Nyckeltal (frågor, poäng, tid, läge)
+- **Svensk UI**: "Granska och publicera", "Allt ser bra ut! Klart att publicera"
+
+### Prestanda-mål
+- **Snabb skapande**: ≤2 minuter för ett komplett quiz
+- **AI-väg**: ~90 sekunder (30s info + 45s AI-generering + 15s granska)
+- **Tillgänglighet**: WCAG 2.1 AA med full tangentbordsnavigering
+
+### Tekniska komponenter
+- `QuizCreationWizard` - Huvudkomponent med steghantering
+- `WizardSteps` - Visuell stegindikator
+- `QuizBasicInfoStep`, `QuizQuestionsStep`, `QuizPublishStep`
+- **Location**: `/src/components/quiz/QuizCreationWizard.tsx`
+
+## AI Panel Integration
+
+### AI-assisterad Quiz-skapning
+
+AI-panelen i steg 2 erbjuder intelligent fråggenerering:
+
+**Funktioner:**
+- Strukturerad input (ämne, årskurs, antal frågor, svårighet)
+- Svenska prompt-mallar för lärare
+- Förhandsvisning med checkbox-val av frågor
+- Redigerbara AI-förslag
+
+**Disclaimer (obligatorisk på svenska):**
+> "Dubbelkolla alltid innehållet. AI kan ha fel."
+
+### AI-assisterad Rättning (Human-in-the-loop)
+
+**Workflow för lärare:**
+1. Öppna TeacherReviewMode för ett quiz
+2. För fritextsvar - klicka "AI-förslag" 
+3. Granska AI-bedömning med confidence-nivå
+4. Välj: **Godkänn**, **Redigera**, eller **Avvisa**
+
+**Stödda frågetyper:**
+- Fritextsvar med rubrik-baserad bedömning
+- Bildbaserade svar (grundläggande stöd)
+- Flervalsfrågor (automatisk rättning)
+
+**Tekniska komponenter:**
+- `AISuggestionsPanel` - Modal för AI-förslag 
+- `AIGradingClient` - Huvudklient för AI-rättning
+- **Location**: `/src/components/quiz/AISuggestionsPanel.tsx`
+
+**Batch-funktioner:**
+- Godkänn alla förslag över viss confidence-tröskel
+- Snabb behandling av stora klasser
+
+**Prestandaoptimering:**
+- Lazy loading av AI-komponenter (+5kB JavaScript)
+- AI-bedömning: 800-1200ms per fritextsvar
+- Cachning av bedömningar per session
 
 ## Design System
+
+Skolapp v3 använder ett konsekvent design system med tokens och komponenter. **Se [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) för detaljerad dokumentation.**
+
+### Snabbreferens
+
+**Design Tokens**: Centraliserade värden för färger, typografi, spacing, shadows m.m.
+- **Location**: `/src/lib/design-tokens.ts`
+- **Tailwind Config**: `tailwind.config.js`
+
+**Core Components**: Button, Card, Input, Typography, Layout komponenter
+- **Location**: `/src/components/ui/`
+- **Usage**: Importera och använd med design tokens
+
+### Utvecklingsregler
+- ❌ **Aldrig** inline styles eller hardkodade hex-värden
+- ✅ **Alltid** använd design tokens och core komponenter
+- ✅ **Alltid** testa med both light/dark mode
+- ✅ **Alltid** validera mot WCAG 2.1 AA
 
 ### Design Tokens
 
