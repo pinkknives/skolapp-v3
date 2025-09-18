@@ -44,6 +44,13 @@ cd skolapp-v3
 # Install dependencies
 npm install
 
+# Setup environment variables
+cp .env.local.example .env.local
+# Edit .env.local and fill in your Supabase project settings:
+# - NEXT_PUBLIC_SUPABASE_URL: Your project URL from Supabase dashboard
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY: Your anon public key from API settings
+# - SUPABASE_SERVICE_ROLE_KEY: Your service role key from API settings
+
 # Verify installation by running type-check and lint
 npm run type-check
 npm run lint
@@ -71,6 +78,41 @@ npm run build
 # Performance analysis (optional)
 npm run analyze
 ```
+
+## Environment Configuration
+
+### Supabase Setup
+
+Skolapp v3 uses Supabase for backend services. To configure the connection:
+
+1. **Copy the example environment file:**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+2. **Get your Supabase credentials:**
+   - Go to your [Supabase dashboard](https://supabase.com/dashboard)
+   - Select your project
+   - Navigate to Settings → API
+   - Copy the following values:
+
+3. **Fill in your `.env.local` file:**
+   ```bash
+   # Your project URL (e.g., https://abcdefghijklmnop.supabase.co)
+   NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
+   
+   # Your anon public key (safe to expose in browser)
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+   
+   # Your service role key (NEVER commit this - server-side only)
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+   ```
+
+4. **Important security notes:**
+   - `.env.local` is automatically ignored by Git
+   - Never commit real keys to version control
+   - Service role key has admin privileges - keep it secure
+   - Only use service role key in server-side code
 
 ## Available Scripts
 
