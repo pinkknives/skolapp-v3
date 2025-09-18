@@ -135,15 +135,14 @@ export function UserMenu({ onLogin }: UserMenuProps) {
                   variant="ghost"
                   size="sm"
                   fullWidth
-                  onClick={() => {
-                    setIsOpen(false)
-                    // TODO: Implement profile page
-                    alert('Profilsida kommer snart!')
-                  }}
+                  asChild
+                  onClick={() => setIsOpen(false)}
                   className="gap-x-2"
                 >
-                  <User size={16} strokeWidth={2} />
-                  Min profil
+                  <Link href="/profile">
+                    <User size={16} strokeWidth={2} />
+                    Min profil
+                  </Link>
                 </Button>
 
                 {user.role === 'lärare' && (

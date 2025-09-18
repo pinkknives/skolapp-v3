@@ -80,8 +80,14 @@ export function Navbar({
   }
 
   const handleAuthClick = (mode: 'login' | 'register' | 'guest' = 'login') => {
-    setAuthMode(mode)
-    setShowAuthModal(true)
+    if (mode === 'login' || mode === 'register') {
+      // Redirect to login page for Supabase magic link auth
+      window.location.href = '/login'
+    } else {
+      // Keep guest login as modal
+      setAuthMode(mode)
+      setShowAuthModal(true)
+    }
   }
 
   const MenuIcon = () => (
