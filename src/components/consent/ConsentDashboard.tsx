@@ -8,6 +8,7 @@ import { ConsentStatusPanel } from './ConsentStatusPanel'
 import { ConsentHistory } from './ConsentHistory'
 import { DataOverview } from './DataOverview'
 import { longTermDataService } from '@/lib/long-term-data'
+import { parentTokenService } from '@/lib/parent-tokens'
 import { type ConsentRecord } from '@/types/auth'
 
 interface ConsentDashboardProps {
@@ -22,16 +23,31 @@ export function ConsentDashboard({ token, studentId }: ConsentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'data'>('overview')
 
   useEffect(() => {
-    // In real implementation, validate token and load consent data
-    // For demo purposes, we'll simulate loading consent data
     const loadConsentData = async () => {
       try {
         setLoading(true)
         
+        // Validate token if provided
+        if (token) {
+          const validatedToken = parentTokenService.validateToken(
+            token,
+            // In real implementation, get from request headers
+            '192.168.1.100',
+            navigator.userAgent
+          )
+          
+          if (!validatedToken) {
+            setError('Ogiltig eller utgången länk. Begär en ny länk från skolan.')
+            return
+          }
+          
+          console.log('[ConsentDashboard] Token validated:', validatedToken.method)
+        }
+        
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000))
         
-        // Mock consent data - in real implementation, fetch from backend using token
+        // Mock consent data - in real implementation, fetch from backend using validated token
         const mockConsent: ConsentRecord = {
           id: 'consent_12345',
           studentId: studentId || 'student_123',

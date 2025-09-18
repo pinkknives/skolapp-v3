@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { BankIDLogin } from './BankIDLogin'
 import { ParentAccessMethods } from './ParentAccessMethods'
+import { parentTokenService } from '@/lib/parent-tokens'
 
 interface ParentalLoginContentProps {}
 
@@ -26,12 +27,30 @@ export function ParentalLoginContent({}: ParentalLoginContentProps) {
     e.preventDefault()
     setIsLoading(true)
     
-    // Simulate access code validation
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // In real implementation, validate access code and redirect to consent dashboard
-    console.log('Access code submitted:', accessCode)
-    setIsLoading(false)
+    try {
+      // Validate access code using token service
+      const validatedToken = parentTokenService.validateAccessCode(
+        accessCode,
+        // In real implementation, get from request headers
+        '192.168.1.100',
+        navigator.userAgent
+      )
+      
+      if (!validatedToken) {
+        alert('Ogiltig eller utgången åtkomstkod. Kontrollera koden eller begär en ny från skolan.')
+        setIsLoading(false)
+        return
+      }
+      
+      // Redirect to consent dashboard with validated token
+      const consentUrl = `/foralder/samtycke?token=${validatedToken.id}&student=${validatedToken.studentId}`
+      window.location.href = consentUrl
+      
+    } catch (error) {
+      console.error('Access code validation error:', error)
+      alert('Ett fel uppstod vid validering av åtkomstkoden. Försök igen.')
+      setIsLoading(false)
+    }
   }
 
   const handleEmailLinkRequest = async (e: React.FormEvent) => {
