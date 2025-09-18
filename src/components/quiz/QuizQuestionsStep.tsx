@@ -8,6 +8,7 @@ import { Quiz, Question, QuestionType } from '@/types/quiz'
 import { QuestionEditor } from './QuestionEditor'
 import { ImprovedAIQuizDraft } from './ImprovedAIQuizDraft'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
+import { Reorder } from 'framer-motion'
 
 interface QuizQuestionsStepProps {
   quiz: Partial<Quiz>
@@ -68,6 +69,10 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
       questions: [...(quiz.questions || []), ...aiQuestions]
     })
     setShowAIModal(false)
+  }
+
+  const handleReorderQuestions = (reorderedQuestions: Question[]) => {
+    onChange({ questions: reorderedQuestions })
   }
 
   const questionTypes: { type: QuestionType; label: string; icon: React.ReactNode; description: string }[] = [
@@ -170,64 +175,95 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
       {/* Questions List */}
       {quiz.questions && quiz.questions.length > 0 ? (
         <div className="space-y-4">
-          <Typography variant="h6" className="font-semibold">
-            Dina frågor ({quiz.questions.length})
-          </Typography>
+          <div className="flex items-center justify-between">
+            <Typography variant="h6" className="font-semibold">
+              Dina frågor ({quiz.questions.length})
+            </Typography>
+            {quiz.questions.length > 1 && (
+              <div className="flex items-center gap-2 text-sm text-neutral-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Dra för att ändra ordning
+              </div>
+            )}
+          </div>
           
-          {quiz.questions.map((question, index) => (
-            <Card key={question.id || index} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-sm font-semibold">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <Typography variant="body2" className="font-medium">
-                        {question.title || 'Ny fråga'}
-                      </Typography>
-                      <Typography variant="caption" className="text-neutral-500">
-                        {question.type === 'multiple-choice' && 'Flerval'}
-                        {question.type === 'free-text' && 'Fritext'}
-                        {question.type === 'image' && 'Bild'}
-                        {question.points && ` • ${question.points} poäng`}
-                      </Typography>
+          <Reorder.Group
+            axis="y"
+            values={quiz.questions}
+            onReorder={handleReorderQuestions}
+            className="space-y-3"
+          >
+            {quiz.questions.map((question, index) => (
+              <Reorder.Item
+                key={question.id || index}
+                value={question}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <Card className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {/* Drag handle */}
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 text-neutral-400 hover:text-neutral-600 cursor-grab active:cursor-grabbing">
+                            <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                          </div>
+                          <span className="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-sm font-semibold">
+                            {index + 1}
+                          </span>
+                        </div>
+                        <div>
+                          <Typography variant="body2" className="font-medium">
+                            {question.title || 'Ny fråga'}
+                          </Typography>
+                          <Typography variant="caption" className="text-neutral-500">
+                            {question.type === 'multiple-choice' && 'Flerval'}
+                            {question.type === 'free-text' && 'Fritext'}
+                            {question.type === 'image' && 'Bild'}
+                            {question.points && ` • ${question.points} poäng`}
+                          </Typography>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setExpandedQuestion(expandedQuestion === index ? null : index)}
+                        >
+                          {expandedQuestion === index ? 'Dölj' : 'Redigera'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeQuestion(index)}
+                          className="text-error-600 hover:text-error-700 hover:border-error-300"
+                        >
+                          Ta bort
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  </CardHeader>
                   
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setExpandedQuestion(expandedQuestion === index ? null : index)}
-                    >
-                      {expandedQuestion === index ? 'Dölj' : 'Redigera'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeQuestion(index)}
-                      className="text-error-600 hover:text-error-700 hover:border-error-300"
-                    >
-                      Ta bort
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              {expandedQuestion === index && (
-                <CardContent className="pt-0 border-t">
-                  <QuestionEditor
-                    question={question}
-                    questionIndex={index}
-                    onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
-                    onDelete={() => removeQuestion(index)}
-                    onDuplicate={() => duplicateQuestion(index)}
-                  />
-                </CardContent>
-              )}
-            </Card>
-          ))}
+                  {expandedQuestion === index && (
+                    <CardContent className="pt-0 border-t">
+                      <QuestionEditor
+                        question={question}
+                        questionIndex={index}
+                        onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
+                        onDelete={() => removeQuestion(index)}
+                        onDuplicate={() => duplicateQuestion(index)}
+                      />
+                    </CardContent>
+                  )}
+                </Card>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
         </div>
       ) : (
         /* Empty state */
