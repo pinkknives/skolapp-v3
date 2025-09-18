@@ -10,6 +10,7 @@ import { UserMenu } from '@/components/auth/UserMenu'
 import { AuthModal } from '@/components/auth/AuthModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { canAccessTeacherPortal } from '@/lib/auth-utils'
+import { LogoIcon } from '@/components/brand/Logo'
 
 interface NavItem {
   href: string
@@ -142,19 +143,12 @@ export function Navbar({
                 aria-label="Go to homepage"
               >
                 {logo || (
-                  <>
-                    <svg
-                      className="h-8 w-8"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" />
-                    </svg>
-                    <Typography variant="h6" className="font-bold">
+                  <div className="flex items-center space-x-2">
+                    <LogoIcon size="lg" priority className="text-primary-600" />
+                    <Typography variant="h6" className="font-bold text-primary-600">
                       Skolapp
                     </Typography>
-                  </>
+                  </div>
                 )}
               </Link>
             </div>

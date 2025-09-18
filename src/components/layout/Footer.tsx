@@ -2,6 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Typography } from '@/components/ui/Typography'
+import { LogoIcon } from '@/components/brand/Logo'
 
 interface FooterLink {
   href: string
@@ -111,15 +112,8 @@ export function Footer({
               className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-md"
               aria-label="Go to homepage"
             >
-              <svg
-                className="h-8 w-8"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" />
-              </svg>
-              <Typography variant="h6" className="font-bold">
+              <LogoIcon size="lg" priority className="text-primary-600" />
+              <Typography variant="h6" className="font-bold text-primary-600">
                 Skolapp
               </Typography>
             </Link>
