@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Typography, Heading } from '@/components/ui/Typography'
 import { QuizSharing } from '@/components/quiz/QuizSharing'
@@ -83,11 +84,42 @@ const mockQuizzes: Quiz[] = [
         expectedAnswer: 'verb'
       }
     ]
+  },
+  {
+    id: 'quiz_3',
+    title: 'Naturkunskap - Växter',
+    description: 'Grundläggande kunskap om växtriket',
+    tags: ['naturkunskap', 'växter', 'biologi'],
+    createdAt: new Date('2023-12-05'),
+    updatedAt: new Date('2024-01-18'),
+    createdBy: 'teacher-1',
+    status: 'archived',
+    settings: {
+      allowRetakes: false,
+      shuffleQuestions: false,
+      shuffleAnswers: true,
+      showCorrectAnswers: true,
+      executionMode: 'self-paced'
+    },
+    questions: [
+      {
+        id: 'q1',
+        type: 'multiple-choice',
+        title: 'Vilken del av växten tar upp vatten?',
+        points: 1,
+        options: [
+          { id: 'opt1', text: 'Bladen', isCorrect: false },
+          { id: 'opt2', text: 'Rötterna', isCorrect: true },
+          { id: 'opt3', text: 'Stammen', isCorrect: false },
+          { id: 'opt4', text: 'Blommorna', isCorrect: false }
+        ]
+      }
+    ]
   }
 ]
 
 export default function QuizManagementPage() {
-  const [quizzes] = useState<Quiz[]>(mockQuizzes)
+  const [quizzes, setQuizzes] = useState<Quiz[]>(mockQuizzes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()))
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [showSharing, setShowSharing] = useState(false)
   const [showReviewMode, setShowReviewMode] = useState(false)
@@ -113,11 +145,11 @@ export default function QuizManagementPage() {
   const getStatusText = (status: QuizStatus) => {
     switch (status) {
       case 'published':
-        return 'Publicerad'
+        return 'Publikt'
       case 'draft':
         return 'Utkast'
       case 'archived':
-        return 'Arkiverad'
+        return 'Arkiverat'
       default:
         return status
     }
@@ -131,6 +163,40 @@ export default function QuizManagementPage() {
   const handleReviewMode = (quiz: Quiz) => {
     setSelectedQuiz(quiz)
     setShowReviewMode(true)
+  }
+
+  const handleDuplicateQuiz = (quiz: Quiz) => {
+    // Create a copy of the quiz with new ID and draft status
+    const duplicatedQuiz: Quiz = {
+      ...quiz,
+      id: `quiz_${Date.now()}`,
+      title: `${quiz.title} (kopia)`,
+      status: 'draft',
+      shareCode: undefined,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    // Add to the beginning of the list (most recent)
+    const updatedQuizzes = [duplicatedQuiz, ...quizzes]
+    setQuizzes(updatedQuizzes)
+    
+    // Show feedback (in a real app, you'd show a toast notification)
+    alert('Quiz duplicerat som utkast')
+  }
+
+  const handleArchiveQuiz = (quiz: Quiz) => {
+    // Update quiz status to archived
+    const updatedQuizzes = quizzes.map(q => 
+      q.id === quiz.id 
+        ? { ...q, status: 'archived' as QuizStatus, updatedAt: new Date() }
+        : q
+    ).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    
+    setQuizzes(updatedQuizzes)
+    
+    // Show feedback
+    alert('Quiz arkiverat')
   }
 
   if (showReviewMode && selectedQuiz) {
@@ -269,7 +335,8 @@ export default function QuizManagementPage() {
                     )}
                   </CardContent>
 
-                  <CardFooter className="flex flex-col gap-2">
+                  <CardFooter className="flex flex-col gap-3">
+                    {/* Primary actions for published quizzes */}
                     {quiz.status === 'published' && (
                       <div className="flex gap-2 w-full">
                         <Button
@@ -278,7 +345,7 @@ export default function QuizManagementPage() {
                           fullWidth
                           onClick={() => handleShareQuiz(quiz)}
                         >
-                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                           </svg>
                           Dela
@@ -289,7 +356,7 @@ export default function QuizManagementPage() {
                           fullWidth
                           onClick={() => handleReviewMode(quiz)}
                         >
-                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
                           Granska
@@ -297,7 +364,9 @@ export default function QuizManagementPage() {
                       </div>
                     )}
                     
-                    <div className="flex gap-2 w-full">
+                    {/* Secondary action row */}
+                    <div className="flex gap-2 w-full items-center">
+                      {/* Results button for published quizzes */}
                       {quiz.status === 'published' && (
                         <Button
                           variant="outline"
@@ -306,7 +375,7 @@ export default function QuizManagementPage() {
                           asChild
                         >
                           <Link href={`/quiz/${quiz.id}/results`}>
-                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                             Visa resultat
@@ -314,6 +383,7 @@ export default function QuizManagementPage() {
                         </Button>
                       )}
                       
+                      {/* Edit button - always visible */}
                       <Button
                         variant="outline"
                         size="sm"
@@ -321,22 +391,57 @@ export default function QuizManagementPage() {
                         asChild
                       >
                         <Link href={`/teacher/quiz/edit/${quiz.id}`}>
-                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                           Redigera
                         </Link>
                       </Button>
                       
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-neutral-500 hover:text-error-600"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </Button>
+                      {/* Quick action icons */}
+                      <div className="flex gap-1 ml-auto">
+                        {/* Duplicate button */}
+                        <IconButton
+                          variant="ghost"
+                          size="sm"
+                          title="Duplicera quiz"
+                          onClick={() => handleDuplicateQuiz(quiz)}
+                          aria-label="Duplicera quiz"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </IconButton>
+                        
+                        {/* Archive/Unarchive button */}
+                        {quiz.status !== 'archived' ? (
+                          <IconButton
+                            variant="ghost"
+                            size="sm"
+                            title="Arkivera quiz"
+                            onClick={() => handleArchiveQuiz(quiz)}
+                            aria-label="Arkivera quiz"
+                            className="text-neutral-500 hover:text-warning-600"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l4 4 4-4m-4-4v12" />
+                            </svg>
+                          </IconButton>
+                        ) : (
+                          <IconButton
+                            variant="ghost"
+                            size="sm"
+                            title="Ta bort permanent"
+                            onClick={() => alert('Funktionen är inte tillgänglig i denna demo')}
+                            aria-label="Ta bort permanent"
+                            className="text-neutral-500 hover:text-error-600"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </IconButton>
+                        )}
+                      </div>
                     </div>
                   </CardFooter>
                 </Card>
