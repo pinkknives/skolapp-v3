@@ -1,0 +1,14 @@
+name: Playwright Smoke
+on: pull_request
+permissions: { contents: read }
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: 'npm' }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npm run build && npx serve -s out -l 3000 || npm run dev &
+      - run: npx playwright test --project="chromium" --project="webkit"
