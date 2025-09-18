@@ -3,38 +3,27 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Typography, Heading } from '@/components/ui/Typography'
 import Link from 'next/link'
+import { Plus, ClipboardList, Users, BarChart3 } from 'lucide-react'
 
 const features = [
   {
     title: 'Skapa Quiz',
     description: 'Skapa engagerande quiz med AI-hjälp eller manuellt. Välj mellan olika frågetyper och genomförandelägen.',
-    icon: (
-      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-      </svg>
-    ),
+    icon: <Plus size={24} strokeWidth={2} />,
     href: '/teacher/quiz/create',
     buttonText: 'Skapa nytt quiz'
   },
   {
     title: 'Hantera Quiz',
     description: 'Se alla dina quiz, redigera befintliga och hantera publicering och arkivering.',
-    icon: (
-      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-      </svg>
-    ),
+    icon: <ClipboardList size={24} strokeWidth={2} />,
     href: '/teacher/quiz',
     buttonText: 'Hantera quiz'
   },
   {
     title: 'Klasser & Elever',
     description: 'Organisera dina klasser, hantera elevlister och få översikt över resultat och framsteg.',
-    icon: (
-      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-      </svg>
-    ),
+    icon: <Users size={24} strokeWidth={2} />,
     href: '/teacher/classes',
     buttonText: 'Kommer snart',
     disabled: true
@@ -42,11 +31,7 @@ const features = [
   {
     title: 'Statistik & Rapporter',
     description: 'Analysera elevernas prestationer och få insikter för att förbättra undervisningen.',
-    icon: (
-      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
+    icon: <BarChart3 size={24} strokeWidth={2} />,
     href: '/teacher/analytics',
     buttonText: 'Kommer snart',
     disabled: true
@@ -76,17 +61,13 @@ export default function TeacherPage() {
                 </Typography>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" asChild>
-                    <Link href="/teacher/quiz/create">
-                      <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
+                    <Link href="/teacher/quiz/create" className="gap-x-2">
+                      <Plus size={20} strokeWidth={2} />
                       Skapa ditt första quiz
                     </Link>
                   </Button>
-                  <Button variant="outline" size="lg" disabled>
-                    <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
+                  <Button variant="outline" size="lg" disabled className="gap-x-2">
+                    <Users size={20} strokeWidth={2} />
                     Lägg till elever (kommer snart)
                   </Button>
                 </div>

@@ -12,6 +12,7 @@ import {
   canAccessTeacherPortal 
 } from '@/lib/auth-utils'
 import Link from 'next/link'
+import { User, ChevronDown, GraduationCap, CreditCard, LogOut } from 'lucide-react'
 
 interface UserMenuProps {
   onLogin?: () => void
@@ -44,10 +45,9 @@ export function UserMenu({ onLogin }: UserMenuProps) {
           variant="outline" 
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
+          className="gap-x-2"
         >
-          <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
+          <User size={16} strokeWidth={2} />
           {guestSession.nickname || 'Gäst'}
         </Button>
 
@@ -95,18 +95,11 @@ export function UserMenu({ onLogin }: UserMenuProps) {
           variant="outline" 
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          leftIcon={
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          }
-          rightIcon={
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          }
+          className="gap-x-2"
         >
+          <User size={16} strokeWidth={2} />
           {user.firstName}
+          <ChevronDown size={16} strokeWidth={2} />
         </Button>
 
         {isOpen && (
@@ -129,11 +122,10 @@ export function UserMenu({ onLogin }: UserMenuProps) {
                     fullWidth
                     asChild
                     onClick={() => setIsOpen(false)}
+                    className="gap-x-2"
                   >
                     <Link href="/teacher">
-                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-2 4h2m-6 0h2v4H9v-4z" />
-                      </svg>
+                      <GraduationCap size={16} strokeWidth={2} />
                       Lärarportal
                     </Link>
                   </Button>
@@ -148,10 +140,9 @@ export function UserMenu({ onLogin }: UserMenuProps) {
                     // TODO: Implement profile page
                     alert('Profilsida kommer snart!')
                   }}
+                  className="gap-x-2"
                 >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+                  <User size={16} strokeWidth={2} />
                   Min profil
                 </Button>
 
@@ -165,10 +156,9 @@ export function UserMenu({ onLogin }: UserMenuProps) {
                       // TODO: Implement subscription management
                       alert('Prenumerationshantering kommer snart!')
                     }}
+                    className="gap-x-2"
                   >
-                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
+                    <CreditCard size={16} strokeWidth={2} />
                     Prenumeration
                   </Button>
                 )}
@@ -180,10 +170,9 @@ export function UserMenu({ onLogin }: UserMenuProps) {
                   size="sm"
                   fullWidth
                   onClick={handleLogout}
+                  className="gap-x-2"
                 >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
+                  <LogOut size={16} strokeWidth={2} />
                   Logga ut
                 </Button>
               </div>
