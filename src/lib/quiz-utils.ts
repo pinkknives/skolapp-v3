@@ -1,6 +1,6 @@
-import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession } from '@/types/quiz'
+import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinRequest, Student, QuizSession, QuizResult, MultipleChoiceQuestion, MultipleChoiceOption } from '@/types/quiz'
 import { dataRetentionService, createSessionWithRetention } from '@/lib/data-retention'
-import { longTermDataService, canStoreLongTermData } from '@/lib/long-term-data'
+import { longTermDataService, canStoreLongTermData, type AnalyticsData } from '@/lib/long-term-data'
 import { type User, type DataRetentionMode } from '@/types/auth'
 
 // Generate a random 4-character share code
@@ -77,13 +77,13 @@ export function validateQuiz(quiz: Partial<Quiz>): { isValid: boolean; errors: s
       errors.push(`Fråga ${index + 1}: Poäng måste vara större än 0`)
     }
 
-    if (question.type === 'multiple-choice') {
-      const mcQuestion = question as any
+    if (question.type === 'multiple-choice' || question.type === 'image') {
+      const mcQuestion = question as MultipleChoiceQuestion
       if (!mcQuestion.options || mcQuestion.options.length < 2) {
         errors.push(`Fråga ${index + 1}: Minst två svarsalternativ krävs`)
       }
 
-      const correctAnswers = mcQuestion.options?.filter((opt: any) => opt.isCorrect) || []
+      const correctAnswers = mcQuestion.options?.filter((opt: MultipleChoiceOption) => opt.isCorrect) || []
       if (correctAnswers.length === 0) {
         errors.push(`Fråga ${index + 1}: Minst ett korrekt svar krävs`)
       }
@@ -351,8 +351,8 @@ export async function joinQuiz(request: QuizJoinRequest, user?: User | null): Pr
       quiz,
       session
     }
-  } catch (error) {
-    console.error('Error joining quiz:', error)
+  } catch {
+    // Error joining quiz - return error state
     return {
       success: false,
       error: 'Ett fel uppstod när du försökte gå med i quizet. Försök igen.',
@@ -454,10 +454,10 @@ export function submitQuizResult(
 /**
  * Get quiz results for a student with respect to data retention
  */
-export function getQuizResults(studentId: string, sessionId?: string, user?: User | null): any[] {
+export function getQuizResults(studentId: string, sessionId?: string, user?: User | null): QuizResult[] {
   if (typeof window === 'undefined') return []
 
-  const results: any[] = []
+  const results: QuizResult[] = []
 
   // Get results from long-term storage if user has long-term mode
   if (user && canStoreLongTermData(user)) {
@@ -486,8 +486,8 @@ export function getQuizResults(studentId: string, sessionId?: string, user?: Use
       if (result.studentId === studentId && !results.find(r => r.id === result.id)) {
         results.push(result)
       }
-    } catch (error) {
-      console.error('Error parsing quiz result:', error)
+    } catch {
+      // Error parsing quiz result - skip this entry
     }
   }
 
@@ -497,7 +497,7 @@ export function getQuizResults(studentId: string, sessionId?: string, user?: Use
 /**
  * Get analytics data for a user (long-term mode only)
  */
-export function getUserAnalytics(userId: string): any[] {
+export function getUserAnalytics(userId: string): AnalyticsData[] {
   return longTermDataService.getAnalyticsData(userId)
 }
 
@@ -595,8 +595,8 @@ export function triggerGDPRCleanup(sessionId?: string): void {
     try {
       sessionStorage.removeItem(key)
       // Session data removed
-    } catch (error) {
-      console.error('[GDPR] Error removing session data:', key, error)
+    } catch {
+      // Error removing session data - continue cleanup
     }
   }
   
@@ -614,7 +614,7 @@ export function triggerGDPRCleanup(sessionId?: string): void {
 export function getTeacherQuizResults(
   quizId: string, 
   teacherUser: User | null
-): { results: any[], students: any[], canViewIndividual: boolean } {
+): { results: QuizResult[], students: Student[], canViewIndividual: boolean } {
   if (typeof window === 'undefined') {
     return { results: [], students: [], canViewIndividual: false }
   }
@@ -622,8 +622,8 @@ export function getTeacherQuizResults(
   const canViewIndividual = teacherUser?.subscriptionPlan !== 'gratis' && 
                             teacherUser?.dataRetentionMode === 'långtid'
   
-  let results: any[] = []
-  let students: any[] = []
+  let results: QuizResult[] = []
+  let students: Student[] = []
   
   // Get results from appropriate storage based on teacher's plan
   if (canViewIndividual && teacherUser) {

@@ -139,7 +139,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
           }
         }
       } catch (error) {
-        console.warn('Failed to load AI draft from localStorage:', error)
+        // Failed to load from localStorage, continue with empty draft
       }
     }
   }, [])
