@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
-import { Quiz } from '@/types/quiz'
-import { calculateTotalPoints, estimateCompletionTime, formatExecutionMode } from '@/lib/quiz-utils'
+import { Quiz, QuizStatus } from '@/types/quiz'
+import { calculateTotalPoints, estimateCompletionTime, formatExecutionMode, generateShareCode } from '@/lib/quiz-utils'
+import QRCode from 'qrcode'
 
 interface QuizPublishStepProps {
   quiz: Partial<Quiz>
@@ -16,6 +17,10 @@ interface QuizPublishStepProps {
 export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPublishStepProps) {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [isValidated, setIsValidated] = useState(false)
+  const [shareCode, setShareCode] = useState<string>('')
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
+  const [showSharingPanel, setShowSharingPanel] = useState(false)
+  const [status, setStatus] = useState<QuizStatus>(quiz.status || 'draft')
 
   // Validate on mount and changes
   useEffect(() => {
@@ -28,6 +33,53 @@ export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPubl
     setIsValidated(isValid)
     onValidationChange(isValid)
   }, [quiz.title, quiz.questions, onValidationChange])
+
+  // Generate share code and QR code when quiz is ready
+  useEffect(() => {
+    if (isValidated && !shareCode) {
+      const newShareCode = quiz.shareCode || generateShareCode()
+      setShareCode(newShareCode)
+      
+      // Update quiz with share code if it doesn't have one
+      if (!quiz.shareCode) {
+        onChange({ shareCode: newShareCode })
+      }
+    }
+  }, [isValidated, shareCode, quiz.shareCode, onChange])
+
+  // Generate QR code when share code is available
+  useEffect(() => {
+    if (shareCode && typeof window !== 'undefined') {
+      const joinUrl = `${window.location.origin}/quiz/join/${shareCode}`
+      QRCode.toDataURL(joinUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#1e40af', // primary-800
+          light: '#ffffff'
+        }
+      }).then(setQrCodeUrl).catch(console.error)
+    }
+  }, [shareCode])
+
+  const handlePublish = () => {
+    setStatus('published')
+    onChange({ 
+      status: 'published',
+      shareCode,
+      updatedAt: new Date()
+    })
+    setShowSharingPanel(true)
+  }
+
+  const handleUnpublish = () => {
+    setStatus('draft')
+    onChange({ 
+      status: 'draft',
+      updatedAt: new Date()
+    })
+    setShowSharingPanel(false)
+  }
 
   const totalPoints = quiz.questions ? calculateTotalPoints(quiz.questions) : 0
   const estimatedTime = quiz.questions ? estimateCompletionTime(quiz.questions) : 0
@@ -289,13 +341,46 @@ export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPubl
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <div>
+              <div className="flex-1">
                 <Typography variant="body2" className="font-medium text-success-800">
                   Allt ser bra ut! Klart att publicera
                 </Typography>
                 <Typography variant="caption" className="text-success-700">
                   Ditt quiz är redo att delas med eleverna
                 </Typography>
+              </div>
+              <div className="flex gap-2">
+                {status === 'draft' ? (
+                  <Button
+                    onClick={handlePublish}
+                    className="bg-success-600 hover:bg-success-700 text-white"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Publicera quiz
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowSharingPanel(!showSharingPanel)}
+                      className="border-success-300 text-success-700 hover:bg-success-50"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                      </svg>
+                      {showSharingPanel ? 'Dölj delning' : 'Dela quiz'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleUnpublish}
+                      className="border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+                    >
+                      Avpublicera
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -315,6 +400,117 @@ export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPubl
                 </Typography>
                 <Typography variant="caption" className="text-warning-700">
                   Gå tillbaka till tidigare steg för att komplettera informationen
+                </Typography>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sharing Panel */}
+      {status === 'published' && showSharingPanel && shareCode && (
+        <Card className="bg-primary-50 border-primary-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+              </svg>
+              Dela ditt quiz
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Quiz Code */}
+              <div className="text-center">
+                <Typography variant="body2" className="font-medium mb-2">
+                  Quiz-kod
+                </Typography>
+                <div className="inline-flex items-center bg-white rounded-lg px-6 py-4 shadow-sm border border-primary-200">
+                  <span className="text-2xl font-bold text-primary-900 tracking-wider">
+                    {shareCode}
+                  </span>
+                </div>
+                <Typography variant="caption" className="text-primary-700 mt-2 block">
+                  Eleverna kan gå med genom att ange denna kod på quiz/join
+                </Typography>
+              </div>
+
+              {/* QR Code */}
+              {qrCodeUrl && (
+                <div className="text-center">
+                  <Typography variant="body2" className="font-medium mb-4">
+                    QR-kod
+                  </Typography>
+                  <div className="inline-block bg-white p-4 rounded-lg shadow-sm border border-primary-200">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt={`QR kod för quiz: ${shareCode}`}
+                      className="mx-auto"
+                      width={200}
+                      height={200}
+                    />
+                  </div>
+                  <Typography variant="caption" className="text-primary-700 mt-2 block">
+                    Scanna med mobilen för direkt åtkomst
+                  </Typography>
+                </div>
+              )}
+
+              {/* Sharing Options */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      const joinUrl = `${window.location.origin}/quiz/join/${shareCode}`
+                      navigator.clipboard.writeText(joinUrl)
+                    }
+                  }}
+                  className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Kopiera länk
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareCode)
+                  }}
+                  className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                  </svg>
+                  Kopiera kod
+                </Button>
+
+                {qrCodeUrl && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.download = `quiz-${shareCode}-qr.png`
+                      link.href = qrCodeUrl
+                      link.click()
+                    }}
+                    className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Ladda ner QR
+                  </Button>
+                )}
+              </div>
+
+              {/* Status indicator */}
+              <div className="flex items-center justify-center gap-2 pt-4 border-t border-primary-200">
+                <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
+                <Typography variant="caption" className="text-success-700 font-medium">
+                  Quiz är publikt och kan nås av elever
                 </Typography>
               </div>
             </div>
