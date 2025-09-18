@@ -180,11 +180,11 @@ export class LocalDemoAdapter implements AIGradingAdapter {
     }
   }
 
-  async explainAnswer(question: Question, correctAnswer?: string): Promise<string> {
+  async explainAnswer(_question: Question, _correctAnswer?: string): Promise<string> {
     await new Promise(resolve => setTimeout(resolve, 600))
     
-    if (question.type === 'multiple-choice') {
-      const correctOption = question.options?.find(opt => opt.isCorrect)
+    if (_question.type === 'multiple-choice') {
+      const correctOption = _question.options?.find(opt => opt.isCorrect)
       return correctOption 
         ? `Det rätta svaret är "${correctOption.text}" eftersom det är det alternativ som är markerat som korrekt.`
         : 'Förklaring kan inte genereras för denna flervalsfråga.'
@@ -193,7 +193,7 @@ export class LocalDemoAdapter implements AIGradingAdapter {
     return 'Demo-förklaring: Denna fråga kräver manuell förklaring från läraren.'
   }
 
-  async generateFeedback(answer: string, question: Question, isCorrect: boolean): Promise<string> {
+  async generateFeedback(_answer: string, _question: Question, isCorrect: boolean): Promise<string> {
     await new Promise(resolve => setTimeout(resolve, 500))
     
     if (isCorrect) {
@@ -210,20 +210,20 @@ export class CloudLLMAdapter implements AIGradingAdapter {
   requiresExternalAPI = true
   supportedQuestionTypes: QuestionType[] = ['free-text', 'image']
 
-  async gradeText(answer: string, question: Question, rubric?: Rubric): Promise<AIAssessment> {
+  async gradeText(_answer: string, _question: Question, _rubric?: Rubric): Promise<AIAssessment> {
     // This would integrate with external LLM service
     throw new Error('Cloud LLM adapter not implemented in MVP - endast för långtidsläge med samtycke')
   }
 
-  async gradeImage(imageRef: string, question: Question, rubric?: Rubric): Promise<AIAssessment> {
+  async gradeImage(_imageRef: string, _question: Question, _rubric?: Rubric): Promise<AIAssessment> {
     throw new Error('Cloud LLM adapter not implemented in MVP - endast för långtidsläge med samtycke')
   }
 
-  async explainAnswer(question: Question, correctAnswer?: string): Promise<string> {
+  async explainAnswer(_question: Question, _correctAnswer?: string): Promise<string> {
     throw new Error('Cloud LLM adapter not implemented in MVP - endast för långtidsläge med samtycke')
   }
 
-  async generateFeedback(answer: string, question: Question, isCorrect: boolean): Promise<string> {
+  async generateFeedback(_answer: string, _question: Question, _isCorrect: boolean): Promise<string> {
     throw new Error('Cloud LLM adapter not implemented in MVP - endast för långtidsläge med samtycke')
   }
 }

@@ -1,6 +1,5 @@
 // Audit logging service for AI grading decisions
-import { AIAssessment, TeacherDecision, AIGradingSession } from '@/types/quiz'
-import { type User } from '@/types/auth'
+import { AIAssessment, TeacherDecision } from '@/types/quiz'
 
 export interface AIGradingAuditEntry {
   id: string

@@ -97,7 +97,7 @@ class LongTermDataService {
         this.updateLongTermSessionActivity(sessionId)
       }
       
-      console.log(`[LongTermData] Stored quiz result for user ${userId}`)
+      // Quiz result stored successfully
     } catch (error) {
       console.error('[LongTermData] Error storing quiz result:', error)
     }
@@ -125,7 +125,7 @@ class LongTermDataService {
       
       localStorage.setItem(storageKey, JSON.stringify(updatedData))
       
-      console.log(`[LongTermData] Stored analytics data for user ${analyticsData.userId}`)
+      // Analytics data stored successfully
     } catch (error) {
       console.error('[LongTermData] Error storing analytics data:', error)
     }
@@ -314,7 +314,7 @@ class LongTermDataService {
    * Handle consent withdrawal - immediate cleanup
    */
   private handleConsentWithdrawal(userId: string): void {
-    console.log(`[LongTermData] Processing consent withdrawal for user ${userId}`)
+    // Process consent withdrawal for user
     
     // Remove all long-term data for user
     const keysToRemove = [
@@ -329,7 +329,7 @@ class LongTermDataService {
     // Deactivate long-term sessions
     this.deactivateLongTermSessions(userId)
     
-    console.log(`[LongTermData] Completed data cleanup for user ${userId}`)
+    // Data cleanup completed
   }
 
   /**

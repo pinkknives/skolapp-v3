@@ -448,7 +448,7 @@ export function submitQuizResult(
     }
   }
 
-  console.log(`[QuizUtils] Submitted quiz result for ${user?.dataRetentionMode || 'korttid'} storage:`, result)
+  // Quiz result submitted successfully
 }
 
 /**
@@ -575,7 +575,7 @@ export function cleanupSessionData(sessionId: string): void {
     }
   }
 
-  console.log(`[QuizUtils] Manually cleaned up session data for ${sessionId}`)
+  // Session data cleanup completed
 }
 
 /**
@@ -584,7 +584,7 @@ export function cleanupSessionData(sessionId: string): void {
 export function triggerGDPRCleanup(sessionId?: string): void {
   if (typeof window === 'undefined') return
   
-  console.log('[GDPR] Triggering data cleanup for session:', sessionId || 'all short-term sessions')
+  // Trigger data cleanup for session
   
   // Clean up session storage for short-term data
   const sessionKeys = Object.keys(sessionStorage).filter(key => 
@@ -594,7 +594,7 @@ export function triggerGDPRCleanup(sessionId?: string): void {
   for (const key of sessionKeys) {
     try {
       sessionStorage.removeItem(key)
-      console.log('[GDPR] Removed session data:', key)
+      // Session data removed
     } catch (error) {
       console.error('[GDPR] Error removing session data:', key, error)
     }
@@ -605,7 +605,7 @@ export function triggerGDPRCleanup(sessionId?: string): void {
     cleanupSessionData(sessionId)
   }
   
-  console.log('[GDPR] Short-term data cleanup completed')
+  // Short-term data cleanup completed
 }
 
 /**
@@ -635,7 +635,7 @@ export function getTeacherQuizResults(
     students = []
   } else {
     // Only aggregate data for free tier
-    console.log('[GDPR] Limited access: only aggregate data available for free tier')
+    // Limited access: only aggregate data available for free tier
   }
   
   return {
@@ -656,11 +656,11 @@ export function scheduleQuizSessionCleanup(sessionId: string, dataRetentionMode:
     : 24 * 60 * 60 * 1000 // 24 hours for long-term session data
   
   setTimeout(() => {
-    console.log(`[GDPR] Auto-cleanup triggered for session ${sessionId} (${dataRetentionMode})`)
+    // Auto-cleanup triggered for session
     if (dataRetentionMode === 'korttid') {
       triggerGDPRCleanup(sessionId)
     }
   }, cleanupDelay)
   
-  console.log(`[GDPR] Scheduled cleanup for session ${sessionId} in ${cleanupDelay / (60 * 1000)} minutes`)
+  // Cleanup scheduled for session
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
@@ -82,13 +83,7 @@ export function TeacherReviewMode({
     return correctOption?.id === answer
   }
 
-  const getOptionStats = (optionId: string) => {
-    const responses = getStudentResponsesForCurrentQuestion()
-    const count = responses.filter(r => r.answer === optionId).length
-    const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0
-    return { count, percentage }
-  }
-
+  // Navigation functions - declared before useEffect to avoid dependency hoisting issues
   const nextQuestion = useCallback(() => {
     if (currentQuestionIndex < localQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
@@ -124,6 +119,13 @@ export function TeacherReviewMode({
       setIsFullscreen(false)
     }
   }, [isFullscreen])
+
+  const getOptionStats = (optionId: string) => {
+    const responses = getStudentResponsesForCurrentQuestion()
+    const count = responses.filter(r => r.answer === optionId).length
+    const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0
+    return { count, percentage }
+  }
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -169,10 +171,13 @@ export function TeacherReviewMode({
           <div className="space-y-6">
             {question.type === 'image' && (question as ImageQuestion).imageUrl && (
               <div className="flex justify-center">
-                <img
-                  src={(question as ImageQuestion).imageUrl}
+                <Image
+                  src={(question as ImageQuestion).imageUrl!}
                   alt={(question as ImageQuestion).imageAlt || 'Question image'}
-                  className="max-w-full max-h-96 rounded-lg shadow-md"
+                  width={800}
+                  height={400}
+                  className="max-w-full max-h-96 rounded-lg shadow-md object-contain"
+                  priority={false}
                 />
               </div>
             )}

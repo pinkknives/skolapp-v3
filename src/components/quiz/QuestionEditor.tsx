@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -179,10 +180,13 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
             
             {(imagePreview || (question as ImageQuestion).imageUrl) && (
               <div className="mt-2">
-                <img
-                  src={imagePreview || (question as ImageQuestion).imageUrl}
+                <Image
+                  src={imagePreview || (question as ImageQuestion).imageUrl!}
                   alt={(question as ImageQuestion).imageAlt || 'Preview'}
-                  className="max-w-full h-auto max-h-64 rounded-md border"
+                  width={400}
+                  height={256}
+                  className="max-w-full h-auto max-h-64 rounded-md border object-contain"
+                  priority={false}
                 />
               </div>
             )}

@@ -130,10 +130,10 @@ export default function RootLayout({
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
-                      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                      // Service worker registered successfully
                     })
                     .catch(function(error) {
-                      console.log('ServiceWorker registration failed: ', error);
+                      // Service worker registration failed
                     });
                 });
               }
