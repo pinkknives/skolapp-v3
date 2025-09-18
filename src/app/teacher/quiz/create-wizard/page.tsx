@@ -2,17 +2,15 @@
 
 import React, { useState } from 'react'
 import { Layout, Container, Section } from '@/components/layout/Layout'
-import { Button } from '@/components/ui/Button'
 import { Typography, Heading } from '@/components/ui/Typography'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { QuizCreationWizard } from '@/components/quiz/QuizCreationWizard'
 import { Quiz } from '@/types/quiz'
 import { createDefaultQuiz } from '@/lib/quiz-utils'
 
 export default function CreateWizardPage() {
-  const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1'))
+  const [quiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1'))
 
-  const handleQuizComplete = (completedQuiz: Quiz) => {
+  const handleQuizComplete = (_completedQuiz: Quiz) => {
     // In real implementation, this would save to database and redirect
   }
 
