@@ -308,6 +308,90 @@ Core components include:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 🗄️ Supabase (Auth + DB)
+
+Skolapp v3 använder Supabase för autentisering och datalagring med inbyggt GDPR-stöd.
+
+### Datamodell
+
+- **Auth**: E-post magic link. Roller i `profiles.role` (teacher|student).
+- **Data**: `quizzes`, `questions`, `attempts`, `answers`, `consents`.
+- **RLS**: På för alla tabeller. Lärare ser egna quiz/resultat; elev ser enbart sitt.
+
+### Klienter
+
+- `supabase-browser.ts` (för client components)
+- `supabase-server.ts` (server actions/SSR; använder service_role på servern)
+
+### Flöde (MVP)
+
+1. Användare loggar in → `profiles` upsertas med role (default: teacher).
+2. Lärare skapar quiz → join-kod genereras automatiskt.
+3. Elev ansluter till quiz med kod → attempt skapas.
+4. Svar sparas i `answers`. Långtidslagring kräver `consents`; annars rensas enligt policy.
+
+### Databastabeller
+
+#### `quizzes`
+- `id`: UUID primary key
+- `owner_id`: Referenser auth.users
+- `title`: Quiz titel
+- `join_code`: Unik 4-tecken kod
+- `status`: 'draft' | 'published'
+
+#### `questions`
+- `id`: UUID primary key  
+- `quiz_id`: Referenser quizzes
+- `type`: 'mcq' | 'free' | 'image'
+- `content`: JSONB (frågetext, alternativ)
+- `answer_key`: JSONB (facit)
+
+#### `attempts`
+- `id`: UUID primary key
+- `quiz_id`: Referenser quizzes
+- `student_id`: Referenser auth.users
+- `data_mode`: 'short' | 'long'
+- `student_alias`: För gäst-läge
+
+#### `answers`
+- `attempt_id`, `question_id`: Sammansatt primärnyckel
+- `value`: JSONB (elevens svar)
+- `score`: Numerisk poäng
+
+#### `consents`
+- `student_id`: UUID primary key
+- `guardian_email`, `guardian_name`: Vårdnadshavare
+- `status`: 'pending' | 'approved' | 'denied' | 'expired'
+- `expires_at`: Utgångsdatum
+
+### GDPR-kompatibilitet
+
+**Korttid** = auto-rensa (cron/edge). **Långtid** = endast med registrerat samtycke i `consents`.
+
+- **Korttidsläge**: Data rensas automatiskt efter 24h via `cleanup_short_term_data()`
+- **Långtidsläge**: Kräver föräldrasamtycke, lagrad permanent tills återkallat
+- **RLS**: Säkerställer att användare endast ser egen data
+- **Consent tracking**: Fullständig audit trail för samtycken
+
+### Dataaktioner
+
+Server actions tillgängliga i `/src/app/actions/quiz.ts`:
+
+- `createQuizAction()`: Skapa nytt quiz med auto-genererad join-kod
+- `createAttemptAction()`: Anslut till quiz via kod, skapa attempt
+- `publishQuizAction()`: Publicera quiz för elever
+
+### Auth Widget
+
+Enkel inloggningskomponent med svensk UI:
+
+```tsx
+import { AuthWidget } from '@/components/auth/AuthWidget'
+
+// Använd i valfri komponent
+<AuthWidget />
+```
+
 ## Deployment
 
 The app can be deployed to any platform that supports Next.js:
