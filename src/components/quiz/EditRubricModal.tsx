@@ -24,8 +24,8 @@ export function EditRubricModal({ question, onSave, onClose }: EditRubricModalPr
       await new Promise(resolve => setTimeout(resolve, 500)) // Simulate API call
       onSave(question.id, rubric)
       onClose()
-    } catch (error) {
-      console.error('Error saving rubric:', error)
+    } catch {
+      // Error saving rubric - handle gracefully
     } finally {
       setIsSaving(false)
     }

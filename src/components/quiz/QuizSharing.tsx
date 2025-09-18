@@ -32,7 +32,9 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
         },
       })
         .then(url => setQrCodeUrl(url))
-        .catch(err => console.error('Error generating QR code:', err))
+        .catch(() => {
+          // Error generating QR code - QR will not be available
+        })
     }
   }, [quiz.shareCode, joinUrl])
 
@@ -41,8 +43,8 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
       await navigator.clipboard.writeText(quiz.shareCode || '')
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
+    } catch {
+      // Failed to copy to clipboard - silently fail
     }
   }
 
@@ -51,8 +53,8 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
       await navigator.clipboard.writeText(joinUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy URL:', err)
+    } catch {
+      // Failed to copy URL to clipboard - silently fail
     }
   }
 

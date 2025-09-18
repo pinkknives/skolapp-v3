@@ -81,10 +81,17 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
   const proceedToNextQuestion = useCallback((updatedAnswers: StudentAnswer[], questionTimeSpent: number) => {
     if (isLastQuestion) {
       // Quiz completed
-      setQuizState(prev => ({ ...prev, status: 'completed' }))
-      onComplete({
-        answers: updatedAnswers,
-        timeSpent: quizState.progress.timeElapsed + questionTimeSpent
+      setQuizState(prev => ({ 
+        ...prev, 
+        status: 'completed' 
+      }))
+      // Use callback to get current state instead of stale closure
+      setQuizState(prev => {
+        onComplete({
+          answers: updatedAnswers,
+          timeSpent: prev.progress.timeElapsed + questionTimeSpent
+        })
+        return prev
       })
     } else if (!isTeacherControlled) {
       // Move to next question (only in self-paced mode)
@@ -102,7 +109,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
       setSelectedAnswer('')
       setQuestionStartTime(Date.now())
     }
-  }, [isLastQuestion, isTeacherControlled, onComplete, quizState.progress])
+  }, [isLastQuestion, isTeacherControlled, onComplete])
 
   const handleAnswerSubmit = useCallback(() => {
     const questionTimeSpent = Math.floor((Date.now() - questionStartTime) / 1000)
@@ -114,29 +121,32 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
       answeredAt: new Date()
     }
 
-    const updatedAnswers = [...quizState.progress.answers, answer]
-    
-    setQuizState(prev => ({
-      ...prev,
-      progress: {
-        ...prev.progress,
-        answers: updatedAnswers
-      }
-    }))
-
-    // Show immediate feedback if configured
-    if (quiz.settings.showCorrectAnswers && currentQuestion.type === 'multiple-choice') {
-      setShowFeedback(true)
+    // Use state updater to get current answers
+    setQuizState(prev => {
+      const updatedAnswers = [...prev.progress.answers, answer]
       
-      // Hide feedback after 2 seconds
-      setTimeout(() => {
-        setShowFeedback(false)
+      // Show immediate feedback if configured
+      if (quiz.settings.showCorrectAnswers && currentQuestion.type === 'multiple-choice') {
+        setShowFeedback(true)
+        
+        // Hide feedback after 2 seconds
+        setTimeout(() => {
+          setShowFeedback(false)
+          proceedToNextQuestion(updatedAnswers, questionTimeSpent)
+        }, 2000)
+      } else {
         proceedToNextQuestion(updatedAnswers, questionTimeSpent)
-      }, 2000)
-    } else {
-      proceedToNextQuestion(updatedAnswers, questionTimeSpent)
-    }
-  }, [currentQuestion.id, selectedAnswer, questionStartTime, quizState.progress, quiz.settings.showCorrectAnswers, currentQuestion.type, proceedToNextQuestion])
+      }
+
+      return {
+        ...prev,
+        progress: {
+          ...prev.progress,
+          answers: updatedAnswers
+        }
+      }
+    })
+  }, [currentQuestion.id, selectedAnswer, questionStartTime, quiz.settings.showCorrectAnswers, currentQuestion.type, proceedToNextQuestion])
 
   // Handle multiple choice selection
   const handleMultipleChoiceSelect = (optionId: string) => {

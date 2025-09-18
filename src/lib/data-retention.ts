@@ -308,7 +308,7 @@ class DataRetentionService {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.SESSION_CLEANUP)
       if (stored) {
-        this.cleanupJobs = JSON.parse(stored).map((job: any) => ({
+        this.cleanupJobs = JSON.parse(stored).map((job: CleanupJob & { scheduledFor: string }) => ({
           ...job,
           scheduledFor: new Date(job.scheduledFor)
         }))

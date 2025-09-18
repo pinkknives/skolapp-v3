@@ -115,8 +115,8 @@ export function AISuggestionsPanel({
             true   // wasAnonymized
           )
 
-        } catch (error) {
-          console.error('Error generating AI assessment:', error)
+        } catch {
+          // Error generating AI assessment - silently fail for now
           updatedAnswers[i] = { ...studentAnswer, isProcessing: false }
         }
 

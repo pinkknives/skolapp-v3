@@ -43,9 +43,9 @@ export function AIQuizDraft({ onQuestionsGenerated, onClose }: AIQuizDraftProps)
       const questions = await generateAIQuizDraft(prompt)
       setGeneratedQuestions(questions)
       setHasGenerated(true)
-    } catch (error) {
-      console.error('Error generating AI quiz:', error)
-      // In a real app, show error message to user
+    } catch {
+      // Error handling - in a real app, show error message to user
+      // For now, just silently fail and keep generating state false
     } finally {
       setIsGenerating(false)
     }
