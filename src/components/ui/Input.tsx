@@ -1,6 +1,7 @@
 import React, { forwardRef, useState } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn, generateId } from '@/lib/utils'
+import { Eye, EyeOff } from 'lucide-react'
 
 const inputVariants = cva(
   'flex w-full rounded-md border bg-white px-3 py-2 text-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
@@ -71,31 +72,17 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       setShowPassword(!showPassword)
     }
 
-    const EyeIcon = ({ open }: { open: boolean }) => (
-      <svg
-        className="h-4 w-4 text-neutral-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        {open ? (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-          />
-        ) : (
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-          />
-        )}
-      </svg>
-    )
+    const EyeIcon = ({ open }: { open: boolean }) => {
+      const IconComponent = open ? Eye : EyeOff
+      return (
+        <IconComponent
+          size={16}
+          strokeWidth={2}
+          className="text-neutral-500"
+          aria-hidden="true"
+        />
+      )
+    }
 
     return (
       <div className="w-full">
@@ -134,7 +121,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                   type="button"
                   onClick={togglePasswordVisibility}
                   className="text-neutral-400 hover:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-sm"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Dölj lösenord' : 'Visa lösenord'}
                 >
                   <EyeIcon open={showPassword} />
                 </button>
