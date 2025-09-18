@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Question, MultipleChoiceQuestion, FreeTextQuestion, MultipleChoiceOption } from '@/types/quiz'
@@ -57,40 +58,64 @@ export function AIQuizDraft({ onQuestionsGenerated, onClose }: AIQuizDraftProps)
   }
 
   const gradeOptions = [
-    'Förskola',
-    'Åk 1', 'Åk 2', 'Åk 3',
-    'Åk 4', 'Åk 5', 'Åk 6',
-    'Åk 7', 'Åk 8', 'Åk 9',
-    'Gymnasium åk 1', 'Gymnasium åk 2', 'Gymnasium åk 3'
+    { value: 'Förskola', label: 'Förskola' },
+    { value: 'Åk 1', label: 'Åk 1' }, 
+    { value: 'Åk 2', label: 'Åk 2' }, 
+    { value: 'Åk 3', label: 'Åk 3' },
+    { value: 'Åk 4', label: 'Åk 4' }, 
+    { value: 'Åk 5', label: 'Åk 5' }, 
+    { value: 'Åk 6', label: 'Åk 6' },
+    { value: 'Åk 7', label: 'Åk 7' }, 
+    { value: 'Åk 8', label: 'Åk 8' }, 
+    { value: 'Åk 9', label: 'Åk 9' },
+    { value: 'Gymnasium åk 1', label: 'Gymnasium åk 1' }, 
+    { value: 'Gymnasium åk 2', label: 'Gymnasium åk 2' }, 
+    { value: 'Gymnasium åk 3', label: 'Gymnasium åk 3' }
   ]
 
   const subjectOptions = [
-    'Matematik',
-    'Svenska',
-    'Engelska',
-    'Naturkunskap',
-    'Biologi',
-    'Fysik',
-    'Kemi',
-    'Historia',
-    'Geografi',
-    'Samhällskunskap',
-    'Teknik',
-    'Slöjd',
-    'Bild',
-    'Musik',
-    'Idrott och hälsa'
+    { value: 'Matematik', label: 'Matematik' },
+    { value: 'Svenska', label: 'Svenska' },
+    { value: 'Engelska', label: 'Engelska' },
+    { value: 'Naturkunskap', label: 'Naturkunskap' },
+    { value: 'Biologi', label: 'Biologi' },
+    { value: 'Fysik', label: 'Fysik' },
+    { value: 'Kemi', label: 'Kemi' },
+    { value: 'Historia', label: 'Historia' },
+    { value: 'Geografi', label: 'Geografi' },
+    { value: 'Samhällskunskap', label: 'Samhällskunskap' },
+    { value: 'Teknik', label: 'Teknik' },
+    { value: 'Slöjd', label: 'Slöjd' },
+    { value: 'Bild', label: 'Bild' },
+    { value: 'Musik', label: 'Musik' },
+    { value: 'Idrott och hälsa', label: 'Idrott och hälsa' }
+  ]
+
+  const difficultyOptions = [
+    { value: 'easy', label: 'Lätt' },
+    { value: 'medium', label: 'Medel' },
+    { value: 'hard', label: 'Svår' }
   ]
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ai-quiz-dialog-title"
+    >
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>AI-utkast för quiz</CardTitle>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <CardTitle id="ai-quiz-dialog-title">AI-utkast för quiz</CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose}
+                aria-label="Stäng dialog"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </Button>
@@ -119,39 +144,23 @@ export function AIQuizDraft({ onQuestionsGenerated, onClose }: AIQuizDraftProps)
               <>
                 {/* Generation Form */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-neutral-700">
-                      Ämne
-                    </label>
-                    <select
-                      value={formData.subject}
-                      onChange={(e) => handleInputChange('subject', e.target.value)}
-                      className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                      required
-                    >
-                      <option value="">Välj ämne</option>
-                      {subjectOptions.map(subject => (
-                        <option key={subject} value={subject}>{subject}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Ämne"
+                    placeholder="Välj ämne"
+                    value={formData.subject}
+                    onChange={(e) => handleInputChange('subject', e.target.value)}
+                    options={subjectOptions}
+                    required
+                  />
 
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-neutral-700">
-                      Årskurs
-                    </label>
-                    <select
-                      value={formData.gradeLevel}
-                      onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
-                      className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                      required
-                    >
-                      <option value="">Välj årskurs</option>
-                      {gradeOptions.map(grade => (
-                        <option key={grade} value={grade}>{grade}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Årskurs"
+                    placeholder="Välj årskurs"
+                    value={formData.gradeLevel}
+                    onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
+                    options={gradeOptions}
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -165,20 +174,12 @@ export function AIQuizDraft({ onQuestionsGenerated, onClose }: AIQuizDraftProps)
                     required
                   />
 
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-neutral-700">
-                      Svårighetsgrad
-                    </label>
-                    <select
-                      value={formData.difficulty}
-                      onChange={(e) => handleInputChange('difficulty', e.target.value)}
-                      className="flex w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                    >
-                      <option value="easy">Lätt</option>
-                      <option value="medium">Medel</option>
-                      <option value="hard">Svår</option>
-                    </select>
-                  </div>
+                  <Select
+                    label="Svårighetsgrad"
+                    value={formData.difficulty}
+                    onChange={(e) => handleInputChange('difficulty', e.target.value)}
+                    options={difficultyOptions}
+                  />
                 </div>
 
                 <Input
