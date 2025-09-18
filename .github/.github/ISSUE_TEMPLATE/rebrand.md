@@ -26,7 +26,7 @@ body:
         - label: `/public/brand/Skolapp.png` (huvudlogotyp)
         - label: `/public/brand/Skolapp-symbol.png` (ikon/app-icon)
         - label: `/public/brand/Skolapp.jpeg` (fallback)
-        - label: `/public/brand/Skolapp-Color.png` + `Skolapp-Color-Gradiant.png`
+        - label: `/public/brand/Skolapp-color.png` + `Skolapp-color-gradiant.png`
 
   - type: textarea
     id: changes
