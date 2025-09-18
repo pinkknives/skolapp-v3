@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
 import { Question } from '@/types/quiz'
 
 interface ImprovedAIQuizDraftProps {
@@ -220,8 +221,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   <Typography variant="body2" className="font-medium mb-2">
                     Extra kontext (valfritt)
                   </Typography>
-                  <Input
-                    multiline
+                  <Textarea
                     rows={3}
                     placeholder="Beskriv eventuella speciella krav eller fokus för frågorna..."
                     value={formData.context}

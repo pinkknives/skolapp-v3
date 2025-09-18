@@ -38,9 +38,9 @@ export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPubl
     questionCount: quiz.questions?.length || 0,
     totalPoints,
     estimatedTime,
-    executionMode: quiz.executionMode || 'self-paced',
+    executionMode: quiz.settings?.executionMode || 'self-paced',
     tags: quiz.tags || [],
-    timeLimit: quiz.timeLimit
+    timeLimit: quiz.settings?.timeLimit
   }
 
   return (
