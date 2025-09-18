@@ -87,37 +87,42 @@ const mockQuizzes: Quiz[] = [
 ]
 
 export default function QuizManagementPage() {
-  const [quizzes] = useState<Quiz[]>(mockQuizzes)
+  const [quizzes, setQuizzes] = useState<Quiz[]>(mockQuizzes)
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [showSharing, setShowSharing] = useState(false)
   const [showReviewMode, setShowReviewMode] = useState(false)
   const [filterStatus, setFilterStatus] = useState<QuizStatus | 'all'>('all')
 
+  // Sort quizzes by last updated (senaste uppdaterade överst)
+  const sortedQuizzes = [...quizzes].sort((a, b) => 
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  )
+
   const filteredQuizzes = filterStatus === 'all' 
-    ? quizzes 
-    : quizzes.filter(quiz => quiz.status === filterStatus)
+    ? sortedQuizzes 
+    : sortedQuizzes.filter(quiz => quiz.status === filterStatus)
 
   const getStatusColor = (status: QuizStatus) => {
     switch (status) {
       case 'published':
-        return 'text-success-600 bg-success-50 border-success-200'
+        return 'text-success-700 bg-success-100'
       case 'draft':
-        return 'text-warning-600 bg-warning-50 border-warning-200'
+        return 'text-warning-700 bg-warning-100'
       case 'archived':
-        return 'text-neutral-600 bg-neutral-50 border-neutral-200'
+        return 'text-neutral-700 bg-neutral-100'
       default:
-        return 'text-neutral-600 bg-neutral-50 border-neutral-200'
+        return 'text-neutral-700 bg-neutral-100'
     }
   }
 
   const getStatusText = (status: QuizStatus) => {
     switch (status) {
       case 'published':
-        return 'Publicerad'
+        return 'Publikt'
       case 'draft':
         return 'Utkast'
       case 'archived':
-        return 'Arkiverad'
+        return 'Arkiverat'
       default:
         return status
     }
@@ -131,6 +136,38 @@ export default function QuizManagementPage() {
   const handleReviewMode = (quiz: Quiz) => {
     setSelectedQuiz(quiz)
     setShowReviewMode(true)
+  }
+
+  const handleDuplicateQuiz = (quiz: Quiz) => {
+    // Skapa en kopia av quizet som utkast
+    const duplicatedQuiz: Quiz = {
+      ...quiz,
+      id: `quiz_${Date.now()}`, // Enkel ID-generering för demo
+      title: `${quiz.title} (Kopia)`,
+      status: 'draft',
+      shareCode: undefined, // Ny delningskod behövs för publicering
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    setQuizzes(prevQuizzes => [duplicatedQuiz, ...prevQuizzes])
+    
+    // Visa bekräftelse (i framtiden kan detta vara en toast)
+    console.log('Quiz duplicerat:', duplicatedQuiz.title)
+  }
+
+  const handleArchiveQuiz = (quiz: Quiz) => {
+    // Arkivera quizet
+    setQuizzes(prevQuizzes => 
+      prevQuizzes.map(q => 
+        q.id === quiz.id 
+          ? { ...q, status: 'archived' as QuizStatus, updatedAt: new Date() }
+          : q
+      )
+    )
+    
+    // Visa bekräftelse (i framtiden kan detta vara en toast)
+    console.log('Quiz arkiverat:', quiz.title)
   }
 
   if (showReviewMode && selectedQuiz) {
@@ -214,7 +251,7 @@ export default function QuizManagementPage() {
                           {quiz.description}
                         </CardDescription>
                       </div>
-                      <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(quiz.status)}`}>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quiz.status)}`}>
                         {getStatusText(quiz.status)}
                       </span>
                     </div>
@@ -329,14 +366,30 @@ export default function QuizManagementPage() {
                       </Button>
                       
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-neutral-500 hover:text-error-600"
+                        fullWidth
+                        onClick={() => handleDuplicateQuiz(quiz)}
                       >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
+                        Duplicera
                       </Button>
+                      
+                      {quiz.status !== 'archived' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleArchiveQuiz(quiz)}
+                          className="text-neutral-500 hover:text-warning-600"
+                        >
+                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14l-1 9a2 2 0 01-2 2H8a2 2 0 01-2-2L5 8zM9 12h6M3 8l1-4h16l1 4" />
+                          </svg>
+                          Arkivera
+                        </Button>
+                      )}
                     </div>
                   </CardFooter>
                 </Card>
