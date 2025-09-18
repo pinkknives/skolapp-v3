@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz } from '@/types/quiz'
+import { tokens } from '@/lib/design-tokens'
 
 interface QuizSharingProps {
   quiz: Quiz
@@ -27,8 +28,8 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
         width: 256,
         margin: 1,
         color: {
-          dark: '#0369a1', // primary-700
-          light: '#ffffff',
+          dark: tokens.colors.primary[700],
+          light: tokens.colors.neutral[50],
         },
       })
         .then(url => setQrCodeUrl(url))
