@@ -7,6 +7,7 @@ import { Typography } from '@/components/ui/Typography'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion } from '@/types/quiz'
+import { Plus } from 'lucide-react'
 
 interface ImprovedAIQuizDraftProps {
   quizTitle?: string
@@ -105,10 +106,8 @@ function QuestionEditForm({ question, onSave, onCancel }: QuestionEditFormProps)
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Typography variant="body2" className="font-medium">Svarsalternativ</Typography>
-            <Button onClick={addOption} size="sm" variant="outline">
-              <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+            <Button onClick={addOption} size="sm" variant="outline" className="gap-x-1">
+              <Plus size={12} strokeWidth={2} />
               Lägg till
             </Button>
           </div>

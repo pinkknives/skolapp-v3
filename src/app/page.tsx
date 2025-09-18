@@ -8,34 +8,23 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { canAccessTeacherPortal } from '@/lib/auth-utils'
+import { BookOpen, Users, BarChart3, Zap, Heart, TrendingUp } from 'lucide-react'
 
 const teacherFeatures = [
   {
     title: 'Skapa Quiz',
     description: 'Skapa quiz, dela via QR eller kod, rätta snabbt med stöd av AI (alltid under din kontroll).',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-    ),
+    icon: <BookOpen size={20} strokeWidth={2} />,
   },
   {
     title: 'Klasshantering',
     description: 'Organisera dina klasser, hantera elevlister och få översikt över resultat och framsteg.',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
+    icon: <Users size={20} strokeWidth={2} />,
   },
   {
     title: 'Resultatanalys',
     description: 'Detaljerade rapporter och analytics för att följa upp elevernas lärande och identifiera förbättringsområden.',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
+    icon: <BarChart3 size={20} strokeWidth={2} />,
   },
 ]
 
@@ -43,29 +32,17 @@ const studentFeatures = [
   {
     title: 'Gå med i Quiz',
     description: 'Gå med i klassens quiz på sekunder med QR-kod eller fyrteckenskod.',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
+    icon: <Zap size={20} strokeWidth={2} />,
   },
   {
     title: 'Interaktivt Lärande',
     description: 'Upplev lärande genom spel med omedelbar feedback och engagerande visuella element.',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-    ),
+    icon: <Heart size={20} strokeWidth={2} />,
   },
   {
     title: 'Framstegsspårning',
     description: 'Följ din utveckling över tid och se hur dina kunskaper växer inom olika ämnesområden.',
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-      </svg>
-    ),
+    icon: <TrendingUp size={20} strokeWidth={2} />,
   },
 ]
 
