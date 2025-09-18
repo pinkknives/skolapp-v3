@@ -9,7 +9,16 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:accessibility": "playwright test --project=accessibility",
+    "test:performance": "playwright test --project=performance",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:cross-browser": "playwright test --project=chromium --project=firefox --project=webkit",
+    "lighthouse": "lhci autorun",
+    "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.5",

@@ -1,0 +1,192 @@
+name: Quality Assurance Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-type-check:
+    runs-on: ubuntu-latest
+    name: Lint & Type Check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: ESLint check
+        run: npm run lint
+      
+      - name: TypeScript check
+        run: npm run type-check
+      
+      - name: Build check
+        run: npm run build
+
+  accessibility-test:
+    runs-on: ubuntu-latest
+    name: Accessibility Testing
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Start application
+        run: npm start &
+        env:
+          NODE_ENV: production
+      
+      - name: Wait for application
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+      
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+      
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  performance-budget:
+    runs-on: ubuntu-latest
+    name: Performance Budget Check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build and analyze bundle
+        run: |
+          npm run build
+          npx next-bundle-analyzer
+      
+      - name: Check bundle size
+        run: |
+          # Check if main bundle exceeds 200KB (gzipped)
+          BUNDLE_SIZE=$(stat -c%s .next/static/chunks/pages/_app-*.js 2>/dev/null || echo "0")
+          if [ $BUNDLE_SIZE -gt 204800 ]; then
+            echo "Bundle size exceeded: ${BUNDLE_SIZE} bytes (>200KB)"
+            exit 1
+          fi
+          echo "Bundle size OK: ${BUNDLE_SIZE} bytes"
+
+  cross-browser-test:
+    runs-on: ubuntu-latest
+    name: Cross-browser Testing
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install ${{ matrix.browser }}
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Start application
+        run: npm start &
+        env:
+          NODE_ENV: production
+      
+      - name: Wait for application
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+      
+      - name: Run Playwright tests
+        run: npx playwright test --project=${{ matrix.browser }}
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 30
+
+  swedish-language-check:
+    runs-on: ubuntu-latest
+    name: Swedish Language Validation
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for English text in Swedish files
+        run: |
+          # Check for common English words that should be in Swedish
+          ENGLISH_WORDS="(Create|Delete|Edit|Save|Cancel|Submit|Login|Logout|Home|Settings)"
+          
+          echo "Checking for English words in Swedish context..."
+          if grep -r -E "$ENGLISH_WORDS" src/app src/components --include="*.tsx" --include="*.ts"; then
+            echo "❌ Found potential English text in Swedish context"
+            exit 1
+          else
+            echo "✅ No obvious English text found in Swedish context"
+          fi
+      
+      - name: Check Swedish characters support
+        run: |
+          # Ensure Swedish characters (å, ä, ö) are properly handled
+          echo "Checking for Swedish character support..."
+          if ! grep -r "[åäöÅÄÖ]" src/ > /dev/null; then
+            echo "⚠️ Warning: No Swedish characters found, verify this is intentional"
+          else
+            echo "✅ Swedish characters detected and supported"
+          fi
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Scan
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
+      
+      - name: Check for secrets in code
+        run: |
+          # Basic check for common secret patterns
+          if grep -r -E "(api_key|secret_key|password|token)" src/ --include="*.ts" --include="*.tsx" | grep -v "// TODO" | grep -v "placeholder"; then
+            echo "❌ Potential secrets found in code"
+            exit 1
+          else
+            echo "✅ No obvious secrets found in code"
+          fi
