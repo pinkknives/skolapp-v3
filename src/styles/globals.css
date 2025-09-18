@@ -4,17 +4,17 @@
 
 /* CSS Custom Properties for Design Tokens */
 :root {
-  /* Color Tokens */
-  --color-primary-50: 240 249 255;
-  --color-primary-100: 224 242 254;
-  --color-primary-200: 186 230 253;
-  --color-primary-300: 125 211 252;
-  --color-primary-400: 56 189 248;
-  --color-primary-500: 14 165 233;
-  --color-primary-600: 2 132 199;
-  --color-primary-700: 3 105 161;
-  --color-primary-800: 7 89 133;
-  --color-primary-900: 12 74 110;
+  /* Color Tokens - Updated to Skolapp teal branding */
+  --color-primary-50: 230 240 239;
+  --color-primary-100: 205 224 223;
+  --color-primary-200: 155 191 192;
+  --color-primary-300: 106 158 161;
+  --color-primary-400: 71 127 132;
+  --color-primary-500: 55 123 123;
+  --color-primary-600: 47 103 103;
+  --color-primary-700: 39 83 83;
+  --color-primary-800: 31 63 63;
+  --color-primary-900: 24 47 47;
 
   --color-neutral-50: 250 250 250;
   --color-neutral-100: 245 245 245;

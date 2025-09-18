@@ -60,7 +60,7 @@ export const metadata: Metadata = {
       { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     other: [
-      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#0ea5e9' },
+      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#377b7b' },
     ],
   },
   manifest: '/manifest.json',
@@ -69,8 +69,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#171717' },
+    { media: '(prefers-color-scheme: light)', color: '#377b7b' },
+    { media: '(prefers-color-scheme: dark)', color: '#2f6767' },
   ],
   width: 'device-width',
   initialScale: 1,
