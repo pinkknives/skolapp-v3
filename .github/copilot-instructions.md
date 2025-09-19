@@ -134,3 +134,13 @@ Focus reviews on high-value areas that require human judgment:
 - AI features must always be **teacher-in-the-loop**.
 - AI output must display Swedish disclaimer:  
   *“Dubbelkolla alltid innehållet. AI kan ha fel.”*
+
+  ## Re-review policy
+Copilot ska **inte** re-recencera när diffen endast innehåller:
+- `**/*.md`, `.github/workflows/**`, `package-lock.json`
+- Endast kommentarsändringar eller formattering
+
+Copilot ska **re-recencera** när:
+- PR:en har label `needs-copilot`, eller
+- Diffen rör `src/**` eller `app/**`, eller
+- PR-beskrivningen innehåller `/recheck` eller `/security-focus`.
