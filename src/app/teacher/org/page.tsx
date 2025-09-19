@@ -21,6 +21,7 @@ import {
   type OrganizationInvite
 } from '@/lib/orgs'
 import { Users, Plus, Settings, Mail, Trash2, Copy, Check } from 'lucide-react'
+import { BillingCard } from '@/components/billing/BillingCard'
 
 export default function OrganizationPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
@@ -420,6 +421,12 @@ export default function OrganizationPage() {
                         </div>
                       </CardHeader>
                     </Card>
+
+                    {/* Billing */}
+                    <BillingCard 
+                      organizationId={selectedOrg.id}
+                      canManage={canManage}
+                    />
 
                     {/* Members */}
                     <Card>

@@ -1,5 +1,6 @@
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import type { PostgrestError } from '@supabase/supabase-js'
+import type { BillingStatus, Entitlements } from '@/types/billing'
 
 export interface Organization {
   id: string
@@ -7,6 +8,10 @@ export interface Organization {
   created_by: string
   created_at: string
   updated_at: string
+  billing_status: BillingStatus
+  entitlements: Entitlements
+  stripe_customer_id?: string
+  stripe_sub_id?: string
 }
 
 export interface OrganizationMember {
