@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "lib": [
-      "dom",
-      "dom.iterable",
-      "es6"
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -27,7 +27,12 @@
         "./src/*"
       ]
     },
-    "target": "ES2017"
+    "target": "ES2022",
+    "types": [
+      "node",
+      "react",
+      "react-dom"
+    ]
   },
   "include": [
     "next-env.d.ts",

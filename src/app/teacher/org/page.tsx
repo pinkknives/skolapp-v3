@@ -40,18 +40,6 @@ export default function OrganizationPage() {
   const [inviteRole, setInviteRole] = useState<'admin' | 'teacher'>('teacher')
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    loadOrganizations()
-  }, [loadOrganizations])
-
-  useEffect(() => {
-    if (selectedOrg) {
-      loadMembers()
-      loadInvites()
-      checkManagePermissions()
-    }
-  }, [selectedOrg, loadMembers, loadInvites, checkManagePermissions])
-
   const loadOrganizations = useCallback(async () => {
     try {
       setLoading(true)
@@ -111,6 +99,18 @@ export default function OrganizationPage() {
       setCanManage(false)
     }
   }, [selectedOrg])
+
+  useEffect(() => {
+    loadOrganizations()
+  }, [loadOrganizations])
+
+  useEffect(() => {
+    if (selectedOrg) {
+      loadMembers()
+      loadInvites()
+      checkManagePermissions()
+    }
+  }, [selectedOrg, loadMembers, loadInvites, checkManagePermissions])
 
   const handleCreateOrganization = async (e: React.FormEvent) => {
     e.preventDefault()

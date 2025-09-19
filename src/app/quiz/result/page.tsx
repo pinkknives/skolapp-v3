@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { StudentAnswer } from '@/types/quiz'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
+import { AlertTriangle, CheckCircle2, Info, Loader2, Plus } from 'lucide-react'
+import { quizResult as t } from '@/locales/sv/quiz'
 
 interface QuizResult {
   quizId: string
@@ -20,6 +22,17 @@ export default function QuizResultPage() {
   const router = useRouter()
   const [result, setResult] = useState<QuizResult | null>(null)
   const [loading, setLoading] = useState(true)
+  const reduceMotion = useReducedMotion()
+
+  const getMotionProps = (opts?: { delay?: number; fromY?: number }) => {
+    const delay = opts?.delay ?? 0
+    const fromY = opts?.fromY ?? 20
+    return {
+      initial: reduceMotion ? false : { opacity: 0, y: fromY },
+      animate: { opacity: 1, y: 0 },
+      transition: { duration: reduceMotion ? 0 : 0.18, delay: reduceMotion ? 0 : delay }
+    }
+  }
 
   useEffect(() => {
     // Get result data from session storage
@@ -59,11 +72,11 @@ export default function QuizResultPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite" aria-busy="true">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <Loader2 className="h-8 w-8 text-primary-600 animate-spin mx-auto mb-4" aria-hidden="true" />
           <Typography variant="body1" className="text-neutral-600">
-            Laddar resultat...
+            {t.loading}
           </Typography>
         </div>
       </div>
@@ -72,21 +85,20 @@ export default function QuizResultPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" role="alert" aria-live="polite">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 bg-warning-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="h-8 w-8 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 15c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
+            <AlertTriangle className="h-8 w-8 text-warning-600" aria-hidden="true" />
           </div>
           <Typography variant="h6" className="text-warning-800 mb-2">
-            Inga resultat hittades
+            {t.noResult.title}
           </Typography>
           <Typography variant="body2" className="text-warning-600 mb-4">
-            Det gick inte att hitta resultat för detta quiz.
+            {t.noResult.description}
           </Typography>
-          <Button onClick={handleNewQuiz}>
-            Gå med i nytt quiz
+          <Button onClick={handleNewQuiz} className="inline-flex items-center gap-x-2">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            {t.actions.joinNewQuiz}
           </Button>
         </div>
       </div>
@@ -97,34 +109,23 @@ export default function QuizResultPage() {
     <div className="min-h-screen bg-gradient-to-br from-success-50 to-neutral-50 p-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-8"
-        >
+        <motion.div {...getMotionProps({ fromY: -12 })} className="text-center mb-8">
           <div className="w-20 h-20 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="h-10 w-10 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <CheckCircle2 className="h-10 w-10 text-success-600" aria-hidden="true" />
           </div>
           <Typography variant="h4" className="text-success-800 mb-2">
-            Quiz Slutförd!
+            {t.header.title}
           </Typography>
           <Typography variant="body1" className="text-success-600">
-            Tack för ditt deltagande. Dina svar har sparats.
+            {t.header.subtitle}
           </Typography>
         </motion.div>
 
         {/* Summary Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
+        <motion.div {...getMotionProps({ delay: 0.1 })}>
           <Card className="bg-white shadow-lg mb-6">
             <CardHeader>
-              <CardTitle className="text-center">Sammanfattning</CardTitle>
+              <CardTitle className="text-center">{t.summary.title}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
@@ -133,7 +134,7 @@ export default function QuizResultPage() {
                     {result.answers.length}
                   </Typography>
                   <Typography variant="caption" className="text-primary-600">
-                    Besvarade frågor
+                    {t.summary.answered}
                   </Typography>
                 </div>
                 
@@ -142,7 +143,7 @@ export default function QuizResultPage() {
                     {formatTime(result.timeSpent)}
                   </Typography>
                   <Typography variant="caption" className="text-success-600">
-                    Total tid
+                    {t.summary.totalTime}
                   </Typography>
                 </div>
                 
@@ -154,7 +155,7 @@ export default function QuizResultPage() {
                     })}
                   </Typography>
                   <Typography variant="caption" className="text-neutral-600">
-                    Slutförd
+                    {t.summary.completedAt}
                   </Typography>
                 </div>
               </div>
@@ -163,22 +164,19 @@ export default function QuizResultPage() {
         </motion.div>
 
         {/* Feedback Message */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
+        <motion.div {...getMotionProps({ delay: 0.2 })}>
           <Card className="bg-white shadow-lg mb-6">
             <CardContent className="text-center py-6">
               <Typography variant="h6" className="text-neutral-800 mb-3">
-                Vad händer nu?
+                {t.feedback.title}
               </Typography>
               <Typography variant="body2" className="text-neutral-600 mb-4">
-                Din lärare kommer att granska dina svar och ge feedback. Resultat och bedömning kommer att delas med dig senare.
+                {t.feedback.description}
               </Typography>
-              <div className="bg-primary-50 p-4 rounded-lg">
+              <div className="bg-primary-50 p-4 rounded-lg inline-flex items-start gap-x-2 text-left mx-auto">
+                <Info className="h-4 w-4 text-primary-700 mt-0.5" aria-hidden="true" />
                 <Typography variant="caption" className="text-primary-700">
-                  📊 Dina svar sparas tillfälligt enligt GDPR-regler. Långtidslagring kräver samtycke från skolan.
+                  {t.gdpr.shortTermNote}
                 </Typography>
               </div>
             </CardContent>
@@ -186,30 +184,17 @@ export default function QuizResultPage() {
         </motion.div>
 
         {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="text-center"
-        >
-          <Button
-            size="lg"
-            onClick={handleNewQuiz}
-            className="mr-4"
-          >
-            Gå med i nytt quiz
+        <motion.div {...getMotionProps({ delay: 0.3 })} className="text-center">
+          <Button size="lg" onClick={handleNewQuiz} className="inline-flex items-center gap-x-2">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            {t.actions.joinNewQuiz}
           </Button>
         </motion.div>
 
         {/* Privacy Notice */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-          className="mt-8 text-center"
-        >
+        <motion.div {...getMotionProps({ delay: 0.4 })} className="mt-8 text-center">
           <Typography variant="caption" className="text-neutral-500">
-            Dina personuppgifter hanteras enligt GDPR. Kontakta din lärare för frågor om datahantering.
+            {t.gdpr.notice}
           </Typography>
         </motion.div>
       </div>
