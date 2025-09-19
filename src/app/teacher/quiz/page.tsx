@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
@@ -9,7 +9,7 @@ import { QuizStatus } from '@/types/quiz'
 import { getOrganizationQuizzes, updateQuizWithOrganization, deleteQuizWithOrganization } from '@/lib/quiz-utils'
 import { getUserOrganizations, Organization } from '@/lib/orgs'
 import Link from 'next/link'
-import { Plus, Share2, Play, BarChart3, HelpCircle, Edit, Copy, Archive } from 'lucide-react'
+import { Plus, Share2, Play, HelpCircle, Edit, Archive } from 'lucide-react'
 
 // Database quiz interface (simplified from Supabase)
 interface DatabaseQuiz {
@@ -70,7 +70,7 @@ export default function QuizManagementPage() {
     }
   }
 
-  const loadQuizzes = async () => {
+  const loadQuizzes = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -80,12 +80,12 @@ export default function QuizManagementPage() {
         return
       }
       setQuizzes(data || [])
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid laddning av quiz')
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedOrgId])
 
   const handleOrgChange = (orgId: string) => {
     setSelectedOrgId(orgId)
@@ -131,7 +131,7 @@ export default function QuizManagementPage() {
     setShowSharing(true)
   }
 
-  const handleReviewMode = (quiz: DatabaseQuiz) => {
+  const _handleReviewMode = (quiz: DatabaseQuiz) => {
     setSelectedQuiz(quiz)
     setShowReviewMode(true)
   }
@@ -144,7 +144,7 @@ export default function QuizManagementPage() {
         return
       }
       await loadQuizzes() // Reload to get updated status
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid publicering av quiz')
     }
   }
@@ -157,7 +157,7 @@ export default function QuizManagementPage() {
         return
       }
       await loadQuizzes() // Reload to get updated status
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid avpublicering av quiz')
     }
   }
@@ -173,7 +173,7 @@ export default function QuizManagementPage() {
         return
       }
       await loadQuizzes() // Reload to remove deleted quiz
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid arkivering av quiz')
     }
   }

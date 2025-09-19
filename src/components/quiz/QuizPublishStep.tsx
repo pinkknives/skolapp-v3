@@ -14,7 +14,7 @@ interface QuizPublishStepProps {
   onValidationChange: (isValid: boolean) => void
 }
 
-export function QuizPublishStep({ quiz, onChange, onValidationChange }: QuizPublishStepProps) {
+export function QuizPublishStep({ quiz, onValidationChange }: QuizPublishStepProps) {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [showPreview, setShowPreview] = useState(false)
   const [isValidated, setIsValidated] = useState(false)

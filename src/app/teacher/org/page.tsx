@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Typography, Heading } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
@@ -42,7 +42,7 @@ export default function OrganizationPage() {
 
   useEffect(() => {
     loadOrganizations()
-  }, [])
+  }, [loadOrganizations])
 
   useEffect(() => {
     if (selectedOrg) {
@@ -50,9 +50,9 @@ export default function OrganizationPage() {
       loadInvites()
       checkManagePermissions()
     }
-  }, [selectedOrg])
+  }, [selectedOrg, loadMembers, loadInvites, checkManagePermissions])
 
-  const loadOrganizations = async () => {
+  const loadOrganizations = useCallback(async () => {
     try {
       setLoading(true)
       const { data, error } = await getUserOrganizations()
@@ -64,14 +64,14 @@ export default function OrganizationPage() {
       if (data && data.length > 0 && !selectedOrg) {
         setSelectedOrg(data[0])
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade')
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedOrg])
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     if (!selectedOrg) return
     
     try {
@@ -81,12 +81,12 @@ export default function OrganizationPage() {
         return
       }
       setMembers(data || [])
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid laddning av medlemmar')
     }
-  }
+  }, [selectedOrg])
 
-  const loadInvites = async () => {
+  const loadInvites = useCallback(async () => {
     if (!selectedOrg) return
     
     try {
@@ -96,21 +96,21 @@ export default function OrganizationPage() {
         return
       }
       setInvites(data || [])
-    } catch (err) {
+    } catch (_err) {
       console.error('Ett oväntat fel inträffade vid laddning av inbjudningar')
     }
-  }
+  }, [selectedOrg])
 
-  const checkManagePermissions = async () => {
+  const checkManagePermissions = useCallback(async () => {
     if (!selectedOrg) return
     
     try {
       const canManageOrg = await canManageOrganization(selectedOrg.id)
       setCanManage(canManageOrg)
-    } catch (err) {
+    } catch (_err) {
       setCanManage(false)
     }
-  }
+  }, [selectedOrg])
 
   const handleCreateOrganization = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,7 +131,7 @@ export default function OrganizationPage() {
       }
       setShowCreateForm(false)
       setNewOrgName('')
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid skapande av organisation')
     } finally {
       setSubmitting(false)
@@ -163,7 +163,7 @@ export default function OrganizationPage() {
         setError(null)
         alert(`Inbjudan skapad! Kopiera länken och skicka till ${inviteEmail}:\n\n${inviteUrl}`)
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid sändning av inbjudan')
     } finally {
       setSubmitting(false)
@@ -178,7 +178,7 @@ export default function OrganizationPage() {
         return
       }
       await loadMembers()
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid uppdatering av roll')
     }
   }
@@ -193,7 +193,7 @@ export default function OrganizationPage() {
         return
       }
       await loadInvites()
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid återkallning av inbjudan')
     }
   }
@@ -205,7 +205,7 @@ export default function OrganizationPage() {
       await navigator.clipboard.writeText(inviteUrl)
       setCopiedToken(token)
       setTimeout(() => setCopiedToken(null), 2000)
-    } catch (err) {
+    } catch (_err) {
       // Fallback for browsers that don't support clipboard API
       alert(`Kopiera denna länk:\n\n${inviteUrl}`)
     }
@@ -221,7 +221,7 @@ export default function OrganizationPage() {
         return
       }
       await loadMembers()
-    } catch (err) {
+    } catch (_err) {
       setError('Ett oväntat fel inträffade vid borttagning av medlem')
     }
   }

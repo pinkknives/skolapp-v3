@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
-import { UserWithProfile, ROLE_MAPPING } from '@/lib/auth'
+import { UserWithProfile } from '@/lib/auth'
 import { updateProfileAction } from '@/app/actions/profile'
 import { TeacherVerification } from './TeacherVerification'
 import { User, Mail, GraduationCap, Settings } from 'lucide-react'
@@ -34,7 +34,7 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
       } else {
         alert('Det gick inte att spara profilen: ' + (result.error || 'Okänt fel'))
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Det gick inte att spara profilen')
     } finally {
       setIsLoading(false)

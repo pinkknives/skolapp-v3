@@ -51,7 +51,7 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
     }
 
     loadOrganizations()
-  }, [])
+  }, [onChange, quiz.orgId])
 
   // Validate on changes
   useEffect(() => {

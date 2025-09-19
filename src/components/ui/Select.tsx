@@ -15,9 +15,9 @@ const selectVariants = cva(
         success: 'border-success-500 focus:border-success-600 focus-visible:ring-success-500',
       },
       size: {
-        sm: 'h-8 px-2 text-xs',
-        md: 'h-10 px-3 text-sm',
-        lg: 'h-12 px-4 text-base',
+        sm: 'h-11 px-2 text-xs',
+        md: 'h-12 px-3 text-sm',
+        lg: 'h-14 px-4 text-base',
       },
     },
     defaultVariants: {
