@@ -6,8 +6,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  // Global timeout for all tests (5 minutes for CI stability)
+  globalTimeout: process.env.CI ? 5 * 60 * 1000 : undefined,
+  // Per-test timeout (30 seconds for individual tests)
+  timeout: 30 * 1000,
   reporter: [
-    ['html'],
+    ['html', { outputFolder: 'playwright-report' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['json', { outputFile: 'test-results/results.json' }]
   ],
@@ -16,21 +20,29 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Respect reduced motion for accessibility testing
+    reducedMotion: 'reduce',
+    // Set Swedish locale for testing
+    locale: 'sv-SE',
+    timezoneId: 'Europe/Stockholm',
   },
 
   projects: [
-    // Desktop browsers
+    // Core desktop browsers for critical flows
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testMatch: /.*\.(e2e|spec)\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testMatch: /.*\.(e2e|spec)\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testMatch: /.*\.(e2e|spec)\.ts/,
     },
 
     // Mobile devices
