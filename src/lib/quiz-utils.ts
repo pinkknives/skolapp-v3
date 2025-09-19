@@ -668,36 +668,55 @@ export function scheduleQuizSessionCleanup(sessionId: string, dataRetentionMode:
 }
 
 /**
- * Get quizzes for the current user's organization
+ * Get quizzes for the current user's organization or a specific organization
  */
-export async function getOrganizationQuizzes(): Promise<{ data: any[] | null; error: any }> {
+export async function getOrganizationQuizzes(orgId?: string): Promise<{ data: any[] | null; error: any }> {
   const supabase = supabaseBrowser()
   
   try {
-    // Get current user's organization
-    const { data: orgData, error: orgError } = await getCurrentUserOrganization()
-    if (orgError || !orgData) {
-      // If no organization, get user's personal quizzes
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) {
-        return { data: null, error: userError || new Error('Användare inte inloggad') }
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { data: null, error: userError || new Error('Användare inte inloggad') }
+    }
+
+    let targetOrgId = orgId
+
+    // If no specific orgId provided, get user's current organization
+    if (!targetOrgId) {
+      const { data: orgData, error: orgError } = await getCurrentUserOrganization()
+      if (orgError || !orgData) {
+        // If no organization, get user's personal quizzes
+        const { data, error } = await supabase
+          .from('quizzes')
+          .select('*')
+          .eq('owner_id', user.id)
+          .is('org_id', null)
+          .order('created_at', { ascending: false })
+
+        return { data, error }
       }
+      targetOrgId = orgData.org.id
+    }
 
-      const { data, error } = await supabase
-        .from('quizzes')
-        .select('*')
-        .eq('owner_id', user.id)
-        .is('org_id', null)
-        .order('created_at', { ascending: false })
+    // Verify user has access to the organization
+    const { data: membership, error: membershipError } = await supabase
+      .from('org_members')
+      .select('*')
+      .eq('org_id', targetOrgId)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single()
 
-      return { data, error }
+    if (membershipError || !membership) {
+      return { data: null, error: new Error('Du har inte behörighet att se quiz från denna organisation') }
     }
 
     // Get organization quizzes
     const { data, error } = await supabase
       .from('quizzes')
       .select('*')
-      .eq('org_id', orgData.org.id)
+      .eq('org_id', targetOrgId)
       .order('created_at', { ascending: false })
 
     return { data, error }
@@ -711,7 +730,8 @@ export async function getOrganizationQuizzes(): Promise<{ data: any[] | null; er
  */
 export async function createQuizWithOrganization(
   title: string,
-  description?: string
+  description?: string,
+  orgId?: string
 ): Promise<{ data: any | null; error: any }> {
   const supabase = supabaseBrowser()
   
@@ -722,8 +742,28 @@ export async function createQuizWithOrganization(
       return { data: null, error: userError || new Error('Användare inte inloggad') }
     }
 
-    // Get user's organization (optional)
-    const { data: orgData } = await getCurrentUserOrganization()
+    let targetOrgId = orgId
+
+    // If no orgId specified, try to get user's current organization
+    if (!targetOrgId) {
+      const { data: orgData } = await getCurrentUserOrganization()
+      targetOrgId = orgData?.org?.id
+    }
+
+    // Verify user has access to the target organization if specified
+    if (targetOrgId) {
+      const { data: membership, error: membershipError } = await supabase
+        .from('org_members')
+        .select('*')
+        .eq('org_id', targetOrgId)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single()
+
+      if (membershipError || !membership) {
+        return { data: null, error: new Error('Du har inte behörighet att skapa quiz i denna organisation') }
+      }
+    }
     
     // Create quiz
     const quizData: any = {
@@ -733,9 +773,9 @@ export async function createQuizWithOrganization(
       status: 'draft'
     }
     
-    // Add organization if user is part of one
-    if (orgData?.org) {
-      quizData.org_id = orgData.org.id
+    // Add organization if specified
+    if (targetOrgId) {
+      quizData.org_id = targetOrgId
     }
     
     const { data, error } = await supabase

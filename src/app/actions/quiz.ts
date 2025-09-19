@@ -24,6 +24,7 @@ interface CreateAttemptResult {
 export async function createQuizAction(formData: FormData): Promise<CreateQuizResult> {
   const title = formData.get('title') as string
   const ownerId = formData.get('ownerId') as string
+  const orgId = formData.get('orgId') as string
 
   if (!title || !ownerId) {
     return {
@@ -32,8 +33,31 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
     }
   }
 
+  if (!orgId) {
+    return {
+      success: false,
+      error: 'Organisation krävs'
+    }
+  }
+
   try {
     const supabase = supabaseServer()
+
+    // Verify user has access to the organization
+    const { data: membership, error: membershipError } = await supabase
+      .from('org_members')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('user_id', ownerId)
+      .eq('status', 'active')
+      .single()
+
+    if (membershipError || !membership) {
+      return {
+        success: false,
+        error: 'Du har inte behörighet att skapa quiz i denna organisation'
+      }
+    }
 
     // Generate unique join code
     let joinCode = generateShareCode()
@@ -63,12 +87,13 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
       }
     }
 
-    // Insert the quiz
+    // Insert the quiz with organization
     const { data: quiz, error: insertError } = await supabase
       .from('quizzes')
       .insert({
         title,
         owner_id: ownerId,
+        org_id: orgId,
         join_code: joinCode,
         status: 'draft'
       })

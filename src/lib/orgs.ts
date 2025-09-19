@@ -75,12 +75,65 @@ export async function getUserOrganizations(): Promise<{ data: Organization[] | n
   const supabase = supabaseBrowser()
   
   try {
-    const { data, error } = await supabase
-      .from('orgs')
-      .select('*')
-      .order('created_at', { ascending: false })
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { data: null, error: userError || new Error('Användare inte inloggad') }
+    }
 
-    return { data, error }
+    // Get user's organizations through membership
+    const { data, error } = await supabase
+      .from('org_members')
+      .select(`
+        org:org_id (*)
+      `)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('joined_at', { ascending: false })
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    // Extract organizations from membership records
+    const organizations = (data?.map(member => member.org).filter(Boolean) || []) as unknown as Organization[]
+    return { data: organizations, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Get organizations where the user can create quizzes (teacher, admin, or owner)
+ */
+export async function getUserCreatableOrganizations(): Promise<{ data: Organization[] | null; error: any }> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { data: null, error: userError || new Error('Användare inte inloggad') }
+    }
+
+    // Get user's organizations where they can create quizzes
+    const { data, error } = await supabase
+      .from('org_members')
+      .select(`
+        org:org_id (*)
+      `)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .in('role', ['owner', 'admin', 'teacher'])
+      .order('joined_at', { ascending: false })
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    // Extract organizations from membership records
+    const organizations = (data?.map(member => member.org).filter(Boolean) || []) as unknown as Organization[]
+    return { data: organizations, error: null }
   } catch (error) {
     return { data: null, error }
   }

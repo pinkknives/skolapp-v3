@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Typography, Heading } from '@/components/ui/Typography'
 import { QuizStatus } from '@/types/quiz'
 import { getOrganizationQuizzes, updateQuizWithOrganization, deleteQuizWithOrganization } from '@/lib/quiz-utils'
+import { getUserOrganizations, Organization } from '@/lib/orgs'
 import Link from 'next/link'
 import { Plus, Share2, Play, BarChart3, HelpCircle, Edit, Copy, Archive } from 'lucide-react'
 
@@ -31,16 +32,49 @@ export default function QuizManagementPage() {
   const [filterStatus, setFilterStatus] = useState<QuizStatus | 'all'>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Organization-related state
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('')
+  const [loadingOrgs, setLoadingOrgs] = useState(true)
 
   useEffect(() => {
-    loadQuizzes()
+    loadOrganizations()
   }, [])
+
+  useEffect(() => {
+    if (!loadingOrgs) {
+      loadQuizzes()
+    }
+  }, [selectedOrgId, loadingOrgs])
+
+  const loadOrganizations = async () => {
+    try {
+      setLoadingOrgs(true)
+      const { data, error } = await getUserOrganizations()
+      if (error) {
+        console.error('Error loading organizations:', error)
+        return
+      }
+      
+      setOrganizations(data || [])
+      
+      // Auto-select first organization if available
+      if (data && data.length > 0) {
+        setSelectedOrgId(data[0].id)
+      }
+    } catch (error) {
+      console.error('Error loading organizations:', error)
+    } finally {
+      setLoadingOrgs(false)
+    }
+  }
 
   const loadQuizzes = async () => {
     try {
       setLoading(true)
       setError(null)
-      const { data, error } = await getOrganizationQuizzes()
+      const { data, error } = await getOrganizationQuizzes(selectedOrgId || undefined)
       if (error) {
         setError('Kunde inte ladda quiz: ' + error.message)
         return
@@ -51,6 +85,10 @@ export default function QuizManagementPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleOrgChange = (orgId: string) => {
+    setSelectedOrgId(orgId)
   }
 
   // Sort quizzes by last updated (senaste uppdaterade överst)
@@ -217,6 +255,46 @@ export default function QuizManagementPage() {
                 }} className="mt-2" size="sm">
                   Försök igen
                 </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Organization Selection */}
+          {!loadingOrgs && organizations.length > 1 && (
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <Typography variant="body2" className="font-medium text-neutral-700">
+                    Organisation:
+                  </Typography>
+                  <select
+                    value={selectedOrgId}
+                    onChange={(e) => handleOrgChange(e.target.value)}
+                    className="px-3 py-1 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    {organizations.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Show current organization for single org users */}
+          {!loadingOrgs && organizations.length === 1 && (
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <Typography variant="body2" className="font-medium text-neutral-700">
+                    Organisation:
+                  </Typography>
+                  <Typography variant="body2" className="text-neutral-600">
+                    {organizations[0].name}
+                  </Typography>
+                </div>
               </CardContent>
             </Card>
           )}
