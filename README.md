@@ -413,3 +413,111 @@ The application integrates with Spec Kit for:
 - Standards alignment
 
 Integration points are located in `/src/components/spec-kit/`.
+
+## Organisationer & RLS (Row Level Security)
+
+Skolapp v3 använder ett robust organisationssystem med inbyggd datasäkerhet via Row Level Security (RLS) för att säkerställa att data isoleras mellan olika skolor och organisationer.
+
+### Organisationsstruktur
+
+**Huvudkomponenter:**
+- `orgs` - Organisationer (skolor, kommuner, etc.)
+- `org_members` - Medlemskap med roller (owner, admin, teacher)
+- `org_invites` - Inbjudningar till organisationer
+- Koppling till `quizzes` via `org_id` för organisationstillhörighet
+
+**Roller och behörigheter:**
+- **Owner**: Skapare av organisation, full kontroll
+- **Admin**: Kan hantera medlemmar och inställningar
+- **Teacher**: Kan skapa och hantera quiz inom organisationen
+
+### RLS-säkerhetsprinciper
+
+**Grundläggande isolation:**
+- Användare kan endast se data från organisationer de tillhör
+- Quiz från andra organisationer är ej tillgängliga
+- Medlemslistor skyddade mellan organisationer
+- Försök och resultat isolerade per organisation
+
+**RLS-policies implementerade:**
+```sql
+-- Organisationer: Endast medlemmar kan läsa
+CREATE POLICY "user reads own orgs" ON orgs
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM org_members om 
+    WHERE om.org_id = orgs.id 
+    AND om.user_id = auth.uid() 
+    AND om.status = 'active'
+  )
+);
+
+-- Quiz: Medlemmar kan läsa organisationens quiz
+CREATE POLICY "org member reads org quizzes" ON quizzes
+FOR SELECT USING (
+  auth.uid() = owner_id
+  OR (
+    org_id IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM org_members om 
+      WHERE om.org_id = quizzes.org_id 
+      AND om.user_id = auth.uid() 
+      AND om.status = 'active'
+    )
+  )
+);
+```
+
+**Verifierad säkerhet:**
+- Negativa tester bekräftar att cross-org access blockeras
+- RLS-policies förhindrar dataläckage mellan organisationer
+- Automatiserade tester säkerställer korrekt isolering
+
+### Implementation
+
+**Frontend-komponenter:**
+- `/src/app/teacher/org/page.tsx` - Organisationshantering
+- `/src/app/teacher/quiz/page.tsx` - Quiz-hantering per organisation
+- `/src/lib/orgs.ts` - Organisationsfunktioner
+- `/src/lib/quiz-utils.ts` - Quiz-funktioner med organisationsstöd
+
+**Backend-säkerhet:**
+- `/supabase/migrations/005_orgs.sql` - RLS-policies och schema
+- Server-side validering av organisationstillhörighet
+- Automatisk koppling av quiz till användarens organisation
+
+**Testning:**
+- `/test/helpers/rls-verification.ts` - RLS-verifieringstester
+- `/scripts/run-rls-tests.js` - Automatiserade säkerhetstester
+- Negativtester för cross-org access
+
+### Användning
+
+**För lärare:**
+1. Skapa eller bli inbjuden till en organisation
+2. Alla quiz kopplas automatiskt till organisationen
+3. Se endast quiz och medlemmar från egen organisation
+4. Bjud in kollegor via e-postinbjudningar
+
+**För utvecklare:**
+```typescript
+// Hämta quiz för användarens organisation
+const { data, error } = await getOrganizationQuizzes()
+
+// Skapa quiz i organisation
+const result = await createQuizWithOrganization(title, description, orgId)
+
+// Verifiera organisationstillhörighet
+const { data: membership } = await getCurrentUserOrganization()
+```
+
+**Säkerhetstestning:**
+```bash
+# Kör RLS-verifieringstester
+node scripts/run-rls-tests.js
+
+# Resultat visar att cross-org access blockeras korrekt
+# ✅ All RLS tests passed. Organization isolation working correctly.
+```
+
+Detta system garanterar GDPR-kompatibilitet och datasäkerhet genom att säkerställa att varje organisation endast kan komma åt sin egen data.
