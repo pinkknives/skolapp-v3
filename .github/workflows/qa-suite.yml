@@ -62,3 +62,26 @@ jobs:
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
       - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Check deprecated Actions
+        run: bash ./scripts/check-deprecated-actions.sh
+      - name: Check deprecated npm packages
+        run: bash ./scripts/check-deprecated-packages.sh
+      - name: Upload deprecation reports
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+        with:
+          name: deprecated-reports
+          path: ./.reports/deprecated/**
+
+  Security Scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: npm audit (dev allowed)
+        run: npm audit --audit-level=moderate || true
+      - name: Secret scan (simple)
+        run: git ls-files | xargs -I {} grep -nE "(AWS_|SECRET|SERVICE_ROLE|API_KEY)" {} || true
