@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, ExecutionMode } from '@/types/quiz'
+import { getUserCreatableOrganizations, Organization } from '@/lib/orgs'
 
 interface QuizBasicInfoStepProps {
   quiz: Partial<Quiz>
@@ -16,12 +17,49 @@ interface QuizBasicInfoStepProps {
 
 export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBasicInfoStepProps) {
   const [tagInput, setTagInput] = useState('')
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [loadingOrgs, setLoadingOrgs] = useState(true)
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('')
+
+  // Load user's organizations
+  useEffect(() => {
+    const loadOrganizations = async () => {
+      try {
+        setLoadingOrgs(true)
+        const { data, error } = await getUserCreatableOrganizations()
+        if (error) {
+          console.error('Error loading organizations:', error)
+          return
+        }
+        
+        setOrganizations(data || [])
+        
+        // Auto-select if only one organization
+        if (data && data.length === 1) {
+          setSelectedOrgId(data[0].id)
+          onChange({ orgId: data[0].id })
+        } else if (data && data.length > 1) {
+          // Set to current selected org if available
+          const currentOrgId = quiz.orgId || ''
+          setSelectedOrgId(currentOrgId)
+        }
+      } catch (error) {
+        console.error('Error loading organizations:', error)
+      } finally {
+        setLoadingOrgs(false)
+      }
+    }
+
+    loadOrganizations()
+  }, [])
 
   // Validate on changes
   useEffect(() => {
-    const isValid = !!(quiz.title && quiz.title.trim().length > 0)
+    const hasTitle = !!(quiz.title && quiz.title.trim().length > 0)
+    const hasOrg = organizations.length === 0 || selectedOrgId !== ''
+    const isValid = hasTitle && hasOrg
     onValidationChange(isValid)
-  }, [quiz.title, onValidationChange])
+  }, [quiz.title, selectedOrgId, organizations.length, onValidationChange])
 
   const handleAddTag = () => {
     if (tagInput.trim() && !quiz.tags?.includes(tagInput.trim())) {
@@ -43,6 +81,11 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
       e.preventDefault()
       handleAddTag()
     }
+  }
+
+  const handleOrgChange = (orgId: string) => {
+    setSelectedOrgId(orgId)
+    onChange({ orgId })
   }
 
   const executionModes: { value: ExecutionMode; label: string; description: string }[] = [
@@ -92,6 +135,48 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
           <CardTitle>Grundläggande information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Organization selection - only show if user has multiple organizations */}
+          {!loadingOrgs && organizations.length > 1 && (
+            <div>
+              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
+                Organisation <span className="text-red-500">*</span>
+              </Typography>
+              <select
+                value={selectedOrgId}
+                onChange={(e) => handleOrgChange(e.target.value)}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                required
+              >
+                <option value="">Välj organisation</option>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+              <Typography variant="caption" className="text-neutral-500 mt-1">
+                Välj vilken organisation detta quiz ska tillhöra
+              </Typography>
+            </div>
+          )}
+
+          {/* Show selected org for single org users */}
+          {!loadingOrgs && organizations.length === 1 && (
+            <div>
+              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
+                Organisation
+              </Typography>
+              <div className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md">
+                <Typography variant="body2" className="text-neutral-700">
+                  {organizations[0].name}
+                </Typography>
+              </div>
+              <Typography variant="caption" className="text-neutral-500 mt-1">
+                Detta quiz kommer att tillhöra din organisation
+              </Typography>
+            </div>
+          )}
+
           {/* Title - Required */}
           <div>
             <Input

@@ -73,6 +73,7 @@ export interface Quiz {
   createdAt: Date
   updatedAt: Date
   createdBy: string // Teacher ID
+  orgId?: string // Organization ID (optional for backwards compatibility)
   status: QuizStatus
   settings: QuizSettings
   questions: Question[]
