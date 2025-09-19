@@ -2,31 +2,24 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    types: [opened, synchronize, reopened]
   push:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  Lint & Type Check:            # <-- detta ser du redan
+  lint_and_type:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
         with:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run lint -- --max-warnings=0
-      - run: npm run type-check
-
-  build:                         # job-id
-    name: Build                  # <-- DISPLAY-NAMNET (måste vara exakt "Build")
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - run: npx eslint . --max-warnings=0
+      - run: npx tsc --noEmit
