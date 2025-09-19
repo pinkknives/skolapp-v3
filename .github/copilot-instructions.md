@@ -59,6 +59,19 @@
   - Playwright e2e for **critical flows** (quiz create, join, submit)
   - Lighthouse notes in PR description
 
+## CI/Tool responsibility (Copilot should NOT flag these)
+ESLint automatically handles:
+- Unused variables, imports, and parameters
+- TypeScript `any` usage and strict typing
+- React hooks dependency arrays and patterns
+- Code formatting and style consistency
+- Inline style restrictions
+
+Lighthouse CI automatically validates:
+- Performance budgets (bundle size, Core Web Vitals)
+- Basic accessibility compliance (color contrast, ARIA basics)
+- PWA requirements and best practices
+
 ## PR expectations
 - Follow `/plan` scope precisely.
 - Link tasks to commits. Keep commit messages imperative.
@@ -70,6 +83,37 @@
   - [ ] PWA unaffected
   - [ ] GDPR respected (Korttid vs Långtid, consent)
   - [ ] Tests included where relevant
+
+## Copilot review focus areas (what TO flag)
+Focus reviews on high-value areas that require human judgment:
+
+### Security & Privacy (HIGH PRIORITY)
+- Secrets, tokens, or credentials in code
+- SQL injection vulnerabilities  
+- XSS/CSRF protection gaps
+- Data leakage between organizations
+- Environment variable misuse
+
+### GDPR & Swedish Compliance (HIGH PRIORITY)
+- Parental consent flow implementation
+- Data retention policy violations
+- Cross-organization data access
+- Swedish language consistency and accuracy
+- Legal compliance for Swedish schools
+
+### Accessibility (CONTEXTUAL)
+- Complex WCAG 2.1 AA compliance beyond basic color/contrast
+- Screen reader experience and semantic HTML
+- Keyboard navigation patterns
+- Focus management in dynamic content
+- Touch target sizing in complex layouts
+
+### Architecture & Performance (STRATEGIC)
+- Smart code splitting and lazy loading decisions
+- Architectural performance anti-patterns
+- Complex state management issues
+- Database query optimization opportunities
+- Memory leak risks in React components
 
 ## Helpful patterns
 - Server components by default; client only where needed.
