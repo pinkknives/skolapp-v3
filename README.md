@@ -556,3 +556,4 @@ node scripts/run-rls-tests.js
 
 Detta system garanterar GDPR-kompatibilitet och datasäkerhet genom att säkerställa att varje organisation endast kan komma åt sin egen data.
 - Sanity check Fri Sep 19 12:42:28 UTC 2025
+
