@@ -2,6 +2,8 @@ import { Quiz, Question, QuizStatus, AIQuizDraft, QuizJoinResult, QuizJoinReques
 import { dataRetentionService, createSessionWithRetention } from '@/lib/data-retention'
 import { longTermDataService, canStoreLongTermData, type AnalyticsData } from '@/lib/long-term-data'
 import { type User, type DataRetentionMode } from '@/types/auth'
+import { supabaseBrowser } from '@/lib/supabase-browser'
+import { getCurrentUserOrganization } from '@/lib/orgs'
 
 // Generate a random 4-character share code
 export function generateShareCode(): string {
@@ -663,4 +665,126 @@ export function scheduleQuizSessionCleanup(sessionId: string, dataRetentionMode:
   }, cleanupDelay)
   
   // Cleanup scheduled for session
+}
+
+/**
+ * Get quizzes for the current user's organization
+ */
+export async function getOrganizationQuizzes(): Promise<{ data: any[] | null; error: any }> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    // Get current user's organization
+    const { data: orgData, error: orgError } = await getCurrentUserOrganization()
+    if (orgError || !orgData) {
+      // If no organization, get user's personal quizzes
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        return { data: null, error: userError || new Error('Användare inte inloggad') }
+      }
+
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select('*')
+        .eq('owner_id', user.id)
+        .is('org_id', null)
+        .order('created_at', { ascending: false })
+
+      return { data, error }
+    }
+
+    // Get organization quizzes
+    const { data, error } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('org_id', orgData.org.id)
+      .order('created_at', { ascending: false })
+
+    return { data, error }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Create a new quiz with organization assignment
+ */
+export async function createQuizWithOrganization(
+  title: string,
+  description?: string
+): Promise<{ data: any | null; error: any }> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { data: null, error: userError || new Error('Användare inte inloggad') }
+    }
+
+    // Get user's organization (optional)
+    const { data: orgData } = await getCurrentUserOrganization()
+    
+    // Create quiz
+    const quizData: any = {
+      title,
+      description,
+      owner_id: user.id,
+      status: 'draft'
+    }
+    
+    // Add organization if user is part of one
+    if (orgData?.org) {
+      quizData.org_id = orgData.org.id
+    }
+    
+    const { data, error } = await supabase
+      .from('quizzes')
+      .insert(quizData)
+      .select()
+      .single()
+
+    return { data, error }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Update quiz with organization context
+ */
+export async function updateQuizWithOrganization(
+  quizId: string,
+  updates: Partial<{ title: string; description: string; status: QuizStatus }>
+): Promise<{ error: any }> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    const { error } = await supabase
+      .from('quizzes')
+      .update(updates)
+      .eq('id', quizId)
+
+    return { error }
+  } catch (error) {
+    return { error }
+  }
+}
+
+/**
+ * Delete quiz with organization context
+ */
+export async function deleteQuizWithOrganization(quizId: string): Promise<{ error: any }> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    const { error } = await supabase
+      .from('quizzes')
+      .delete()
+      .eq('id', quizId)
+
+    return { error }
+  } catch (error) {
+    return { error }
+  }
 }
