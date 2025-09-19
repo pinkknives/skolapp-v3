@@ -137,7 +137,7 @@ export default function RLSTestPage() {
                   </ul>
                   
                   <Typography variant="body2" className="text-neutral-700 mt-4">
-                    <strong>Förväntat resultat:</strong> Alla queries ska antingen ge "permission denied" 
+                    <strong>Förväntat resultat:</strong> Alla queries ska antingen ge &quot;permission denied&quot; 
                     eller tomma resultat, vilket indikerar att RLS-policies fungerar korrekt.
                   </Typography>
                 </div>
