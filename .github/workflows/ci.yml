@@ -7,43 +7,26 @@ on:
     branches: [ main ]
 
 jobs:
-  Lint & Type Check:
+  Lint & Type Check:            # <-- detta ser du redan
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4 pinned
-      - name: Setup Node
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4 pinned
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - name: Install deps
-        run: npm ci
-      - name: Lint (0 warnings)
-        run: npm run lint -- --max-warnings=0
-      - name: Type-check
-        run: npm run type-check
+      - run: npm ci
+      - run: npm run lint -- --max-warnings=0
+      - run: npm run type-check
 
-  Build:
+  build:                         # job-id
+    name: Build                  # <-- DISPLAY-NAMNET (måste vara exakt "Build")
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
-      - name: Setup Node
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - name: Restore Next.js cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4 pinned
-        with:
-          path: |
-            ~/.npm
-            .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.[jt]sx?', '**/*.ts') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-
-      - name: Install deps
-        run: npm ci
-      - name: Build
-        run: npm run build
+      - run: npm ci
+      - run: npm run build
