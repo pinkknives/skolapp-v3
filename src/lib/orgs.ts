@@ -265,6 +265,75 @@ export async function cancelInvite(inviteId: string): Promise<{ error: any }> {
 }
 
 /**
+ * Accept an organization invitation using token
+ */
+export async function acceptInvitation(token: string): Promise<{ data: { org_id: string; role: string } | null; error: any }> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { data: null, error: userError || new Error('Användare inte inloggad') }
+    }
+
+    // Find the invite by token
+    const { data: invite, error: inviteError } = await supabase
+      .from('org_invites')
+      .select('*')
+      .eq('token', token)
+      .gt('expires_at', new Date().toISOString())
+      .single()
+
+    if (inviteError || !invite) {
+      return { data: null, error: new Error('Ogiltig eller utgången inbjudan') }
+    }
+
+    // Check if user is already a member of this organization
+    const { data: existingMember } = await supabase
+      .from('org_members')
+      .select('*')
+      .eq('org_id', invite.org_id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (existingMember) {
+      return { data: null, error: new Error('Du är redan medlem i denna organisation') }
+    }
+
+    // Create the organization membership
+    const { error: memberError } = await supabase
+      .from('org_members')
+      .insert({
+        org_id: invite.org_id,
+        user_id: user.id,
+        role: invite.role,
+        status: 'active'
+      })
+
+    if (memberError) {
+      return { data: null, error: memberError }
+    }
+
+    // Mark the invite as used by deleting it
+    await supabase
+      .from('org_invites')
+      .delete()
+      .eq('id', invite.id)
+
+    return { 
+      data: { 
+        org_id: invite.org_id, 
+        role: invite.role 
+      }, 
+      error: null 
+    }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+/**
  * Check if user can manage organization (owner or admin)
  */
 export async function canManageOrganization(orgId: string): Promise<boolean> {
