@@ -34,6 +34,7 @@ export interface BaseQuestion {
   points: number
   timeLimit?: number // in seconds
   rubric?: Rubric // Optional rubric for AI grading
+  rationale?: string // AI-generated explanation or teacher notes
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
@@ -89,6 +90,7 @@ export interface AIQuizDraft {
     numberOfQuestions: number
     difficulty: 'easy' | 'medium' | 'hard'
     topics?: string[]
+    goals?: string
   }
   generatedQuestions: Question[]
   createdAt: Date

@@ -171,42 +171,43 @@ export function formatExecutionMode(mode: Quiz['settings']['executionMode']): st
   }
 }
 
-// Mock AI quiz generation function (placeholder for future AI integration)
+// AI quiz generation function using the server API endpoint
 export async function generateAIQuizDraft(prompt: AIQuizDraft['prompt']): Promise<Question[]> {
-  // This is a mock implementation - in real app would call AI service
-  await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API call
-
-  const questions: Question[] = []
-  
-  for (let i = 0; i < prompt.numberOfQuestions; i++) {
-    const questionTypes: Question['type'][] = ['multiple-choice', 'free-text']
-    const randomType = questionTypes[Math.floor(Math.random() * questionTypes.length)]
+  try {
+    const response = await fetch('/api/ai/generate-quiz', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subject: prompt.subject,
+        gradeLevel: prompt.gradeLevel,
+        numberOfQuestions: prompt.numberOfQuestions,
+        difficulty: prompt.difficulty,
+        topics: prompt.topics,
+        goals: prompt.goals
+      })
+    })
     
-    if (randomType === 'multiple-choice') {
-      questions.push({
-        id: generateQuestionId(),
-        type: 'multiple-choice',
-        title: `AI-genererad fråga ${i + 1} om ${prompt.subject}`,
-        points: 1,
-        options: [
-          { id: `opt_${Date.now()}_1`, text: 'Korrekt svar', isCorrect: true },
-          { id: `opt_${Date.now()}_2`, text: 'Fel svar 1', isCorrect: false },
-          { id: `opt_${Date.now()}_3`, text: 'Fel svar 2', isCorrect: false },
-          { id: `opt_${Date.now()}_4`, text: 'Fel svar 3', isCorrect: false }
-        ]
-      })
-    } else {
-      questions.push({
-        id: generateQuestionId(),
-        type: 'free-text',
-        title: `AI-genererad fritextfråga ${i + 1} om ${prompt.subject}`,
-        points: 1,
-        expectedAnswer: 'Förväntad AI-genererat svar'
-      })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Okänt fel' }))
+      throw new Error(errorData.error || `HTTP ${response.status}`)
     }
+    
+    const data = await response.json()
+    return data.questions || []
+    
+  } catch (error) {
+    console.error('AI quiz generation failed:', error)
+    // Fallback to ensure UI doesn't break - return error as quiz question
+    return [{
+      id: generateQuestionId(),
+      type: 'free-text',
+      title: `Fel vid AI-generering: ${error instanceof Error ? error.message : 'Okänt fel'}`,
+      points: 1,
+      expectedAnswer: 'Försök igen eller skapa frågor manuellt.'
+    }]
   }
-
-  return questions
 }
 
 // Mock function to look up quiz by share code
