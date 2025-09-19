@@ -1,102 +1,61 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card'
 import { Typography, Heading } from '@/components/ui/Typography'
-import { QuizSharing } from '@/components/quiz/QuizSharing'
-import { TeacherReviewMode } from '@/components/quiz/TeacherReviewMode'
-import { Quiz, QuizStatus } from '@/types/quiz'
-import { formatExecutionMode, calculateTotalPoints, estimateCompletionTime } from '@/lib/quiz-utils'
+import { QuizStatus } from '@/types/quiz'
+import { getOrganizationQuizzes, updateQuizWithOrganization, deleteQuizWithOrganization } from '@/lib/quiz-utils'
 import Link from 'next/link'
 import { Plus, Share2, Play, BarChart3, HelpCircle, Edit, Copy, Archive } from 'lucide-react'
 
-// Mock data - in a real app this would come from a database
-const mockQuizzes: Quiz[] = [
-  {
-    id: 'quiz_1',
-    title: 'Matematik - Multiplikation',
-    description: 'Grundläggande multiplikationstabeller för åk 3',
-    tags: ['matematik', 'multiplikation', 'åk3'],
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-16'),
-    createdBy: 'teacher-1',
-    status: 'published',
-    shareCode: 'AB3K',
-    settings: {
-      timeLimit: 30,
-      allowRetakes: false,
-      shuffleQuestions: true,
-      shuffleAnswers: true,
-      showCorrectAnswers: true,
-      executionMode: 'self-paced'
-    },
-    questions: [
-      {
-        id: 'q1',
-        type: 'multiple-choice',
-        title: 'Vad är 7 × 8?',
-        points: 1,
-        options: [
-          { id: 'opt1', text: '54', isCorrect: false },
-          { id: 'opt2', text: '56', isCorrect: true },
-          { id: 'opt3', text: '58', isCorrect: false },
-          { id: 'opt4', text: '64', isCorrect: false }
-        ]
-      },
-      {
-        id: 'q2',
-        type: 'multiple-choice',
-        title: 'Vad är 9 × 6?',
-        points: 1,
-        options: [
-          { id: 'opt1', text: '52', isCorrect: false },
-          { id: 'opt2', text: '54', isCorrect: true },
-          { id: 'opt3', text: '56', isCorrect: false },
-          { id: 'opt4', text: '58', isCorrect: false }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'quiz_2',
-    title: 'Svenska - Ordklass',
-    description: 'Igenkänning av olika ordklasser',
-    tags: ['svenska', 'ordklass', 'grammatik'],
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10'),
-    createdBy: 'teacher-1',
-    status: 'draft',
-    settings: {
-      allowRetakes: true,
-      shuffleQuestions: false,
-      shuffleAnswers: false,
-      showCorrectAnswers: true,
-      executionMode: 'teacher-controlled'
-    },
-    questions: [
-      {
-        id: 'q1',
-        type: 'free-text',
-        title: 'Vilken ordklass är ordet "springa"?',
-        points: 2,
-        expectedAnswer: 'verb'
-      }
-    ]
-  }
-]
+// Database quiz interface (simplified from Supabase)
+interface DatabaseQuiz {
+  id: string
+  title: string
+  description?: string
+  status: 'draft' | 'published'
+  join_code?: string
+  owner_id: string
+  org_id?: string
+  created_at: string
+  updated_at: string
+}
 
 export default function QuizManagementPage() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>(mockQuizzes)
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
+  const [quizzes, setQuizzes] = useState<DatabaseQuiz[]>([])
+  const [selectedQuiz, setSelectedQuiz] = useState<DatabaseQuiz | null>(null)
   const [showSharing, setShowSharing] = useState(false)
   const [showReviewMode, setShowReviewMode] = useState(false)
   const [filterStatus, setFilterStatus] = useState<QuizStatus | 'all'>('all')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadQuizzes()
+  }, [])
+
+  const loadQuizzes = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const { data, error } = await getOrganizationQuizzes()
+      if (error) {
+        setError('Kunde inte ladda quiz: ' + error.message)
+        return
+      }
+      setQuizzes(data || [])
+    } catch (err) {
+      setError('Ett oväntat fel inträffade vid laddning av quiz')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Sort quizzes by last updated (senaste uppdaterade överst)
   const sortedQuizzes = [...quizzes].sort((a, b) => 
-    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   )
 
   const filteredQuizzes = filterStatus === 'all' 
@@ -129,57 +88,97 @@ export default function QuizManagementPage() {
     }
   }
 
-  const handleShareQuiz = (quiz: Quiz) => {
+  const handleShareQuiz = (quiz: DatabaseQuiz) => {
     setSelectedQuiz(quiz)
     setShowSharing(true)
   }
 
-  const handleReviewMode = (quiz: Quiz) => {
+  const handleReviewMode = (quiz: DatabaseQuiz) => {
     setSelectedQuiz(quiz)
     setShowReviewMode(true)
   }
 
-  const handleDuplicateQuiz = (quiz: Quiz) => {
-    // Skapa en kopia av quizet som utkast
-    const duplicatedQuiz: Quiz = {
-      ...quiz,
-      id: `quiz_${Date.now()}`, // Enkel ID-generering för demo
-      title: `${quiz.title} (Kopia)`,
-      status: 'draft',
-      shareCode: undefined, // Ny delningskod behövs för publicering
-      createdAt: new Date(),
-      updatedAt: new Date()
+  const handlePublishQuiz = async (quiz: DatabaseQuiz) => {
+    try {
+      const { error } = await updateQuizWithOrganization(quiz.id, { status: 'published' })
+      if (error) {
+        setError('Kunde inte publicera quiz: ' + error.message)
+        return
+      }
+      await loadQuizzes() // Reload to get updated status
+    } catch (err) {
+      setError('Ett oväntat fel inträffade vid publicering av quiz')
     }
-    
-    setQuizzes(prevQuizzes => [duplicatedQuiz, ...prevQuizzes])
-    
-    // Visa bekräftelse (i framtiden kan detta vara en toast)
-    console.log('Quiz duplicerat:', duplicatedQuiz.title)
   }
 
-  const handleArchiveQuiz = (quiz: Quiz) => {
-    // Arkivera quizet
-    setQuizzes(prevQuizzes => 
-      prevQuizzes.map(q => 
-        q.id === quiz.id 
-          ? { ...q, status: 'archived' as QuizStatus, updatedAt: new Date() }
-          : q
-      )
-    )
+  const handleUnpublishQuiz = async (quiz: DatabaseQuiz) => {
+    try {
+      const { error } = await updateQuizWithOrganization(quiz.id, { status: 'draft' })
+      if (error) {
+        setError('Kunde inte avpublicera quiz: ' + error.message)
+        return
+      }
+      await loadQuizzes() // Reload to get updated status
+    } catch (err) {
+      setError('Ett oväntat fel inträffade vid avpublicering av quiz')
+    }
+  }
+
+  const handleArchiveQuiz = async (quiz: DatabaseQuiz) => {
+    if (!confirm(`Är du säker på att du vill arkivera &quot;${quiz.title}&quot;?`)) return
     
-    // Visa bekräftelse (i framtiden kan detta vara en toast)
-    console.log('Quiz arkiverat:', quiz.title)
+    try {
+      // For now, we'll delete the quiz since we don't have an archived status in the migration
+      const { error } = await deleteQuizWithOrganization(quiz.id)
+      if (error) {
+        setError('Kunde inte arkivera quiz: ' + error.message)
+        return
+      }
+      await loadQuizzes() // Reload to remove deleted quiz
+    } catch (err) {
+      setError('Ett oväntat fel inträffade vid arkivering av quiz')
+    }
   }
 
   if (showReviewMode && selectedQuiz) {
+    // For now, we'll just close review mode since we don't have the component implemented for database quizzes
     return (
-      <TeacherReviewMode
-        quiz={selectedQuiz}
-        onExit={() => {
-          setShowReviewMode(false)
-          setSelectedQuiz(null)
-        }}
-      />
+      <Layout>
+        <Section spacing="lg">
+          <Container>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" className="mb-4">
+                  Granskningsläge för &quot;{selectedQuiz.title}&quot;
+                </Typography>
+                <Typography variant="body1" className="mb-4">
+                  Denna funktion är under utveckling.
+                </Typography>
+                <Button onClick={() => {
+                  setShowReviewMode(false)
+                  setSelectedQuiz(null)
+                }}>
+                  Tillbaka till quiz-lista
+                </Button>
+              </CardContent>
+            </Card>
+          </Container>
+        </Section>
+      </Layout>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <Section spacing="lg">
+          <Container>
+            <div className="text-center">
+              <Typography variant="body1">Laddar quiz...</Typography>
+            </div>
+          </Container>
+        </Section>
+      </Layout>
     )
   }
 
@@ -199,7 +198,7 @@ export default function QuizManagementPage() {
               </div>
               <Button 
                 asChild 
-                leftIcon={<Plus size={16} strokeWidth={2} />}
+                leftIcon={<Plus size={16} />}
               >
                 <Link href="/teacher/quiz/create">
                   Skapa nytt quiz
@@ -208,217 +207,208 @@ export default function QuizManagementPage() {
             </div>
           </div>
 
-          {/* Filters */}
-          <Card className="mb-6">
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-4">
-                <Typography variant="body2" className="font-medium text-neutral-700">
-                  Filtrera:
-                </Typography>
-                <div className="flex flex-wrap gap-2">
-                  {(['all', 'published', 'draft', 'archived'] as const).map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setFilterStatus(status)}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                        filterStatus === status
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                      }`}
-                    >
-                      {status === 'all' ? 'Alla' : getStatusText(status as QuizStatus)}
-                      {status !== 'all' && (
-                        <span className="ml-1 text-xs opacity-75">
-                          ({quizzes.filter(q => q.status === status).length})
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {error && (
+            <Card className="mb-6">
+              <CardContent>
+                <Typography variant="body1" color="error">{error}</Typography>
+                <Button onClick={() => {
+                  setError(null)
+                  loadQuizzes()
+                }} className="mt-2" size="sm">
+                  Försök igen
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Filter Controls */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  filterStatus === 'all'
+                    ? 'bg-primary-100 text-primary-800'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                Alla ({quizzes.length})
+              </button>
+              <button
+                onClick={() => setFilterStatus('published')}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  filterStatus === 'published'
+                    ? 'bg-primary-100 text-primary-800'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                Publicerade ({quizzes.filter(q => q.status === 'published').length})
+              </button>
+              <button
+                onClick={() => setFilterStatus('draft')}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  filterStatus === 'draft'
+                    ? 'bg-primary-100 text-primary-800'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                Utkast ({quizzes.filter(q => q.status === 'draft').length})
+              </button>
+            </div>
+          </div>
 
           {/* Quiz Grid */}
-          {filteredQuizzes.length > 0 ? (
+          {filteredQuizzes.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HelpCircle size={32} className="text-neutral-400" />
+                </div>
+                {quizzes.length === 0 ? (
+                  <>
+                    <Typography variant="h6" className="mb-2">
+                      Inga quiz ännu
+                    </Typography>
+                    <Typography variant="body2" className="text-neutral-600 mb-4">
+                      Skapa ditt första quiz för att komma igång.
+                    </Typography>
+                    <Button asChild>
+                      <Link href="/teacher/quiz/create">
+                        Skapa nytt quiz
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="h6" className="mb-2">
+                      Inga quiz matchar filtret
+                    </Typography>
+                    <Typography variant="body2" className="text-neutral-600">
+                      Prova att ändra filtret för att se fler quiz.
+                    </Typography>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredQuizzes.map((quiz) => (
-                <Card key={quiz.id} className="h-full flex flex-col">
+                <Card key={quiz.id} className="flex flex-col">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{quiz.title}</CardTitle>
-                        <CardDescription className="mb-3">
-                          {quiz.description}
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">
+                          {quiz.title}
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          {quiz.description || 'Ingen beskrivning'}
                         </CardDescription>
                       </div>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quiz.status)}`}>
-                        {getStatusText(quiz.status)}
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(quiz.status as QuizStatus)}`}>
+                        {getStatusText(quiz.status as QuizStatus)}
                       </span>
                     </div>
-                    
-                    {/* Tags */}
-                    {quiz.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {quiz.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-neutral-100 text-neutral-600 text-xs rounded-md"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {quiz.tags.length > 3 && (
-                          <span className="px-2 py-1 bg-neutral-100 text-neutral-600 text-xs rounded-md">
-                            +{quiz.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </CardHeader>
-
-                  <CardContent className="flex-1">
-                    <div className="grid grid-cols-2 gap-4 text-sm text-neutral-600">
-                      <div>
-                        <Typography variant="caption" className="text-neutral-500">Frågor</Typography>
-                        <Typography variant="body2" className="font-medium">{quiz.questions.length}</Typography>
-                      </div>
-                      <div>
-                        <Typography variant="caption" className="text-neutral-500">Poäng</Typography>
-                        <Typography variant="body2" className="font-medium">{calculateTotalPoints(quiz.questions)}</Typography>
-                      </div>
-                      <div>
-                        <Typography variant="caption" className="text-neutral-500">Tid (ca)</Typography>
-                        <Typography variant="body2" className="font-medium">
-                          {quiz.settings.timeLimit ? `${quiz.settings.timeLimit} min` : `${estimateCompletionTime(quiz.questions)} min`}
-                        </Typography>
-                      </div>
-                      <div>
-                        <Typography variant="caption" className="text-neutral-500">Läge</Typography>
-                        <Typography variant="body2" className="font-medium">{formatExecutionMode(quiz.settings.executionMode)}</Typography>
-                      </div>
-                    </div>
-
-                    {quiz.shareCode && (
-                      <div className="mt-4 p-3 bg-primary-50 rounded-md">
-                        <Typography variant="caption" className="text-primary-600 block mb-1">Delningskod</Typography>
-                        <Typography variant="body2" className="font-mono font-bold text-primary-800">{quiz.shareCode}</Typography>
-                      </div>
-                    )}
-                  </CardContent>
-
-                  <CardFooter className="flex flex-col gap-2">
-                    {quiz.status === 'published' && (
-                      <div className="flex gap-2 w-full">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          fullWidth
-                          onClick={() => handleShareQuiz(quiz)}
-                          leftIcon={<Share2 size={16} strokeWidth={2} />}
-                        >
-                          Dela
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          fullWidth
-                          onClick={() => handleReviewMode(quiz)}
-                          leftIcon={<Play size={16} strokeWidth={2} />}
-                        >
-                          Granska
-                        </Button>
-                      </div>
-                    )}
-                    
-                    <div className="flex gap-2 w-full">
-                      {quiz.status === 'published' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          fullWidth
-                          asChild
-                        >
-                          <Link href={`/quiz/${quiz.id}/results`} className="flex items-center gap-x-2">
-                            <BarChart3 size={16} strokeWidth={2} />
-                            Visa resultat
-                          </Link>
-                        </Button>
+                    <div className="mt-3 text-xs text-neutral-500">
+                      <div>Skapad: {new Date(quiz.created_at).toLocaleDateString('sv-SE')}</div>
+                      {quiz.join_code && (
+                        <div>Delningskod: <span className="font-mono font-bold">{quiz.join_code}</span></div>
                       )}
-                      
+                    </div>
+                  </CardHeader>
+                  
+                  <CardFooter className="mt-auto">
+                    <div className="flex flex-wrap gap-2 w-full">
                       <Button
                         variant="outline"
                         size="sm"
-                        fullWidth
                         asChild
+                        className="flex-1"
                       >
-                        <Link href={`/teacher/quiz/edit/${quiz.id}`} className="flex items-center gap-x-2">
-                          <Edit size={16} strokeWidth={2} />
-                          Redigera
+                        <Link href={`/teacher/quiz/${quiz.id}/edit`}>
+                          <Edit size={14} />
+                          <span className="ml-1">Redigera</span>
                         </Link>
                       </Button>
                       
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        fullWidth
-                        onClick={() => handleDuplicateQuiz(quiz)}
-                        leftIcon={<Copy size={16} strokeWidth={2} />}
-                      >
-                        Duplicera
-                      </Button>
-                      
-                      {quiz.status !== 'archived' && (
+                      {quiz.status === 'published' && quiz.join_code && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          onClick={() => handleArchiveQuiz(quiz)}
-                          className="text-neutral-500 hover:text-warning-600"
-                          leftIcon={<Archive size={16} strokeWidth={2} />}
+                          onClick={() => handleShareQuiz(quiz)}
+                          className="flex-1"
                         >
-                          Arkivera
+                          <Share2 size={14} />
+                          <span className="ml-1">Dela</span>
                         </Button>
                       )}
+                      
+                      {quiz.status === 'draft' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePublishQuiz(quiz)}
+                          className="flex-1"
+                        >
+                          <Play size={14} />
+                          <span className="ml-1">Publicera</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUnpublishQuiz(quiz)}
+                          className="flex-1"
+                        >
+                          <span className="ml-1">Avpublicera</span>
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleArchiveQuiz(quiz)}
+                        className="text-error-600 hover:text-error-700 hover:bg-error-50"
+                      >
+                        <Archive size={14} />
+                      </Button>
                     </div>
                   </CardFooter>
                 </Card>
               ))}
             </div>
-          ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <HelpCircle size={64} strokeWidth={1.5} className="mx-auto mb-4 text-neutral-300" />
-                <Heading level={3} className="mb-2">
-                  {filterStatus === 'all' ? 'Inga quiz skapade än' : `Inga ${getStatusText(filterStatus as QuizStatus).toLowerCase()} quiz`}
-                </Heading>
-                <Typography variant="body1" className="text-neutral-600 mb-6">
-                  {filterStatus === 'all' 
-                    ? 'Skapa ditt första quiz för att komma igång med interaktiv undervisning.'
-                    : 'Inga quiz matchar det valda filtret.'
-                  }
-                </Typography>
-                {filterStatus === 'all' && (
-                  <Button asChild>
-                    <Link href="/teacher/quiz/create">
-                      Skapa ditt första quiz
-                    </Link>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
           )}
 
           {/* Sharing Modal */}
           {showSharing && selectedQuiz && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                <QuizSharing
-                  quiz={selectedQuiz}
-                  onClose={() => {
-                    setShowSharing(false)
-                    setSelectedQuiz(null)
-                  }}
-                />
+                <div className="p-6">
+                  <Typography variant="h6" className="mb-4">
+                    Dela &quot;{selectedQuiz.title}&quot;
+                  </Typography>
+                  {selectedQuiz.join_code ? (
+                    <div>
+                      <Typography variant="body1" className="mb-2">
+                        Delningskod: <span className="font-mono font-bold text-lg">{selectedQuiz.join_code}</span>
+                      </Typography>
+                      <Typography variant="body2" className="text-neutral-600 mb-4">
+                        Dela denna kod med dina elever så de kan gå med i quizet.
+                      </Typography>
+                    </div>
+                  ) : (
+                    <Typography variant="body1" className="mb-4">
+                      Detta quiz har ingen delningskod ännu.
+                    </Typography>
+                  )}
+                  <Button 
+                    onClick={() => {
+                      setShowSharing(false)
+                      setSelectedQuiz(null)
+                    }}
+                  >
+                    Stäng
+                  </Button>
+                </div>
               </div>
             </div>
           )}

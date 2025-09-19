@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Typography, Heading } from '@/components/ui/Typography'
 import Link from 'next/link'
-import { Plus, ClipboardList, Users, BarChart3 } from 'lucide-react'
+import { Plus, ClipboardList, Users, BarChart3, Building2 } from 'lucide-react'
 
 const features = [
   {
@@ -19,6 +19,13 @@ const features = [
     icon: <ClipboardList size={24} strokeWidth={2} />,
     href: '/teacher/quiz',
     buttonText: 'Hantera quiz'
+  },
+  {
+    title: 'Organisation',
+    description: 'Skapa och hantera din organisation, bjud in andra lärare och samarbeta kring quiz.',
+    icon: <Building2 size={24} strokeWidth={2} />,
+    href: '/teacher/org',
+    buttonText: 'Hantera organisation'
   },
   {
     title: 'Klasser & Elever',
