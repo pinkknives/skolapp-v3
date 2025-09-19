@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Lint & Type Check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -22,7 +22,7 @@ jobs:
         run: npm ci
       
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
         with:
           path: |
             ~/.npm
@@ -44,9 +44,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Accessibility Testing
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -88,9 +88,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Performance Budget Check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -99,7 +99,7 @@ jobs:
         run: npm ci
       
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
         with:
           path: |
             ~/.npm
@@ -130,9 +130,9 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -141,7 +141,7 @@ jobs:
         run: npm ci
       
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
         with:
           path: |
             ~/.npm
@@ -169,7 +169,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.browser }}
       
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
         if: failure()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Swedish Language Validation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Enhanced Swedish language validation
         run: |
           # Use enhanced validation script with whitelist
@@ -190,9 +190,9 @@ jobs:
     runs-on: ubuntu-latest  
     name: Deprecated Dependencies Check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -207,7 +207,7 @@ jobs:
         run: ./scripts/check-deprecated-packages.sh
       
       - name: Upload reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
         if: always()
         with:
           name: deprecated-checks-reports
@@ -218,9 +218,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Security Scan
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
         with:
           node-version: '18'
           cache: 'npm'

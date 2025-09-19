@@ -21,7 +21,7 @@ export interface RLSTestResult {
   actualResult: 'permission_denied' | 'empty_result' | 'success' | 'error'
   passed: boolean
   errorMessage?: string
-  details?: any
+  details?: unknown
 }
 
 /**
