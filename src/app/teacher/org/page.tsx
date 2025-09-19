@@ -13,21 +13,26 @@ import {
   updateMemberRole, 
   removeMember, 
   inviteToOrganization,
+  getOrganizationInvites,
+  cancelInvite,
   canManageOrganization,
   type Organization,
-  type OrganizationMember 
+  type OrganizationMember,
+  type OrganizationInvite
 } from '@/lib/orgs'
-import { Users, Plus, Settings, Mail, Trash2 } from 'lucide-react'
+import { Users, Plus, Settings, Mail, Trash2, Copy, Check } from 'lucide-react'
 
 export default function OrganizationPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
   const [members, setMembers] = useState<OrganizationMember[]>([])
+  const [invites, setInvites] = useState<OrganizationInvite[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [canManage, setCanManage] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
   // Form states
   const [newOrgName, setNewOrgName] = useState('')
@@ -42,6 +47,7 @@ export default function OrganizationPage() {
   useEffect(() => {
     if (selectedOrg) {
       loadMembers()
+      loadInvites()
       checkManagePermissions()
     }
   }, [selectedOrg])
@@ -77,6 +83,21 @@ export default function OrganizationPage() {
       setMembers(data || [])
     } catch (err) {
       setError('Ett oväntat fel inträffade vid laddning av medlemmar')
+    }
+  }
+
+  const loadInvites = async () => {
+    if (!selectedOrg) return
+    
+    try {
+      const { data, error } = await getOrganizationInvites(selectedOrg.id)
+      if (error) {
+        console.error('Kunde inte ladda inbjudningar:', error.message)
+        return
+      }
+      setInvites(data || [])
+    } catch (err) {
+      console.error('Ett oväntat fel inträffade vid laddning av inbjudningar')
     }
   }
 
@@ -123,7 +144,7 @@ export default function OrganizationPage() {
 
     try {
       setSubmitting(true)
-      const { error } = await inviteToOrganization(selectedOrg.id, inviteEmail.trim(), inviteRole)
+      const { data, error } = await inviteToOrganization(selectedOrg.id, inviteEmail.trim(), inviteRole)
       if (error) {
         setError('Kunde inte skicka inbjudan: ' + error.message)
         return
@@ -132,7 +153,16 @@ export default function OrganizationPage() {
       setShowInviteForm(false)
       setInviteEmail('')
       setInviteRole('teacher')
-      // In a real app, you might want to show the invite was sent
+      
+      // Reload invites to show the new one
+      await loadInvites()
+      
+      // Show success message with invite URL
+      if (data && data.token) {
+        const inviteUrl = `${window.location.origin}/api/invite/accept?token=${data.token}`
+        setError(null)
+        alert(`Inbjudan skapad! Kopiera länken och skicka till ${inviteEmail}:\n\n${inviteUrl}`)
+      }
     } catch (err) {
       setError('Ett oväntat fel inträffade vid sändning av inbjudan')
     } finally {
@@ -150,6 +180,34 @@ export default function OrganizationPage() {
       await loadMembers()
     } catch (err) {
       setError('Ett oväntat fel inträffade vid uppdatering av roll')
+    }
+  }
+
+  const handleCancelInvite = async (inviteId: string) => {
+    if (!confirm('Är du säker på att du vill återkalla denna inbjudan?')) return
+    
+    try {
+      const { error } = await cancelInvite(inviteId)
+      if (error) {
+        setError('Kunde inte återkalla inbjudan: ' + error.message)
+        return
+      }
+      await loadInvites()
+    } catch (err) {
+      setError('Ett oväntat fel inträffade vid återkallning av inbjudan')
+    }
+  }
+
+  const handleCopyInviteUrl = async (token: string) => {
+    const inviteUrl = `${window.location.origin}/api/invite/accept?token=${token}`
+    
+    try {
+      await navigator.clipboard.writeText(inviteUrl)
+      setCopiedToken(token)
+      setTimeout(() => setCopiedToken(null), 2000)
+    } catch (err) {
+      // Fallback for browsers that don't support clipboard API
+      alert(`Kopiera denna länk:\n\n${inviteUrl}`)
     }
   }
 
@@ -502,6 +560,69 @@ export default function OrganizationPage() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Pending Invites */}
+                    {canManage && invites.length > 0 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Mail size={20} />
+                            Väntande inbjudningar ({invites.length})
+                          </CardTitle>
+                          <CardDescription>
+                            Inbjudningar som inte har accepterats ännu.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {invites.map((invite) => (
+                              <div
+                                key={invite.id}
+                                className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+                              >
+                                <div>
+                                  <Typography variant="body1" className="font-medium">
+                                    {invite.email}
+                                  </Typography>
+                                  <div className="flex items-center gap-3 mt-1">
+                                    <Typography variant="caption" className="text-neutral-600">
+                                      {getRoleDisplayName(invite.role)}
+                                    </Typography>
+                                    <span className="text-neutral-300">•</span>
+                                    <Typography variant="caption" className="text-neutral-600">
+                                      Skickat {new Date(invite.created_at).toLocaleDateString('sv-SE')}
+                                    </Typography>
+                                    <span className="text-neutral-300">•</span>
+                                    <Typography variant="caption" className="text-neutral-600">
+                                      Går ut {new Date(invite.expires_at).toLocaleDateString('sv-SE')}
+                                    </Typography>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCopyInviteUrl(invite.token)}
+                                    leftIcon={copiedToken === invite.token ? <Check size={16} /> : <Copy size={16} />}
+                                    className={copiedToken === invite.token ? "text-green-600 border-green-300" : ""}
+                                  >
+                                    {copiedToken === invite.token ? 'Kopierad!' : 'Kopiera länk'}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCancelInvite(invite.id)}
+                                    className="text-error-600 hover:text-error-700 hover:bg-error-50"
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 )}
               </div>
