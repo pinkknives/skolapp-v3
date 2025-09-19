@@ -19,6 +19,8 @@ import {
   calculateTotalPoints,
   estimateCompletionTime
 } from '@/lib/quiz-utils'
+import { useEntitlements } from '@/hooks/useEntitlements'
+import { AIFeatureBlock } from '@/components/billing/AIFeatureBlock'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -40,13 +42,14 @@ function CreateQuizPage() {
   const [showAIDraft, setShowAIDraft] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const { canUseAI } = useEntitlements()
 
   // Check for ai-draft URL parameter
   useEffect(() => {
-    if (searchParams.get('type') === 'ai-draft') {
+    if (searchParams.get('type') === 'ai-draft' && canUseAI) {
       setShowAIDraft(true)
     }
-  }, [searchParams])
+  }, [searchParams, canUseAI])
 
   const updateQuiz = (updates: Partial<Quiz>) => {
     setQuiz(prev => ({ ...prev, ...updates }))
@@ -239,12 +242,26 @@ function CreateQuizPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Frågor</CardTitle>
-                    <Button onClick={() => setShowAIDraft(true)} variant="outline">
-                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      AI-utkast
-                    </Button>
+                    {canUseAI ? (
+                      <Button onClick={() => setShowAIDraft(true)} variant="outline">
+                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        AI-utkast
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        disabled
+                        className="opacity-50"
+                        title="Kräver premium-prenumeration"
+                      >
+                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        AI-utkast 🔒
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -359,12 +376,38 @@ function CreateQuizPage() {
           </div>
 
           {/* AI Draft Modal */}
-          {showAIDraft && (
+          {showAIDraft && canUseAI && (
             <ImprovedAIQuizDraft
               quizTitle={quiz.title}
               onQuestionsGenerated={handleAIQuestionsGenerated}
               onClose={() => setShowAIDraft(false)}
             />
+          )}
+
+          {/* AI Feature Paywall Modal */}
+          {showAIDraft && !canUseAI && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <Typography variant="h6">AI-assisterad quiz</Typography>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAIDraft(false)}
+                      className="text-neutral-500 hover:text-neutral-700"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                  <AIFeatureBlock
+                    featureName="AI-assisterad quiz-generering"
+                    description="Låt AI hjälpa dig att skapa engagerande quiz baserat på ditt ämne och mål. Få intelligenta förslag på frågor, svar och feedback."
+                    onUpgrade={() => setShowAIDraft(false)}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </Container>
       </Section>
