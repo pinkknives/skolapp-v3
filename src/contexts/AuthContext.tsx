@@ -57,7 +57,7 @@ const initialState: AuthState = {
 }
 
 // Helper function to convert Supabase user to app User type
-function convertSupabaseUser(session: Session, profile: Record<string, any> | null): User {
+function convertSupabaseUser(session: Session, profile: Record<string, unknown> | null): User {
   // Map database role to UI role
   let role: UserRole = 'lärare' // default
   if (profile?.role) {
@@ -68,8 +68,8 @@ function convertSupabaseUser(session: Session, profile: Record<string, any> | nu
   return {
     id: session.user.id,
     email: session.user.email!,
-    firstName: profile?.display_name?.split(' ')[0] || 'Användare',
-    lastName: profile?.display_name?.split(' ').slice(1).join(' ') || '',
+    firstName: (profile?.display_name as string)?.split(' ')[0] || 'Användare',
+    lastName: (profile?.display_name as string)?.split(' ').slice(1).join(' ') || '',
     role,
     subscriptionPlan: 'gratis', // Default subscription
     dataRetentionMode: 'korttid', // Default retention mode

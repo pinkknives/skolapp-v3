@@ -1,6 +1,6 @@
 // Authentication utilities and helpers
 
-import { type User, type UserRole, type SubscriptionPlan, type DataRetentionMode, type ConsentRecord, type SchoolAccount, ROLE_PERMISSIONS, SUBSCRIPTION_LIMITS, DATA_RETENTION_FEATURES } from '@/types/auth'
+import { type User, type UserRole, type SubscriptionPlan, type DataRetentionMode, ROLE_PERMISSIONS, SUBSCRIPTION_LIMITS, DATA_RETENTION_FEATURES } from '@/types/auth'
 
 /**
  * Check if user has specific permission based on role

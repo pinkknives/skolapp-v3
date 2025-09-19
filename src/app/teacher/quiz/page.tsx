@@ -38,6 +38,23 @@ export default function QuizManagementPage() {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('')
   const [loadingOrgs, setLoadingOrgs] = useState(true)
 
+  const loadQuizzes = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const { data, error } = await getOrganizationQuizzes(selectedOrgId || undefined)
+      if (error) {
+        setError('Kunde inte ladda quiz: ' + error.message)
+        return
+      }
+      setQuizzes(data || [])
+    } catch (_err) {
+      setError('Ett oväntat fel inträffade vid laddning av quiz')
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedOrgId])
+
   useEffect(() => {
     loadOrganizations()
   }, [])
@@ -46,7 +63,7 @@ export default function QuizManagementPage() {
     if (!loadingOrgs) {
       loadQuizzes()
     }
-  }, [selectedOrgId, loadingOrgs])
+  }, [selectedOrgId, loadingOrgs, loadQuizzes])
 
   const loadOrganizations = async () => {
     try {
@@ -69,23 +86,6 @@ export default function QuizManagementPage() {
       setLoadingOrgs(false)
     }
   }
-
-  const loadQuizzes = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const { data, error } = await getOrganizationQuizzes(selectedOrgId || undefined)
-      if (error) {
-        setError('Kunde inte ladda quiz: ' + error.message)
-        return
-      }
-      setQuizzes(data || [])
-    } catch (_err) {
-      setError('Ett oväntat fel inträffade vid laddning av quiz')
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedOrgId])
 
   const handleOrgChange = (orgId: string) => {
     setSelectedOrgId(orgId)

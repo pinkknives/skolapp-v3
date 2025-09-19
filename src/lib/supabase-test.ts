@@ -14,7 +14,7 @@ export async function testSupabaseConnection() {
   // Test browser client
   try {
     const browserClient = supabaseBrowser()
-    const { data, error } = await browserClient.from('profiles').select('count').limit(1)
+    const { error } = await browserClient.from('profiles').select('count').limit(1)
     if (error) throw error
     results.browser.connected = true
   } catch (error) {
@@ -24,7 +24,7 @@ export async function testSupabaseConnection() {
   // Test server client
   try {
     const serverClient = supabaseServer()
-    const { data, error } = await serverClient.from('profiles').select('count').limit(1)
+    const { error } = await serverClient.from('profiles').select('count').limit(1)
     if (error) throw error
     results.server.connected = true
   } catch (error) {

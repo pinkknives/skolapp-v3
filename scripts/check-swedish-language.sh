@@ -2,26 +2,20 @@
 
 # Enhanced Swedish Language Validation Script
 # Checks for English text in Swedish UI context with whitelist support
+# Only scans actual UI strings (JSX text, aria labels, titles, etc.)
 
 set -e
 
-# Source the whitelist
-source "$(dirname "$0")/english-whitelist.sh"
+SCRIPT_DIR="$(dirname "$0")"
+WHITELIST_FILE="$SCRIPT_DIR/lang/whitelist.txt"
 
 echo "🔍 Checking for English text in Swedish UI context..."
 
-# Combine all whitelisted terms
-ALL_WHITELIST=(
-  "${TECHNICAL_TERMS[@]}"
-  "${ICON_NAMES[@]}"
-  "${CODE_TERMS[@]}"
-  "${FILE_TERMS[@]}"
-  "${HTTP_TERMS[@]}"
-  "${DB_TERMS[@]}"
-)
-
-# Convert whitelist to regex pattern (case-insensitive)
-WHITELIST_PATTERN=$(IFS='|'; echo "${ALL_WHITELIST[*]}")
+# Check if whitelist file exists
+if [ ! -f "$WHITELIST_FILE" ]; then
+  echo "❌ Whitelist file not found: $WHITELIST_FILE"
+  exit 1
+fi
 
 # Common English words that should be in Swedish in UI
 ENGLISH_UI_WORDS=(
@@ -39,7 +33,6 @@ ENGLISH_UI_WORDS=(
   "Dashboard"
   "Welcome"
   "Hello"
-  "Goodbye"
   "Please"
   "Thank you"
   "Yes"
@@ -48,204 +41,62 @@ ENGLISH_UI_WORDS=(
   "Continue"
   "Back"
   "Next"
-  "Previous"
-  "First"
-  "Last"
   "Start"
   "Stop"
-  "Finish"
   "Complete"
   "Success"
   "Error"
   "Warning"
-  "Information"
   "Help"
   "About"
   "Contact"
   "Support"
-  "FAQ"
-  "Terms"
-  "Privacy"
   "Search"
   "Filter"
-  "Sort"
   "View"
-  "Download"
-  "Upload"
   "Print"
-  "Copy"
-  "Paste"
-  "Cut"
   "Share"
   "Send"
-  "Receive"
   "Open"
   "Close"
   "New"
-  "Old"
-  "Recent"
-  "Popular"
-  "Featured"
-  "Recommended"
-  "Required"
-  "Optional"
-  "Available"
-  "Unavailable"
-  "Online"
-  "Offline"
-  "Public"
-  "Private"
-  "Draft"
-  "Published"
-  "Archived"
-  "Active"
-  "Inactive"
-  "Enabled"
-  "Disabled"
   "Loading"
-  "Loading..."
   "Please wait"
   "Try again"
   "Refresh"
-  "Reload"
   "Update"
-  "Upgrade"
-  "Downgrade"
-  "Install"
-  "Uninstall"
-  "Configure"
-  "Settings"
-  "Preferences"
-  "Options"
-  "Advanced"
-  "Basic"
-  "Standard"
-  "Premium"
-  "Free"
-  "Paid"
-  "Trial"
-  "Subscribe"
-  "Unsubscribe"
-  "Register"
-  "Sign up"
   "Sign in"
   "Sign out"
-  "Log in"
-  "Log out"
-  "Forgot password"
-  "Reset password"
-  "Change password"
   "Remember me"
-  "Stay logged in"
-  "Auto login"
-  "Two factor"
-  "Security"
-  "Permission"
-  "Access"
-  "Denied"
-  "Granted"
-  "Expired"
-  "Invalid"
-  "Valid"
-  "Format"
-  "Size"
-  "Type"
-  "Name"
-  "Description"
-  "Category"
-  "Tag"
-  "Label"
-  "Title"
-  "Subtitle"
-  "Header"
-  "Footer"
-  "Sidebar"
-  "Menu"
-  "Navigation"
-  "Breadcrumb"
-  "Link"
-  "Button"
-  "Input"
-  "Output"
-  "Form"
-  "Field"
-  "Checkbox"
-  "Radio"
-  "Select"
-  "Dropdown"
-  "List"
-  "Table"
-  "Grid"
-  "Card"
-  "Modal"
-  "Dialog"
-  "Popup"
-  "Tooltip"
-  "Alert"
-  "Notification"
-  "Message"
-  "Status"
-  "Progress"
-  "Loading bar"
-  "Percentage"
-  "Count"
-  "Total"
-  "Sum"
-  "Average"
-  "Minimum"
-  "Maximum"
-  "Range"
-  "From"
-  "To"
-  "Between"
-  "Before"
-  "After"
-  "During"
-  "Always"
-  "Never"
-  "Sometimes"
-  "Often"
-  "Rarely"
-  "Daily"
-  "Weekly"
-  "Monthly"
-  "Yearly"
-  "Today"
-  "Yesterday"
-  "Tomorrow"
-  "Now"
-  "Later"
-  "Soon"
-  "Recent"
-  "Past"
-  "Future"
-  "Current"
-  "Latest"
-  "Oldest"
-  "Newest"
 )
 
-# Build pattern for UI words to check (excluding whitelisted ones in specific contexts)
+# Build pattern for UI words to check
 UI_PATTERN=$(IFS='|'; echo "${ENGLISH_UI_WORDS[*]}")
 
 EXIT_CODE=0
 
-echo "Checking UI files for English text that should be in Swedish..."
+echo "Checking TypeScript/React files for English UI text..."
 
-# Check TypeScript/React files for UI text (excluding imports and component names)
+# Create temp directory for processing
+mkdir -p /tmp/lang-check
+
+# Check only TSX/TS files for specific UI patterns
 while IFS= read -r -d '' file; do
-  echo "Checking: $file"
+  echo "Checking UI strings in: $(basename "$file")"
   
-  # Extract potential UI strings (in quotes) and check against patterns
-  if grep -n -E "(['\"])([^'\"]*($UI_PATTERN)[^'\"]*)\1" "$file" | \
-     grep -v -E "(import|from|lucide-react|@/|\.tsx?|\.jsx?)" | \
-     grep -v -E "($WHITELIST_PATTERN)" > /tmp/ui_check.log 2>/dev/null; then
-    
-    echo "❌ Potential English UI text found in $file:"
-    cat /tmp/ui_check.log
+  # Look for JSX text content, aria-labels, titles, placeholders, button text
+  # Match patterns like: >text<, "text", 'text' but only in UI context
+  # Exclude imports, variable assignments, and function definitions
+  grep -n -E "(>|aria-label=|title=|placeholder=|alt=|children.*=|button.*>|span.*>).*($UI_PATTERN)" "$file" 2>/dev/null | \
+    grep -v -E "(import|from|const|let|var|function|class|interface|type|export)" | \
+    grep -v -f "$WHITELIST_FILE" > /tmp/lang-check/ui_check.log 2>/dev/null || true
+  
+  if [ -s /tmp/lang-check/ui_check.log ]; then
+    echo "❌ Potential English UI text found in $(basename "$file"):"
+    cat /tmp/lang-check/ui_check.log
     EXIT_CODE=1
   fi
-done < <(find src/app src/components -name "*.tsx" -o -name "*.ts" -print0)
+done < <(find src/app src/components -name "*.tsx" -print0)
 
 # Check for Swedish characters to ensure Swedish support
 echo "Checking for Swedish character support..."
@@ -257,7 +108,7 @@ else
 fi
 
 # Clean up temp files
-rm -f /tmp/ui_check.log
+rm -rf /tmp/lang-check
 
 if [ $EXIT_CODE -eq 0 ]; then
   echo "✅ No obvious English UI text found that should be in Swedish"

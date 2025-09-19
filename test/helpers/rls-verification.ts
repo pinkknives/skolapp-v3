@@ -433,7 +433,7 @@ export class RLSVerifier {
  */
 export async function runRLSVerification(): Promise<string> {
   const verifier = new RLSVerifier()
-  const results = await verifier.runAllTests()
+  const _results = await verifier.runAllTests()
   const report = verifier.generateReport()
   
   console.log(report)

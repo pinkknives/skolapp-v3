@@ -205,6 +205,14 @@ jobs:
       
       - name: Check for deprecated npm packages
         run: ./scripts/check-deprecated-packages.sh
+      
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deprecated-checks-reports
+          path: reports/
+          retention-days: 30
 
   security-scan:
     runs-on: ubuntu-latest

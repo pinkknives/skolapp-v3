@@ -122,7 +122,7 @@ test.describe('Organization-aware Quiz Management', () => {
     await page.goto('/teacher/quiz');
     
     // Check for loading message (might be brief)
-    const loadingMessage = page.getByText('Laddar quiz...');
+    const _loadingMessage = page.getByText('Laddar quiz...');
     // Don't assert visibility since loading might be too fast to catch
   });
 });
