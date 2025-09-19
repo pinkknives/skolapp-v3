@@ -1,0 +1,266 @@
+#!/bin/bash
+
+# Enhanced Swedish Language Validation Script
+# Checks for English text in Swedish UI context with whitelist support
+
+set -e
+
+# Source the whitelist
+source "$(dirname "$0")/english-whitelist.sh"
+
+echo "🔍 Checking for English text in Swedish UI context..."
+
+# Combine all whitelisted terms
+ALL_WHITELIST=(
+  "${TECHNICAL_TERMS[@]}"
+  "${ICON_NAMES[@]}"
+  "${CODE_TERMS[@]}"
+  "${FILE_TERMS[@]}"
+  "${HTTP_TERMS[@]}"
+  "${DB_TERMS[@]}"
+)
+
+# Convert whitelist to regex pattern (case-insensitive)
+WHITELIST_PATTERN=$(IFS='|'; echo "${ALL_WHITELIST[*]}")
+
+# Common English words that should be in Swedish in UI
+ENGLISH_UI_WORDS=(
+  "Create"
+  "Delete" 
+  "Edit"
+  "Save"
+  "Cancel"
+  "Submit"
+  "Login"
+  "Logout"
+  "Home"
+  "Settings"
+  "Profile"
+  "Dashboard"
+  "Welcome"
+  "Hello"
+  "Goodbye"
+  "Please"
+  "Thank you"
+  "Yes"
+  "No"
+  "OK"
+  "Continue"
+  "Back"
+  "Next"
+  "Previous"
+  "First"
+  "Last"
+  "Start"
+  "Stop"
+  "Finish"
+  "Complete"
+  "Success"
+  "Error"
+  "Warning"
+  "Information"
+  "Help"
+  "About"
+  "Contact"
+  "Support"
+  "FAQ"
+  "Terms"
+  "Privacy"
+  "Search"
+  "Filter"
+  "Sort"
+  "View"
+  "Download"
+  "Upload"
+  "Print"
+  "Copy"
+  "Paste"
+  "Cut"
+  "Share"
+  "Send"
+  "Receive"
+  "Open"
+  "Close"
+  "New"
+  "Old"
+  "Recent"
+  "Popular"
+  "Featured"
+  "Recommended"
+  "Required"
+  "Optional"
+  "Available"
+  "Unavailable"
+  "Online"
+  "Offline"
+  "Public"
+  "Private"
+  "Draft"
+  "Published"
+  "Archived"
+  "Active"
+  "Inactive"
+  "Enabled"
+  "Disabled"
+  "Loading"
+  "Loading..."
+  "Please wait"
+  "Try again"
+  "Refresh"
+  "Reload"
+  "Update"
+  "Upgrade"
+  "Downgrade"
+  "Install"
+  "Uninstall"
+  "Configure"
+  "Settings"
+  "Preferences"
+  "Options"
+  "Advanced"
+  "Basic"
+  "Standard"
+  "Premium"
+  "Free"
+  "Paid"
+  "Trial"
+  "Subscribe"
+  "Unsubscribe"
+  "Register"
+  "Sign up"
+  "Sign in"
+  "Sign out"
+  "Log in"
+  "Log out"
+  "Forgot password"
+  "Reset password"
+  "Change password"
+  "Remember me"
+  "Stay logged in"
+  "Auto login"
+  "Two factor"
+  "Security"
+  "Permission"
+  "Access"
+  "Denied"
+  "Granted"
+  "Expired"
+  "Invalid"
+  "Valid"
+  "Format"
+  "Size"
+  "Type"
+  "Name"
+  "Description"
+  "Category"
+  "Tag"
+  "Label"
+  "Title"
+  "Subtitle"
+  "Header"
+  "Footer"
+  "Sidebar"
+  "Menu"
+  "Navigation"
+  "Breadcrumb"
+  "Link"
+  "Button"
+  "Input"
+  "Output"
+  "Form"
+  "Field"
+  "Checkbox"
+  "Radio"
+  "Select"
+  "Dropdown"
+  "List"
+  "Table"
+  "Grid"
+  "Card"
+  "Modal"
+  "Dialog"
+  "Popup"
+  "Tooltip"
+  "Alert"
+  "Notification"
+  "Message"
+  "Status"
+  "Progress"
+  "Loading bar"
+  "Percentage"
+  "Count"
+  "Total"
+  "Sum"
+  "Average"
+  "Minimum"
+  "Maximum"
+  "Range"
+  "From"
+  "To"
+  "Between"
+  "Before"
+  "After"
+  "During"
+  "Always"
+  "Never"
+  "Sometimes"
+  "Often"
+  "Rarely"
+  "Daily"
+  "Weekly"
+  "Monthly"
+  "Yearly"
+  "Today"
+  "Yesterday"
+  "Tomorrow"
+  "Now"
+  "Later"
+  "Soon"
+  "Recent"
+  "Past"
+  "Future"
+  "Current"
+  "Latest"
+  "Oldest"
+  "Newest"
+)
+
+# Build pattern for UI words to check (excluding whitelisted ones in specific contexts)
+UI_PATTERN=$(IFS='|'; echo "${ENGLISH_UI_WORDS[*]}")
+
+EXIT_CODE=0
+
+echo "Checking UI files for English text that should be in Swedish..."
+
+# Check TypeScript/React files for UI text (excluding imports and component names)
+while IFS= read -r -d '' file; do
+  echo "Checking: $file"
+  
+  # Extract potential UI strings (in quotes) and check against patterns
+  if grep -n -E "(['\"])([^'\"]*($UI_PATTERN)[^'\"]*)\1" "$file" | \
+     grep -v -E "(import|from|lucide-react|@/|\.tsx?|\.jsx?)" | \
+     grep -v -E "($WHITELIST_PATTERN)" > /tmp/ui_check.log 2>/dev/null; then
+    
+    echo "❌ Potential English UI text found in $file:"
+    cat /tmp/ui_check.log
+    EXIT_CODE=1
+  fi
+done < <(find src/app src/components -name "*.tsx" -o -name "*.ts" -print0)
+
+# Check for Swedish characters to ensure Swedish support
+echo "Checking for Swedish character support..."
+if ! find src/ -name "*.tsx" -o -name "*.ts" | xargs grep -l "[åäöÅÄÖ]" > /dev/null; then
+  echo "⚠️ Warning: No Swedish characters found in UI files"
+  echo "   Verify that Swedish localization is properly implemented"
+else
+  echo "✅ Swedish characters detected in codebase"
+fi
+
+# Clean up temp files
+rm -f /tmp/ui_check.log
+
+if [ $EXIT_CODE -eq 0 ]; then
+  echo "✅ No obvious English UI text found that should be in Swedish"
+fi
+
+exit $EXIT_CODE

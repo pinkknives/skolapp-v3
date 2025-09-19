@@ -21,6 +21,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+      
       - name: ESLint check
         run: npm run lint
       
@@ -43,6 +53,16 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
       
       - name: Build application
         run: npm run build
@@ -78,6 +98,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+      
       - name: Build and analyze bundle
         run: |
           npm run build
@@ -110,6 +140,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+      
       - name: Install Playwright Browsers
         run: npx playwright install ${{ matrix.browser }}
       
@@ -129,7 +169,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.browser }}
       
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -141,28 +181,30 @@ jobs:
     name: Swedish Language Validation
     steps:
       - uses: actions/checkout@v4
-      - name: Check for English text in Swedish files
+      - name: Enhanced Swedish language validation
         run: |
-          # Check for common English words that should be in Swedish
-          ENGLISH_WORDS="(Create|Delete|Edit|Save|Cancel|Submit|Login|Logout|Home|Settings)"
-          
-          echo "Checking for English words in Swedish context..."
-          if grep -r -E "$ENGLISH_WORDS" src/app src/components --include="*.tsx" --include="*.ts"; then
-            echo "❌ Found potential English text in Swedish context"
-            exit 1
-          else
-            echo "✅ No obvious English text found in Swedish context"
-          fi
+          # Use enhanced validation script with whitelist
+          ./scripts/check-swedish-language.sh
+
+  deprecated-checks:
+    runs-on: ubuntu-latest  
+    name: Deprecated Dependencies Check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
       
-      - name: Check Swedish characters support
-        run: |
-          # Ensure Swedish characters (å, ä, ö) are properly handled
-          echo "Checking for Swedish character support..."
-          if ! grep -r "[åäöÅÄÖ]" src/ > /dev/null; then
-            echo "⚠️ Warning: No Swedish characters found, verify this is intentional"
-          else
-            echo "✅ Swedish characters detected and supported"
-          fi
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for deprecated GitHub Actions
+        run: ./scripts/check-deprecated-actions.sh
+      
+      - name: Check for deprecated npm packages
+        run: ./scripts/check-deprecated-packages.sh
 
   security-scan:
     runs-on: ubuntu-latest
