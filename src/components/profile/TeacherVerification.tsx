@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { submitTeacherVerificationAction } from '@/app/actions/teacher-verification'
-import { CheckCircle, AlertCircle, Upload, GraduationCap } from 'lucide-react'
+import { CheckCircle, AlertCircle, GraduationCap } from 'lucide-react'
 
 interface TeacherVerificationProps {
   userId: string
@@ -43,7 +43,7 @@ export function TeacherVerification({ userId, currentStatus }: TeacherVerificati
       } else {
         alert('Det gick inte att skicka ansökan: ' + (result.error || 'Okänt fel'))
       }
-    } catch (error) {
+    } catch (_error) {
       alert('Det gick inte att skicka ansökan')
     } finally {
       setIsSubmitting(false)
