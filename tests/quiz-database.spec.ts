@@ -67,7 +67,7 @@ test.describe('Quiz Database Integration', () => {
     await page.goto('/pricing');
     
     // Check for mentions of data retention modes in Swedish
-    const pageContent = await page.textContent('body');
+    const _pageContent = await page.textContent('body');
     
     // Should mention korttid and långtid concepts somewhere in the app
     // This validates that GDPR concepts are present in the UI

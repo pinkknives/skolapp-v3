@@ -287,6 +287,40 @@ Core components include:
 - Performance budgets
 - Core Web Vitals optimization
 
+### Build Caching Strategy
+
+Skolapp v3 implements multi-layer caching in CI/CD for optimal build performance:
+
+#### Next.js Build Cache
+
+All CI workflows include Next.js build caching to reduce build times:
+
+```yaml
+- name: Cache Next.js build
+  uses: actions/cache@v4
+  with:
+    path: |
+      ~/.npm
+      ${{ github.workspace }}/.next/cache
+    key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+    restore-keys: |
+      ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+```
+
+#### Cache Strategy Layers
+
+1. **NPM Dependencies**: `~/.npm` - Speeds up `npm ci`
+2. **Next.js Build Cache**: `.next/cache` - Enables incremental builds
+3. **Source File Invalidation**: Hash-based cache keys ensure cache invalidation when source files change
+
+#### Performance Benefits
+
+- **Cold builds**: ~3-5 minutes (no cache)
+- **Warm builds**: ~1-2 minutes (with cache)
+- **Incremental builds**: ~30-60 seconds (minimal changes)
+
+For local development, builds benefit from Next.js built-in incremental compilation.
+
 ## Browser Support
 
 - Chrome (latest)

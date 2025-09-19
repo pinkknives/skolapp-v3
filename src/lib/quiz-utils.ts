@@ -4,6 +4,7 @@ import { longTermDataService, canStoreLongTermData, type AnalyticsData } from '@
 import { type User, type DataRetentionMode } from '@/types/auth'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import { getCurrentUserOrganization } from '@/lib/orgs'
+import type { PostgrestError } from '@supabase/supabase-js'
 
 // Generate a random 4-character share code
 export function generateShareCode(): string {
@@ -670,7 +671,20 @@ export function scheduleQuizSessionCleanup(sessionId: string, dataRetentionMode:
 /**
  * Get quizzes for the current user's organization or a specific organization
  */
-export async function getOrganizationQuizzes(orgId?: string): Promise<{ data: any[] | null; error: any }> {
+// Database quiz interface (matching Supabase schema)
+interface DatabaseQuiz {
+  id: string
+  title: string
+  description?: string
+  status: 'draft' | 'published'
+  join_code?: string
+  owner_id: string
+  org_id?: string
+  created_at: string
+  updated_at: string
+}
+
+export async function getOrganizationQuizzes(orgId?: string): Promise<{ data: DatabaseQuiz[] | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -721,7 +735,7 @@ export async function getOrganizationQuizzes(orgId?: string): Promise<{ data: an
 
     return { data, error }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
@@ -732,7 +746,7 @@ export async function createQuizWithOrganization(
   title: string,
   description?: string,
   orgId?: string
-): Promise<{ data: any | null; error: any }> {
+): Promise<{ data: DatabaseQuiz | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -766,7 +780,7 @@ export async function createQuizWithOrganization(
     }
     
     // Create quiz
-    const quizData: any = {
+    const quizData: Partial<DatabaseQuiz> = {
       title,
       description,
       owner_id: user.id,
@@ -786,7 +800,7 @@ export async function createQuizWithOrganization(
 
     return { data, error }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
@@ -796,7 +810,7 @@ export async function createQuizWithOrganization(
 export async function updateQuizWithOrganization(
   quizId: string,
   updates: Partial<{ title: string; description: string; status: QuizStatus }>
-): Promise<{ error: any }> {
+): Promise<{ error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -807,14 +821,14 @@ export async function updateQuizWithOrganization(
 
     return { error }
   } catch (error) {
-    return { error }
+    return { error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
 /**
  * Delete quiz with organization context
  */
-export async function deleteQuizWithOrganization(quizId: string): Promise<{ error: any }> {
+export async function deleteQuizWithOrganization(quizId: string): Promise<{ error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -825,6 +839,6 @@ export async function deleteQuizWithOrganization(quizId: string): Promise<{ erro
 
     return { error }
   } catch (error) {
-    return { error }
+    return { error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }

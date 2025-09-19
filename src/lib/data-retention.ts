@@ -1,6 +1,6 @@
 // Data retention service for managing session and quiz data based on subscription plans
 import { type User, type DataRetentionMode } from '@/types/auth'
-import { type QuizResult, type QuizSession, type Student } from '@/types/quiz'
+import { type QuizResult, type Student } from '@/types/quiz'
 
 // Storage keys for different data types
 const STORAGE_KEYS = {
@@ -237,7 +237,7 @@ class DataRetentionService {
    * Log cleanup action for audit trail
    */
   private logCleanupAction(job: CleanupJob, session: SessionData): void {
-    const auditLog = {
+    const _auditLog = {
       timestamp: new Date(),
       action: 'data_cleanup',
       sessionId: job.sessionId,
@@ -377,7 +377,7 @@ class DataRetentionService {
         } else {
           longTermSessions++
         }
-      } catch (error) {
+      } catch (_error) {
         // Ignore malformed sessions
       }
     }

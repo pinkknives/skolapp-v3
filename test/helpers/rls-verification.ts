@@ -21,7 +21,7 @@ export interface RLSTestResult {
   actualResult: 'permission_denied' | 'empty_result' | 'success' | 'error'
   passed: boolean
   errorMessage?: string
-  details?: any
+  details?: unknown
 }
 
 /**
@@ -433,7 +433,7 @@ export class RLSVerifier {
  */
 export async function runRLSVerification(): Promise<string> {
   const verifier = new RLSVerifier()
-  const results = await verifier.runAllTests()
+  const _results = await verifier.runAllTests()
   const report = verifier.generateReport()
   
   console.log(report)

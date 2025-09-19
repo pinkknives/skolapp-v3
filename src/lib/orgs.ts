@@ -1,4 +1,5 @@
 import { supabaseBrowser } from '@/lib/supabase-browser'
+import type { PostgrestError } from '@supabase/supabase-js'
 
 export interface Organization {
   id: string
@@ -38,7 +39,7 @@ export interface OrganizationInvite {
 /**
  * Create a new organization and set the creator as owner
  */
-export async function createOrg(name: string): Promise<{ data: Organization | null; error: any }> {
+export async function createOrg(name: string): Promise<{ data: Organization | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -59,19 +60,19 @@ export async function createOrg(name: string): Promise<{ data: Organization | nu
       .single()
 
     if (error) {
-      return { data: null, error }
+      return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
     }
 
     return { data, error: null }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
 /**
  * Get organizations for the current user
  */
-export async function getUserOrganizations(): Promise<{ data: Organization[] | null; error: any }> {
+export async function getUserOrganizations(): Promise<{ data: Organization[] | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -92,21 +93,21 @@ export async function getUserOrganizations(): Promise<{ data: Organization[] | n
       .order('joined_at', { ascending: false })
 
     if (error) {
-      return { data: null, error }
+      return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
     }
 
     // Extract organizations from membership records
     const organizations = (data?.map(member => member.org).filter(Boolean) || []) as unknown as Organization[]
     return { data: organizations, error: null }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
 /**
  * Get organizations where the user can create quizzes (teacher, admin, or owner)
  */
-export async function getUserCreatableOrganizations(): Promise<{ data: Organization[] | null; error: any }> {
+export async function getUserCreatableOrganizations(): Promise<{ data: Organization[] | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -128,21 +129,21 @@ export async function getUserCreatableOrganizations(): Promise<{ data: Organizat
       .order('joined_at', { ascending: false })
 
     if (error) {
-      return { data: null, error }
+      return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
     }
 
     // Extract organizations from membership records
     const organizations = (data?.map(member => member.org).filter(Boolean) || []) as unknown as Organization[]
     return { data: organizations, error: null }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
 /**
  * Get organization members
  */
-export async function getOrganizationMembers(orgId: string): Promise<{ data: OrganizationMember[] | null; error: any }> {
+export async function getOrganizationMembers(orgId: string): Promise<{ data: OrganizationMember[] | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -161,14 +162,14 @@ export async function getOrganizationMembers(orgId: string): Promise<{ data: Org
 
     return { data, error }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
 /**
  * Get current user's organization membership
  */
-export async function getCurrentUserOrganization(): Promise<{ data: { org: Organization; membership: OrganizationMember } | null; error: any }> {
+export async function getCurrentUserOrganization(): Promise<{ data: { org: Organization; membership: OrganizationMember } | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -205,14 +206,14 @@ export async function getCurrentUserOrganization(): Promise<{ data: { org: Organ
       error: null 
     }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
 /**
  * Update organization member role
  */
-export async function updateMemberRole(memberId: string, newRole: 'admin' | 'teacher'): Promise<{ error: any }> {
+export async function updateMemberRole(memberId: string, newRole: 'admin' | 'teacher'): Promise<{ error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -223,14 +224,14 @@ export async function updateMemberRole(memberId: string, newRole: 'admin' | 'tea
 
     return { error }
   } catch (error) {
-    return { error }
+    return { error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
 /**
  * Remove organization member
  */
-export async function removeMember(memberId: string): Promise<{ error: any }> {
+export async function removeMember(memberId: string): Promise<{ error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -241,14 +242,14 @@ export async function removeMember(memberId: string): Promise<{ error: any }> {
 
     return { error }
   } catch (error) {
-    return { error }
+    return { error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
 /**
  * Invite user to organization
  */
-export async function inviteToOrganization(orgId: string, email: string, role: 'admin' | 'teacher' = 'teacher'): Promise<{ data: OrganizationInvite | null; error: any }> {
+export async function inviteToOrganization(orgId: string, email: string, role: 'admin' | 'teacher' = 'teacher'): Promise<{ data: OrganizationInvite | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -275,14 +276,14 @@ export async function inviteToOrganization(orgId: string, email: string, role: '
 
     return { data, error }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
 /**
  * Get organization invites
  */
-export async function getOrganizationInvites(orgId: string): Promise<{ data: OrganizationInvite[] | null; error: any }> {
+export async function getOrganizationInvites(orgId: string): Promise<{ data: OrganizationInvite[] | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -295,14 +296,14 @@ export async function getOrganizationInvites(orgId: string): Promise<{ data: Org
 
     return { data, error }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 
 /**
  * Cancel organization invite
  */
-export async function cancelInvite(inviteId: string): Promise<{ error: any }> {
+export async function cancelInvite(inviteId: string): Promise<{ error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -313,14 +314,14 @@ export async function cancelInvite(inviteId: string): Promise<{ error: any }> {
 
     return { error }
   } catch (error) {
-    return { error }
+    return { error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
 /**
  * Accept an organization invitation using token
  */
-export async function acceptInvitation(token: string): Promise<{ data: { org_id: string; role: string } | null; error: any }> {
+export async function acceptInvitation(token: string): Promise<{ data: { org_id: string; role: string } | null; error: PostgrestError | Error | null }> {
   const supabase = supabaseBrowser()
   
   try {
@@ -382,7 +383,7 @@ export async function acceptInvitation(token: string): Promise<{ data: { org_id:
       error: null 
     }
   } catch (error) {
-    return { data: null, error }
+    return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
   }
 }
 

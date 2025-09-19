@@ -89,14 +89,14 @@ test.describe('Performance Tests', () => {
     });
     
     // Find main JavaScript bundle
-    const jsBundles = resourceSizes.filter((resource: any) => 
+    const jsBundles = resourceSizes.filter((resource: { name: string; encodedBodySize: number }) => 
       resource.name.includes('.js') && 
       (resource.name.includes('_app') ||
        resource.name.includes('main'))
     );
     
     // Check that main bundle is reasonable size (uncompressed)
-    jsBundles.forEach((bundle: any) => {
+    jsBundles.forEach((bundle: { name: string; encodedBodySize: number }) => {
       expect(bundle.encodedBodySize).toBeLessThan(400 * 1024); // 400KB uncompressed
     });
   });
@@ -115,7 +115,7 @@ test.describe('Performance Tests', () => {
     });
     
     // Images should be reasonably sized
-    imageResources.forEach((image: any) => {
+    imageResources.forEach((image: { name: string; encodedBodySize: number }) => {
       // No single image should be larger than 500KB
       expect(image.encodedBodySize).toBeLessThan(500 * 1024);
     });
@@ -132,8 +132,8 @@ test.describe('Performance Tests', () => {
         new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             // Only count layout shifts without user input
-            if (!(entry as any).hadRecentInput) {
-              clsValue += (entry as any).value;
+            if (!(entry as PerformanceEntry & { hadRecentInput?: boolean }).hadRecentInput) {
+              clsValue += (entry as PerformanceEntry & { value: number }).value;
             }
           }
         }).observe({ entryTypes: ['layout-shift'] });
