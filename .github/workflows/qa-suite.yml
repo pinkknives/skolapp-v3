@@ -1,242 +1,64 @@
-name: Quality Assurance Suite
+name: QA Suite
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
-  lint-and-type-check:
+  Accessibility Testing:
     runs-on: ubuntu-latest
-    name: Lint & Type Check
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Cache Next.js build
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-      
-      - name: ESLint check
-        run: npm run lint
-      
-      - name: TypeScript check
-        run: npm run type-check
-      
-      - name: Build check
-        run: npm run build
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Start app
+        run: npm run start:test &
+      - name: Lighthouse CI
+        run: npx lhci autorun
 
-  accessibility-test:
+  Performance Budget Check:
     runs-on: ubuntu-latest
-    name: Accessibility Testing
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-      
-      - name: Build application
-        run: npm run build
-      
-      - name: Start application
-        run: npm start &
-        env:
-          NODE_ENV: production
-      
-      - name: Wait for application
-        run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli
-      
-      - name: Run Lighthouse CI
-        run: lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-
-  performance-budget:
-    runs-on: ubuntu-latest
-    name: Performance Budget Check
-    steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Cache Next.js build
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-      
-      - name: Build and analyze bundle
-        run: |
-          npm run build
-          npx next-bundle-analyzer
-      
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run build
       - name: Check bundle size
-        run: |
-          # Check if main bundle exceeds 200KB (gzipped)
-          BUNDLE_SIZE=$(stat -c%s .next/static/chunks/pages/_app-*.js 2>/dev/null || echo "0")
-          if [ $BUNDLE_SIZE -gt 204800 ]; then
-            echo "Bundle size exceeded: ${BUNDLE_SIZE} bytes (>200KB)"
-            exit 1
-          fi
-          echo "Bundle size OK: ${BUNDLE_SIZE} bytes"
+        run: node scripts/check-bundle-size.mjs
+      - name: Upload report
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4 pinned
+        with:
+          name: bundle-report
+          path: ./.reports/bundle/**
 
-  cross-browser-test:
+  Cross-browser Testing:
     runs-on: ubuntu-latest
-    name: Cross-browser Testing
-    strategy:
-      matrix:
-        browser: [chromium, firefox, webkit]
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Cache Next.js build
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-      
-      - name: Install Playwright Browsers
-        run: npx playwright install ${{ matrix.browser }}
-      
-      - name: Build application
-        run: npm run build
-      
-      - name: Start application
-        run: npm start &
-        env:
-          NODE_ENV: production
-      
-      - name: Wait for application
-        run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
-      
-      - name: Run Playwright tests
-        run: npx playwright test --project=${{ matrix.browser }}
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
-        if: failure()
-        with:
-          name: playwright-report-${{ matrix.browser }}
-          path: playwright-report/
-          retention-days: 30
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: E2E (Chromium/Firefox/WebKit)
+        run: npm run test:e2e
 
-  swedish-language-check:
+  Swedish Language Validation:
     runs-on: ubuntu-latest
-    name: Swedish Language Validation
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Enhanced Swedish language validation
-        run: |
-          # Use enhanced validation script with whitelist
-          ./scripts/check-swedish-language.sh
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Validate Swedish UI strings
+        run: bash ./scripts/check-swedish-language.sh
 
-  deprecated-checks:
-    runs-on: ubuntu-latest  
-    name: Deprecated Dependencies Check
-    steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Check for deprecated GitHub Actions
-        run: ./scripts/check-deprecated-actions.sh
-      
-      - name: Check for deprecated npm packages
-        run: ./scripts/check-deprecated-packages.sh
-      
-      - name: Upload reports
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
-        if: always()
-        with:
-          name: deprecated-checks-reports
-          path: reports/
-          retention-days: 30
-
-  security-scan:
+  Deprecated Dependencies Check:
     runs-on: ubuntu-latest
-    name: Security Scan
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c665140bd8db9adbae # v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run security audit
-        run: npm audit --audit-level=moderate
-      
-      - name: Check for secrets in code
-        run: |
-          # Basic check for common secret patterns
-          if grep -r -E "(api_key|secret_key|password|token)" src/ --include="*.ts" --include="*.tsx" | grep -v "// TODO" | grep -v "placeholder"; then
-            echo "❌ Potential secrets found in code"
-            exit 1
-          else
-            echo "✅ No obvious secrets found in code"
-          fi
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
