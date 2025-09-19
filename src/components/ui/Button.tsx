@@ -16,11 +16,11 @@ const buttonVariants = cva(
         link: 'text-primary-600 underline-offset-4 hover:underline hover:text-primary-700',
       },
       size: {
-        sm: 'h-8 px-3 text-xs rounded-md',
-        md: 'h-10 px-4 py-2',
-        lg: 'h-12 px-6 text-base',
-        xl: 'h-14 px-8 text-lg',
-        icon: 'h-10 w-10',
+        sm: 'h-11 px-3 text-xs rounded-md',
+        md: 'h-12 px-4 py-2',
+        lg: 'h-14 px-6 text-base',
+        xl: 'h-16 px-8 text-lg',
+        icon: 'h-12 w-12',
       },
       fullWidth: {
         true: 'w-full',

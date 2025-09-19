@@ -46,7 +46,7 @@ export default function QuizManagementPage() {
     if (!loadingOrgs) {
       loadQuizzes()
     }
-  }, [selectedOrgId, loadingOrgs, loadQuizzes])
+  }, [selectedOrgId, loadingOrgs])
 
   const loadOrganizations = async () => {
     try {
