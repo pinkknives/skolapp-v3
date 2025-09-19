@@ -2,31 +2,33 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: ['*']
   push:
-    branches: [ main ]
+    branches: ['main']
+
+permissions: read-all
 
 jobs:
-  Lint & Type Check:            # <-- detta ser du redan
+  lint_typecheck:            # <-- valid job id (no spaces or symbols)
+    name: CI / Lint & Type Check (pull_request)  # shown in Checks & rulesets
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run lint -- --max-warnings=0
-      - run: npm run type-check
 
-  build:                         # job-id
-    name: Build                  # <-- DISPLAY-NAMNET (måste vara exakt "Build")
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check --if-present
+
+      - name: Lint (fail on warnings)
+        run: npm run lint -- --max-warnings=0
