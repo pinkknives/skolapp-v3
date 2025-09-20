@@ -1,7 +1,7 @@
 // Billing utilities and Stripe integration
 import Stripe from 'stripe'
 import { supabaseBrowser } from '@/lib/supabase-browser'
-import type { BillingStatus, Entitlements } from '@/types/billing'
+import type { BillingStatus, Entitlements, BillingInfo, UsageInfo, QuotaStatus } from '@/types/billing'
 
 // Initialize Stripe (server-side only)
 let stripe: Stripe | null = null
@@ -35,83 +35,80 @@ export function getStripeConfig() {
 }
 
 /**
- * Check if current user's organization has a specific entitlement
+ * Check if current user has a specific entitlement
  */
-export async function hasEntitlement(entitlementKey: string): Promise<boolean> {
+export async function hasEntitlement(entitlementKey: keyof Entitlements): Promise<boolean> {
   const supabase = supabaseBrowser()
   
   try {
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return false
     }
 
-    // Get user's active organization membership
-    const { data: membership, error: membershipError } = await supabase
-      .from('org_members')
-      .select(`
-        org:org_id (
-          id,
-          entitlements
-        )
-      `)
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+    const { data, error } = await supabase
+      .from('entitlements')
+      .select('*')
+      .eq('uid', user.id)
       .single()
 
-    if (membershipError || !membership?.org) {
+    if (error || !data) {
       return false
     }
 
-    const org = membership.org as unknown as { id: string; entitlements: Entitlements }
-    return Boolean(org.entitlements[entitlementKey])
+    return Boolean(data[entitlementKey])
   } catch {
     return false
   }
 }
 
 /**
- * Get current user's organization billing information
+ * Get current user's billing information
  */
-export async function getOrganizationBilling(): Promise<{
-  billingStatus: BillingStatus
-  entitlements: Entitlements
-} | null> {
+export async function getUserBilling(): Promise<BillingInfo | null> {
   const supabase = supabaseBrowser()
   
   try {
-    // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return null
     }
 
-    // Get user's active organization
-    const { data: membership, error: membershipError } = await supabase
-      .from('org_members')
-      .select(`
-        org:org_id (
-          billing_status,
-          entitlements
-        )
-      `)
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .single()
+    // Get user profile and entitlements
+    const [profileResult, entitlementsResult] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('stripe_customer_id, subscription_status, plan')
+        .eq('user_id', user.id)
+        .single(),
+      supabase
+        .from('entitlements')
+        .select('*')
+        .eq('uid', user.id)
+        .single()
+    ])
 
-    if (membershipError || !membership?.org) {
+    if (profileResult.error || entitlementsResult.error) {
       return null
     }
 
-    const org = membership.org as unknown as {
-      billing_status: BillingStatus
-      entitlements: Entitlements
-    }
+    const profile = profileResult.data
+    const entitlements = entitlementsResult.data
 
     return {
-      billingStatus: org.billing_status,
-      entitlements: org.entitlements
+      billingStatus: profile.subscription_status,
+      entitlements: {
+        ai_unlimited: entitlements.ai_unlimited,
+        export_csv: entitlements.export_csv,
+        advanced_analytics: entitlements.advanced_analytics,
+        seats: entitlements.seats,
+        ai_monthly_quota: entitlements.ai_monthly_quota,
+        ai_monthly_used: entitlements.ai_monthly_used,
+        period_start: entitlements.period_start,
+        period_end: entitlements.period_end
+      },
+      stripeCustomerId: profile.stripe_customer_id,
+      plan: profile.plan
     }
   } catch {
     return null
@@ -160,6 +157,79 @@ export function getBillingStatusColor(status: BillingStatus): string {
 /**
  * Check if billing status allows AI features
  */
-export function canUseAIFeatures(status: BillingStatus): boolean {
+export function canUseAIFeatures(status: BillingStatus | null): boolean {
   return status === 'active' || status === 'trialing'
+}
+
+/**
+ * Get user's AI usage information
+ */
+export async function getUsageInfo(): Promise<UsageInfo | null> {
+  const supabase = supabaseBrowser()
+  
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('entitlements')
+      .select('ai_monthly_used, ai_monthly_quota, ai_unlimited, period_start, period_end')
+      .eq('uid', user.id)
+      .single()
+
+    if (error || !data) {
+      return null
+    }
+
+    return {
+      ai_monthly_used: data.ai_monthly_used,
+      ai_monthly_quota: data.ai_monthly_quota,
+      ai_unlimited: data.ai_unlimited,
+      period_start: data.period_start,
+      period_end: data.period_end
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Check if user can use AI features (considering quota)
+ */
+export async function canUseAI(): Promise<boolean> {
+  const usage = await getUsageInfo()
+  if (!usage) return false
+  
+  return usage.ai_unlimited || usage.ai_monthly_used < usage.ai_monthly_quota
+}
+
+/**
+ * Get quota status for display
+ */
+export async function getQuotaStatus(): Promise<QuotaStatus | null> {
+  const usage = await getUsageInfo()
+  if (!usage) return null
+
+  const periodEnd = new Date(usage.period_end)
+  const now = new Date()
+  const daysUntilReset = Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+  return {
+    hasQuota: !usage.ai_unlimited,
+    used: usage.ai_monthly_used,
+    limit: usage.ai_monthly_quota,
+    isUnlimited: usage.ai_unlimited,
+    daysUntilReset: Math.max(0, daysUntilReset)
+  }
+}
+
+/**
+ * Increment AI usage (server-side only)
+ */
+export async function incrementAIUsage(): Promise<boolean> {
+  // This should only be called from server-side API routes
+  // The actual implementation will be in the API route using the database function
+  throw new Error('incrementAIUsage should only be called from server-side API routes')
 }

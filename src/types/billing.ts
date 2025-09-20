@@ -1,18 +1,24 @@
 // Billing and subscription types
 
 export type BillingStatus = 'inactive' | 'trialing' | 'active' | 'past_due' | 'canceled'
+export type Plan = 'free' | 'pro'
 
 export interface Entitlements {
-  ai: boolean
+  ai_unlimited: boolean
+  export_csv: boolean
+  advanced_analytics: boolean
   seats: number
-  [key: string]: boolean | number
+  ai_monthly_quota: number
+  ai_monthly_used: number
+  period_start: string
+  period_end: string
 }
 
 export interface BillingInfo {
-  billingStatus: BillingStatus
+  billingStatus: BillingStatus | null
   entitlements: Entitlements
   stripeCustomerId?: string
-  stripeSubId?: string
+  plan: Plan | null
 }
 
 export interface StripeConfig {
@@ -38,7 +44,22 @@ export type StripeWebhookEvent =
   | 'invoice.payment_succeeded'
   | 'invoice.payment_failed'
 
-// Stripe webhook object types
+// Usage quota related types
+export interface UsageInfo {
+  ai_monthly_used: number
+  ai_monthly_quota: number
+  ai_unlimited: boolean
+  period_start: string
+  period_end: string
+}
+
+export interface QuotaStatus {
+  hasQuota: boolean
+  used: number
+  limit: number
+  isUnlimited: boolean
+  daysUntilReset: number
+}
 export interface StripeCheckoutSession {
   id: string
   mode: string

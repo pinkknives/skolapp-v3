@@ -4,7 +4,7 @@ import { supabaseBrowser } from '@/lib/supabase-browser'
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user and organization
+    // Get current user
     const supabase = supabaseBrowser()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
@@ -15,30 +15,14 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Get user's organization
-    const { data: membership, error: membershipError } = await supabase
-      .from('org_members')
-      .select(`
-        org:org_id (
-          id,
-          stripe_customer_id
-        )
-      `)
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id')
       .eq('user_id', user.id)
-      .eq('status', 'active')
-      .in('role', ['owner', 'admin']) // Only owners and admins can manage billing
       .single()
     
-    if (membershipError || !membership?.org) {
-      return NextResponse.json(
-        { error: 'Du har inte behörighet att hantera fakturering för denna organisation' },
-        { status: 403 }
-      )
-    }
-    
-    const org = (membership.org as unknown as { id: string; stripe_customer_id?: string })
-    
-    if (!org.stripe_customer_id) {
+    if (profileError || !profile?.stripe_customer_id) {
       return NextResponse.json(
         { error: 'Ingen aktiv prenumeration hittades' },
         { status: 404 }
@@ -50,8 +34,8 @@ export async function POST(request: NextRequest) {
     
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: org.stripe_customer_id,
-      return_url: `${request.nextUrl.origin}/teacher/org`
+      customer: profile.stripe_customer_id,
+      return_url: `${request.nextUrl.origin}/teacher`
     })
     
     return NextResponse.json({

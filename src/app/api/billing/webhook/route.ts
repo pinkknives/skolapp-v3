@@ -141,24 +141,15 @@ async function handlePaymentFailed(invoice: any) {
 
 async function updateBillingStatus(customerId: string, status: BillingStatus, subscriptionId?: string) {
   try {
-    // Determine entitlements based on billing status
-    const entitlements = (status === 'active' || status === 'trialing') 
-      ? { ai: true, seats: 100 }
-      : { ai: false, seats: 10 }
-    
-    // Update organization in database
-    const { error } = await supabase
-      .from('orgs')
-      .update({
-        billing_status: status,
-        entitlements,
-        stripe_sub_id: subscriptionId,
-        updated_at: new Date().toISOString()
-      })
-      .eq('stripe_customer_id', customerId)
+    // Use the database function to update user billing status
+    const { error } = await supabase.rpc('update_user_billing_status', {
+      customer_id: customerId,
+      new_status: status,
+      subscription_id: subscriptionId
+    })
     
     if (error) {
-      console.error('Error updating billing status:', error)
+      console.error('Error updating user billing status:', error)
       throw error
     }
     

@@ -5,17 +5,26 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { CreditCard, ExternalLink, Crown } from 'lucide-react'
-import { getOrganizationBilling, getBillingStatusDisplay, getBillingStatusColor, getStripeConfig } from '@/lib/billing'
-import type { BillingStatus, Entitlements } from '@/types/billing'
+import { getUserBilling, getBillingStatusDisplay, getBillingStatusColor, getStripeConfig } from '@/lib/billing'
+import type { BillingStatus, Entitlements, Plan } from '@/types/billing'
 
 interface BillingCardProps {
-  organizationId: string
-  canManage: boolean
+  canManage?: boolean
 }
 
-export function BillingCard({ organizationId, canManage }: BillingCardProps) {
-  const [billingStatus, setBillingStatus] = useState<BillingStatus>('inactive')
-  const [entitlements, setEntitlements] = useState<Entitlements>({ ai: false, seats: 10 })
+export function BillingCard({ canManage = true }: BillingCardProps) {
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null)
+  const [plan, setPlan] = useState<Plan | null>('free')
+  const [entitlements, setEntitlements] = useState<Entitlements>({ 
+    ai_unlimited: false,
+    export_csv: false,
+    advanced_analytics: false,
+    seats: 1,
+    ai_monthly_quota: 20,
+    ai_monthly_used: 0,
+    period_start: '',
+    period_end: ''
+  })
   const [loading, setLoading] = useState(true)
   const [loadingCheckout, setLoadingCheckout] = useState(false)
   const [loadingPortal, setLoadingPortal] = useState(false)
@@ -23,14 +32,15 @@ export function BillingCard({ organizationId, canManage }: BillingCardProps) {
 
   useEffect(() => {
     loadBillingInfo()
-  }, [organizationId])
+  }, [])
 
   const loadBillingInfo = async () => {
     try {
       setLoading(true)
-      const billing = await getOrganizationBilling()
+      const billing = await getUserBilling()
       if (billing) {
         setBillingStatus(billing.billingStatus)
+        setPlan(billing.plan)
         setEntitlements(billing.entitlements)
       }
     } catch (err) {
@@ -120,7 +130,7 @@ export function BillingCard({ organizationId, canManage }: BillingCardProps) {
     )
   }
 
-  const statusColor = getBillingStatusColor(billingStatus)
+  const statusColor = getBillingStatusColor(billingStatus || 'inactive')
   
   let stripeConfig
   try {
@@ -163,13 +173,13 @@ export function BillingCard({ organizationId, canManage }: BillingCardProps) {
         {/* Status Badge */}
         <div className="flex items-center gap-3">
           <div className={`px-3 py-1 rounded-full border text-sm font-medium ${statusColor}`}>
-            {getBillingStatusDisplay(billingStatus)}
+            {billingStatus ? getBillingStatusDisplay(billingStatus) : 'Gratis'}
           </div>
-          {entitlements.ai && (
+          {plan === 'pro' && (
             <div className="flex items-center gap-1 text-warning-600">
               <Crown size={16} />
               <Typography variant="caption" className="font-medium">
-                AI-funktioner aktiverade
+                Pro-funktioner aktiverade
               </Typography>
             </div>
           )}
@@ -182,12 +192,16 @@ export function BillingCard({ organizationId, canManage }: BillingCardProps) {
           </Typography>
           <ul className="space-y-1 text-sm text-neutral-600">
             <li className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${entitlements.ai ? 'bg-success-500' : 'bg-neutral-300'}`} />
-              AI-assisterade bedömningar: {entitlements.ai ? 'Aktiverat' : 'Inte aktiverat'}
+              <span className={`w-2 h-2 rounded-full ${entitlements.ai_unlimited ? 'bg-success-500' : 'bg-neutral-300'}`} />
+              AI-funktioner: {entitlements.ai_unlimited ? 'Obegränsat' : `${entitlements.ai_monthly_quota}/månad`}
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-success-500" />
-              Maximalt antal platser: {entitlements.seats}
+              <span className={`w-2 h-2 rounded-full ${entitlements.export_csv ? 'bg-success-500' : 'bg-neutral-300'}`} />
+              CSV-export: {entitlements.export_csv ? 'Aktiverat' : 'Inte aktiverat'}
+            </li>
+            <li className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${entitlements.advanced_analytics ? 'bg-success-500' : 'bg-neutral-300'}`} />
+              Avancerad analys: {entitlements.advanced_analytics ? 'Aktiverat' : 'Inte aktiverat'}
             </li>
           </ul>
         </div>

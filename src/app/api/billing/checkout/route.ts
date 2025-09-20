@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Get current user and organization
+    // Get current user
     const supabase = supabaseBrowser()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
@@ -25,52 +25,42 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Get user's organization
-    const { data: membership, error: membershipError } = await supabase
-      .from('org_members')
-      .select(`
-        org:org_id (
-          id,
-          name,
-          stripe_customer_id
-        )
-      `)
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id, display_name')
       .eq('user_id', user.id)
-      .eq('status', 'active')
-      .in('role', ['owner', 'admin']) // Only owners and admins can manage billing
       .single()
     
-    if (membershipError || !membership?.org) {
+    if (profileError) {
       return NextResponse.json(
-        { error: 'Du har inte behörighet att hantera fakturering för denna organisation' },
-        { status: 403 }
+        { error: 'Kunde inte hämta användardata' },
+        { status: 500 }
       )
     }
-    
-    const org = (membership.org as unknown as { id: string; name: string; stripe_customer_id?: string })
     
     // Initialize Stripe
     const stripe = getStripe()
     
     // Create or get Stripe customer
-    let customerId = org.stripe_customer_id
+    let customerId = profile.stripe_customer_id
     
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
+        name: profile.display_name || user.email,
         metadata: {
-          org_id: org.id,
-          org_name: org.name
+          user_id: user.id
         }
       })
       
       customerId = customer.id
       
-      // Update organization with customer ID
+      // Update profile with customer ID
       await supabase
-        .from('orgs')
+        .from('profiles')
         .update({ stripe_customer_id: customerId })
-        .eq('id', org.id)
+        .eq('user_id', user.id)
     }
     
     // Create checkout session
@@ -84,14 +74,14 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: mode as 'subscription' | 'payment',
-      success_url: `${request.nextUrl.origin}/teacher/org?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.nextUrl.origin}/teacher/org?canceled=true`,
+      success_url: `${request.nextUrl.origin}/teacher?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${request.nextUrl.origin}/teacher?canceled=true`,
       metadata: {
-        org_id: org.id
+        user_id: user.id
       },
       subscription_data: mode === 'subscription' ? {
         metadata: {
-          org_id: org.id
+          user_id: user.id
         }
       } : undefined,
       allow_promotion_codes: true,

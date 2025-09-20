@@ -424,7 +424,6 @@ export default function OrganizationPage() {
 
                     {/* Billing */}
                     <BillingCard 
-                      organizationId={selectedOrg.id}
                       canManage={canManage}
                     />
 
