@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { RubricEditor } from './RubricEditor'
 import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion, MultipleChoiceOption } from '@/types/quiz'
+import { TextSimplificationHint } from './TextSimplificationHint'
+import { ClarityImprovementHint } from './ClarityImprovementHint'
+import { AnswerGenerationHint } from './AnswerGenerationHint'
 
 interface QuestionEditorProps {
   question: Question
@@ -15,9 +18,11 @@ interface QuestionEditorProps {
   onChange: (question: Question) => void
   onDelete: () => void
   onDuplicate: () => void
+  /** Grade level for AI hints (optional) */
+  gradeLevel?: string
 }
 
-export function QuestionEditor({ question, questionIndex, onChange, onDelete, onDuplicate }: QuestionEditorProps) {
+export function QuestionEditor({ question, questionIndex, onChange, onDelete, onDuplicate, gradeLevel }: QuestionEditorProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const handleBasicChange = (updates: Partial<Question>) => {
@@ -131,13 +136,33 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
 
       <CardContent className="space-y-4">
         {/* Question Title */}
-        <Input
-          label="Frågetitel"
-          placeholder="Skriv din fråga här"
-          value={question.title}
-          onChange={(e) => handleBasicChange({ title: e.target.value })}
-          required
-        />
+        <div>
+          <div className="flex justify-between items-start mb-2">
+            <Typography variant="body2" className="font-medium text-neutral-700">
+              Frågetitel <span className="text-red-500">*</span>
+            </Typography>
+            <div className="flex gap-2">
+              {gradeLevel && (
+                <TextSimplificationHint
+                  text={question.title}
+                  targetGrade={gradeLevel}
+                  onApply={(simplifiedText) => handleBasicChange({ title: simplifiedText })}
+                />
+              )}
+              <ClarityImprovementHint
+                questionText={question.title}
+                questionType={question.type === 'multiple-choice' || question.type === 'image' ? 'multiple-choice' : 'free-text'}
+                onApply={(improvedText) => handleBasicChange({ title: improvedText })}
+              />
+            </div>
+          </div>
+          <Input
+            placeholder="Skriv din fråga här"
+            value={question.title}
+            onChange={(e) => handleBasicChange({ title: e.target.value })}
+            required
+          />
+        </div>
 
         {/* Points and Time Limit */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,12 +233,25 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
               <Typography variant="body2" className="font-medium text-neutral-700">
                 Svarsalternativ
               </Typography>
-              <Button variant="outline" size="sm" onClick={addOption}>
-                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Lägg till alternativ
-              </Button>
+              <div className="flex gap-2">
+                <AnswerGenerationHint
+                  questionText={question.title}
+                  _currentOptions={(question as MultipleChoiceQuestion | ImageQuestion).options}
+                  onApply={(newOptions) => {
+                    if (question.type === 'multiple-choice') {
+                      handleMultipleChoiceChange({ options: newOptions })
+                    } else {
+                      handleImageChange({ options: newOptions })
+                    }
+                  }}
+                />
+                <Button variant="outline" size="sm" onClick={addOption}>
+                  <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Lägg till alternativ
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-3">

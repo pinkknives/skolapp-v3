@@ -16,9 +16,11 @@ interface QuizBasicInfoStepProps {
   quiz: Partial<Quiz>
   onChange: (updates: Partial<Quiz>) => void
   onValidationChange: (isValid: boolean) => void
+  /** Callback when AI context (subject/grade) changes */
+  onAiContextChange?: (context: { subject?: string; gradeLevel?: string }) => void
 }
 
-export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBasicInfoStepProps) {
+export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiContextChange }: QuizBasicInfoStepProps) {
   const [tagInput, setTagInput] = useState('')
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loadingOrgs, setLoadingOrgs] = useState(true)
@@ -192,7 +194,10 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
               </Typography>
               <select
                 value={currentSubject}
-                onChange={(e) => setCurrentSubject(e.target.value)}
+                onChange={(e) => {
+                  setCurrentSubject(e.target.value)
+                  onAiContextChange?.({ subject: e.target.value, gradeLevel: currentGrade })
+                }}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="">Välj ämne</option>
@@ -211,7 +216,10 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
               </Typography>
               <select
                 value={currentGrade}
-                onChange={(e) => setCurrentGrade(e.target.value)}
+                onChange={(e) => {
+                  setCurrentGrade(e.target.value)
+                  onAiContextChange?.({ subject: currentSubject, gradeLevel: e.target.value })
+                }}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="">Välj årskurs</option>
