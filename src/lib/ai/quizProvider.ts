@@ -1,4 +1,4 @@
-// AI Quiz Provider - Provider abstraction layer for quiz question generation
+// AI Quiz Provider - Provider abstraction layer for quiz question generation and hints
 import { Question, MultipleChoiceQuestion, FreeTextQuestion } from '@/types/quiz'
 
 export type AiParams = {
@@ -18,8 +18,48 @@ export type AiQuestion =
   | { kind: 'multiple-choice'; prompt: string; choices: AiChoice[] }
   | { kind: 'free-text'; prompt: string; expectedAnswer: string };
 
+// New types for AI hints v2
+export type AiTitleSuggestion = {
+  title: string;
+  description?: string;
+  learningObjectives?: string[];
+};
+
+export type AiTextSimplification = {
+  original: string;
+  simplified: string;
+  improvements: string[];
+};
+
+export type AiDifficultyVariation = {
+  original: AiQuestion;
+  variations: Array<{
+    difficulty: 'easy' | 'medium' | 'hard';
+    question: AiQuestion;
+    changes: string[];
+  }>;
+};
+
+export type AiClarityImprovement = {
+  original: string;
+  improved: string;
+  improvements: string[];
+};
+
+export type AiAnswerGeneration = {
+  questionId: string;
+  generatedChoices: AiChoice[];
+  confidence: 'high' | 'medium' | 'low';
+};
+
 export interface QuizAIProvider {
   generateQuestions(params: AiParams): Promise<AiQuestion[]>;
+  // New hint methods
+  suggestTitle(params: { subject: string; grade: string; topics?: string[]; context?: string }): Promise<AiTitleSuggestion[]>;
+  simplifyText(text: string, targetGrade: string): Promise<AiTextSimplification>;
+  varyDifficulty(question: AiQuestion, targetDifficulties: Array<'easy' | 'medium' | 'hard'>): Promise<AiDifficultyVariation>;
+  improveClarity(questionText: string, questionType: 'multiple-choice' | 'free-text'): Promise<AiClarityImprovement>;
+  generateAnswers(questionText: string): Promise<AiAnswerGeneration>;
   name: string;
   isAvailable: boolean;
 }
@@ -64,6 +104,149 @@ export class MockQuizProvider implements QuizAIProvider {
     }
     
     return questions;
+  }
+
+  async suggestTitle(params: { subject: string; grade: string; topics?: string[]; context?: string }): Promise<AiTitleSuggestion[]> {
+    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+    
+    const topicsText = params.topics?.length ? ` om ${params.topics.join(', ')}` : '';
+    const baseTitle = `${params.subject} för ${params.grade}${topicsText}`;
+    
+    return [
+      {
+        title: `${baseTitle} - Grundläggande`,
+        description: `Introduktion till ${params.subject.toLowerCase()} för elever i ${params.grade}`,
+        learningObjectives: [
+          `Förstå grundläggande begrepp inom ${params.subject.toLowerCase()}`,
+          `Kunna tillämpa kunskaper i praktiska situationer`,
+          `Utveckla problemlösningsförmåga`
+        ]
+      },
+      {
+        title: `Utmaning i ${params.subject}`,
+        description: `Fördjupade frågor inom ${params.subject.toLowerCase()} anpassade för ${params.grade}`,
+        learningObjectives: [
+          `Fördjupa förståelsen för ${params.subject.toLowerCase()}`,
+          `Träna kritiskt tänkande`,
+          `Koppla samman olika koncept`
+        ]
+      },
+      {
+        title: `${params.subject} - Repetition`,
+        description: `Repetition av viktiga moment inom ${params.subject.toLowerCase()}`,
+        learningObjectives: [
+          `Repetera och befästa kunskaper`,
+          `Identifiera kunskapsluckor`,
+          `Förbereda för kommande moment`
+        ]
+      }
+    ];
+  }
+
+  async simplifyText(text: string, targetGrade: string): Promise<AiTextSimplification> {
+    await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 300));
+    
+    // Simple mock simplification
+    const simplified = text
+      .replace(/komplicerad/g, 'svår')
+      .replace(/använder/g, 'använder')
+      .replace(/genomföra/g, 'göra')
+      .replace(/därför att/g, 'för att');
+    
+    return {
+      original: text,
+      simplified: simplified,
+      improvements: [
+        'Kortare meningar',
+        'Enklare ordval',
+        `Anpassat för ${targetGrade}`
+      ]
+    };
+  }
+
+  async varyDifficulty(question: AiQuestion, targetDifficulties: Array<'easy' | 'medium' | 'hard'>): Promise<AiDifficultyVariation> {
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
+    
+    const variations = targetDifficulties.map(difficulty => {
+      let modifiedQuestion: AiQuestion;
+      const changes: string[] = [];
+      
+      if (question.kind === 'multiple-choice') {
+        const prompt = question.prompt.replace(/enkel|medelsvår|svår/, 
+          difficulty === 'easy' ? 'enkel' : difficulty === 'hard' ? 'svår' : 'medelsvår'
+        );
+        
+        modifiedQuestion = {
+          ...question,
+          prompt
+        };
+        
+        if (difficulty === 'easy') {
+          changes.push('Förenklad frågeställning', 'Tydligare alternativ');
+        } else if (difficulty === 'hard') {
+          changes.push('Mer komplex frågeställning', 'Svårare alternativ');
+        } else {
+          changes.push('Balanserad svårighetsgrad');
+        }
+      } else {
+        const prompt = question.prompt.replace(/enkel|medelsvår|svår/, 
+          difficulty === 'easy' ? 'enkel' : difficulty === 'hard' ? 'svår' : 'medelsvår'
+        );
+        
+        modifiedQuestion = {
+          ...question,
+          prompt
+        };
+        changes.push(`Anpassad till ${difficulty === 'easy' ? 'enkel' : difficulty === 'hard' ? 'svår' : 'medelsvår'} nivå`);
+      }
+      
+      return {
+        difficulty,
+        question: modifiedQuestion,
+        changes
+      };
+    });
+    
+    return {
+      original: question,
+      variations
+    };
+  }
+
+  async improveClarity(questionText: string, questionType: 'multiple-choice' | 'free-text'): Promise<AiClarityImprovement> {
+    await new Promise(resolve => setTimeout(resolve, 700 + Math.random() * 350));
+    
+    const improved = questionText
+      .replace(/Vad är/g, 'Vad betyder')
+      .replace(/Hur/g, 'På vilket sätt')
+      .replace(/Varför/g, 'Av vilken anledning');
+    
+    return {
+      original: questionText,
+      improved: improved,
+      improvements: [
+        'Tydligare frågeställning',
+        'Mer specifikt ordval',
+        questionType === 'multiple-choice' ? 'Optimerad för flerval' : 'Optimerad för fritext'
+      ]
+    };
+  }
+
+  async generateAnswers(_questionText: string): Promise<AiAnswerGeneration> {
+    await new Promise(resolve => setTimeout(resolve, 900 + Math.random() * 450));
+    
+    const questionId = `generated_${Date.now()}`;
+    
+    return {
+      questionId,
+      generatedChoices: [
+        { id: `${questionId}_1`, text: 'AI-genererat korrekt svar', correct: true },
+        { id: `${questionId}_2`, text: 'AI-genererat felaktigt alternativ 1', correct: false },
+        { id: `${questionId}_3`, text: 'AI-genererat felaktigt alternativ 2', correct: false },
+        { id: `${questionId}_4`, text: 'AI-genererat felaktigt alternativ 3', correct: false }
+      ],
+      confidence: 'medium'
+    };
   }
 }
 
@@ -180,6 +363,26 @@ Regler:
 - Gör frågorna engagerande och relevanta för ämnet
 - Svara endast med JSON, inga förklaringar`;
   }
+
+  async suggestTitle(_params: { subject: string; grade: string; topics?: string[]; context?: string }): Promise<AiTitleSuggestion[]> {
+    throw new Error('OpenAI title suggestions not yet implemented');
+  }
+
+  async simplifyText(_text: string, _targetGrade: string): Promise<AiTextSimplification> {
+    throw new Error('OpenAI text simplification not yet implemented');
+  }
+
+  async varyDifficulty(_question: AiQuestion, _targetDifficulties: Array<'easy' | 'medium' | 'hard'>): Promise<AiDifficultyVariation> {
+    throw new Error('OpenAI difficulty variation not yet implemented');
+  }
+
+  async improveClarity(_questionText: string, _questionType: 'multiple-choice' | 'free-text'): Promise<AiClarityImprovement> {
+    throw new Error('OpenAI clarity improvement not yet implemented');
+  }
+
+  async generateAnswers(_questionText: string): Promise<AiAnswerGeneration> {
+    throw new Error('OpenAI answer generation not yet implemented');
+  }
 }
 
 export class AnthropicQuizProvider implements QuizAIProvider {
@@ -188,6 +391,26 @@ export class AnthropicQuizProvider implements QuizAIProvider {
 
   async generateQuestions(_params: AiParams): Promise<AiQuestion[]> {
     throw new Error('Anthropic provider not yet implemented');
+  }
+
+  async suggestTitle(_params: { subject: string; grade: string; topics?: string[]; context?: string }): Promise<AiTitleSuggestion[]> {
+    throw new Error('Anthropic title suggestions not yet implemented');
+  }
+
+  async simplifyText(_text: string, _targetGrade: string): Promise<AiTextSimplification> {
+    throw new Error('Anthropic text simplification not yet implemented');
+  }
+
+  async varyDifficulty(_question: AiQuestion, _targetDifficulties: Array<'easy' | 'medium' | 'hard'>): Promise<AiDifficultyVariation> {
+    throw new Error('Anthropic difficulty variation not yet implemented');
+  }
+
+  async improveClarity(_questionText: string, _questionType: 'multiple-choice' | 'free-text'): Promise<AiClarityImprovement> {
+    throw new Error('Anthropic clarity improvement not yet implemented');
+  }
+
+  async generateAnswers(_questionText: string): Promise<AiAnswerGeneration> {
+    throw new Error('Anthropic answer generation not yet implemented');
   }
 }
 
@@ -256,6 +479,92 @@ class QuizAIService {
         } as FreeTextQuestion;
       }
     });
+  }
+
+  // New hint methods
+  async suggestTitle(params: { subject: string; grade: string; topics?: string[]; context?: string }, providerId?: string): Promise<AiTitleSuggestion[]> {
+    const provider = providerId 
+      ? this.providers.find(p => p.name === providerId)
+      : this.getDefaultProvider();
+    
+    if (!provider) {
+      throw new Error(`Provider ${providerId} not found`);
+    }
+
+    if (!provider.isAvailable) {
+      throw new Error(`Provider ${provider.name} is not available`);
+    }
+
+    return await provider.suggestTitle(params);
+  }
+
+  async simplifyText(text: string, targetGrade: string, providerId?: string): Promise<AiTextSimplification> {
+    const provider = providerId 
+      ? this.providers.find(p => p.name === providerId)
+      : this.getDefaultProvider();
+    
+    if (!provider) {
+      throw new Error(`Provider ${providerId} not found`);
+    }
+
+    if (!provider.isAvailable) {
+      throw new Error(`Provider ${provider.name} is not available`);
+    }
+
+    return await provider.simplifyText(text, targetGrade);
+  }
+
+  async varyDifficulty(question: AiQuestion, targetDifficulties: Array<'easy' | 'medium' | 'hard'>, providerId?: string): Promise<AiDifficultyVariation> {
+    const provider = providerId 
+      ? this.providers.find(p => p.name === providerId)
+      : this.getDefaultProvider();
+    
+    if (!provider) {
+      throw new Error(`Provider ${providerId} not found`);
+    }
+
+    if (!provider.isAvailable) {
+      throw new Error(`Provider ${provider.name} is not available`);
+    }
+
+    return await provider.varyDifficulty(question, targetDifficulties);
+  }
+
+  async improveClarity(questionText: string, questionType: 'multiple-choice' | 'free-text', providerId?: string): Promise<AiClarityImprovement> {
+    const provider = providerId 
+      ? this.providers.find(p => p.name === providerId)
+      : this.getDefaultProvider();
+    
+    if (!provider) {
+      throw new Error(`Provider ${providerId} not found`);
+    }
+
+    if (!provider.isAvailable) {
+      throw new Error(`Provider ${provider.name} is not available`);
+    }
+
+    return await provider.improveClarity(questionText, questionType);
+  }
+
+  async generateAnswers(questionText: string, providerId?: string): Promise<AiAnswerGeneration> {
+    const provider = providerId 
+      ? this.providers.find(p => p.name === providerId)
+      : this.getDefaultProvider();
+    
+    if (!provider) {
+      throw new Error(`Provider ${providerId} not found`);
+    }
+
+    if (!provider.isAvailable) {
+      throw new Error(`Provider ${provider.name} is not available`);
+    }
+
+    return await provider.generateAnswers(questionText);
+  }
+
+  // Helper method to check if AI features are available
+  get isAIAvailable(): boolean {
+    return this.getAvailableProviders().length > 0;
   }
 }
 

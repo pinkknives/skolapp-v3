@@ -176,6 +176,62 @@ export const aiAssistant = {
     title: 'Dubbelkolla alltid innehållet. AI kan ha fel.',
     description: 'Granska frågorna noga innan du lägger till dem i ditt quiz. Se till att de passar din undervisning och elevernas nivå.'
   },
+  hints: {
+    titleSuggestions: {
+      button: 'Föreslå titel & lärandemål',
+      ariaLabel: 'Få AI-förslag på quiz-titel och lärandemål',
+      tooltip: 'AI föreslår titel och lärandemål baserat på ämne och årskurs',
+      loading: 'Föreslår titel och lärandemål...',
+      error: 'Kunde inte generera förslag',
+      diffTitle: 'Titel och lärandemål - förslag',
+      diffDescription: 'Granska AI-förslagen och välj vad du vill använda'
+    },
+    simplifyText: {
+      button: 'Förenkla svenska',
+      ariaLabel: 'Förenkla text med AI',
+      tooltip: 'Gör texten enklare att förstå för eleverna',
+      loading: 'Förenklar texten...',
+      error: 'Kunde inte förenkla texten'
+    },
+    varyDifficulty: {
+      button: 'Variera svårighetsgrad',
+      ariaLabel: 'Skapa varianter med olika svårighetsgrad',
+      tooltip: 'Få förslag på samma fråga i olika svårighetsgrader',
+      loading: 'Skapar svårighetsvariationer...',
+      error: 'Kunde inte skapa variationer'
+    },
+    improveClarity: {
+      button: 'Förbättra tydlighet',
+      ariaLabel: 'Förbättra frågans tydlighet med AI',
+      tooltip: 'Gör frågan tydligare och lättare att förstå',
+      loading: 'Förbättrar frågan...',
+      error: 'Kunde inte förbättra frågan'
+    },
+    generateAnswers: {
+      button: 'Generera svarsalternativ',
+      ariaLabel: 'Låt AI generera svarsalternativ',
+      tooltip: 'Skapa svarsalternativ automatiskt för flervalsfrågor',
+      loading: 'Genererar svarsalternativ...',
+      error: 'Kunde inte generera svarsalternativ'
+    },
+    diff: {
+      beforeLabel: 'Innan',
+      afterLabel: 'Efter',
+      improvementsLabel: 'Förbättringar',
+      actionsTitle: 'Vad vill du göra?',
+      insertButton: 'Infoga',
+      replaceButton: 'Ersätt',
+      cancelButton: 'Avbryt',
+      insertTooltip: 'Lägg till som ny text',
+      replaceTooltip: 'Ersätt befintlig text',
+      cancelTooltip: 'Kassera förslaget'
+    },
+    featureDisabled: {
+      message: 'AI ej aktiverad',
+      tooltip: 'AI-funktioner är inte tillgängliga. Kontakta administratör.',
+      upgradeMessage: 'AI-funktioner kräver en aktiv prenumeration.'
+    }
+  },
   form: {
     subject: {
       label: 'Ämne',
