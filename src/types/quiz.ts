@@ -238,3 +238,93 @@ export interface AIGradingSession {
     timestamp: Date
   }[]
 }
+
+// Classroom management types
+export type ClassMemberRole = 'teacher' | 'student'
+export type ClassMemberStatus = 'active' | 'inactive'
+export type ClassSessionStatus = 'scheduled' | 'open' | 'closed'
+
+export interface Class {
+  id: string
+  ownerId: string
+  orgId?: string
+  name: string
+  grade?: string
+  subject?: string
+  inviteCode: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ClassMember {
+  id: string
+  classId: string
+  userId?: string // null for guest students
+  alias?: string // Required for guest students, optional for authenticated
+  role: ClassMemberRole
+  joinedAt: Date
+  status: ClassMemberStatus
+}
+
+export interface ClassSession {
+  id: string
+  classId: string
+  sessionId: string
+  quizId: string
+  status: ClassSessionStatus
+  startedAt: Date
+  endedAt?: Date
+  createdAt: Date
+}
+
+export interface ClassWithMembers extends Class {
+  members: ClassMember[]
+  memberCount: number
+}
+
+export interface ClassSessionWithDetails extends ClassSession {
+  className: string
+  quizTitle: string
+  session: QuizSession
+  participants: SessionParticipant[]
+}
+
+export interface ClassJoinRequest {
+  inviteCode: string
+  alias: string
+  userId?: string // Optional for authenticated users
+}
+
+export interface ClassJoinResult {
+  success: boolean
+  class?: Class
+  member?: ClassMember
+  error?: string
+  errorCode?: 'INVALID_CODE' | 'CLASS_FULL' | 'ALIAS_TAKEN' | 'ALREADY_MEMBER'
+}
+
+export interface ClassSessionResult {
+  success: boolean
+  classSession?: ClassSession
+  session?: QuizSession
+  error?: string
+}
+
+// Results and analytics for class sessions
+export interface ClassSessionStats {
+  totalParticipants: number
+  submittedCount: number
+  averageScore: number
+  averageTimeSpent: number
+  completionRate: number
+}
+
+export interface ClassSessionResults {
+  classSession: ClassSession
+  stats: ClassSessionStats
+  participants: (SessionParticipant & {
+    score?: number
+    timeSpent?: number
+    completedAt?: Date
+  })[]
+}

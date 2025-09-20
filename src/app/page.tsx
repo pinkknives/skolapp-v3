@@ -221,11 +221,19 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={itemVariants}
-            className="text-center"
+            className="text-center space-y-4"
           >
-            <Button size="lg" asChild>
-              <Link href="/quiz/join">Gå med i Quiz nu</Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" asChild>
+                <Link href="/quiz/join">Gå med i Quiz nu</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/join/class">Gå med i Klass</Link>
+              </Button>
+            </div>
+            <Typography variant="body2" className="text-neutral-500">
+              Ange koden från din lärare för att komma igång
+            </Typography>
           </motion.div>
         </Container>
       </Section>
