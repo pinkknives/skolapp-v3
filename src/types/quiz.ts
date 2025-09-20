@@ -253,6 +253,44 @@ export interface QuizSession {
   participants?: SessionParticipant[] // Loaded separately for performance
 }
 
+// New Live Quiz Session types matching the exact database specification
+export interface LiveQuizSession {
+  id: string
+  orgId: string
+  classId?: string
+  quizId: string
+  pin: string // 6-character A-Z0-9 code
+  status: 'LOBBY' | 'ACTIVE' | 'PAUSED' | 'ENDED'
+  currentIndex: number
+  settings: {
+    timePerQuestion?: number
+    showAfterEach?: boolean
+    autoAdvance?: boolean
+  }
+  createdBy: string
+  startedAt?: Date
+  endedAt?: Date
+  createdAt: Date
+}
+
+export interface LiveQuizParticipant {
+  sessionId: string
+  userId: string
+  displayName: string
+  role: 'teacher' | 'student'
+  joinedAt: Date
+  lastSeenAt: Date
+}
+
+export interface LiveQuizAnswer {
+  sessionId: string
+  questionId: string
+  userId: string
+  answer: string
+  isCorrect?: boolean
+  submittedAt: Date
+}
+
 export interface SessionParticipant {
   id: string
   sessionId: string
