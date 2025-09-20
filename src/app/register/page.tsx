@@ -7,21 +7,22 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import { isValidEmail } from '@/lib/auth-utils'
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import { UserPlus, CheckCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
-type AuthState = 'idle' | 'sending' | 'sent' | 'error'
+type RegisterState = 'idle' | 'sending' | 'sent' | 'error'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState('')
-  const [state, setState] = useState<AuthState>('idle')
+  const [displayName, setDisplayName] = useState('')
+  const [state, setState] = useState<RegisterState>('idle')
   const [error, setError] = useState<string | null>(null)
 
-  const handleSendMagicLink = async (e: React.FormEvent) => {
+  const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!email) {
-      setError('E-postadress är obligatorisk')
+    if (!email || !displayName) {
+      setError('E-postadress och visningsnamn är obligatoriska')
       return
     }
     
@@ -30,15 +31,26 @@ export default function LoginPage() {
       return
     }
 
+    if (displayName.trim().length < 2) {
+      setError('Visningsnamnet måste vara minst 2 tecken långt')
+      return
+    }
+
     setState('sending')
     setError(null)
 
     try {
       const supabase = supabaseBrowser()
+      
+      // Sign up with magic link
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback?signup=true&display_name=${encodeURIComponent(displayName.trim())}`,
+          data: {
+            display_name: displayName.trim(),
+            role: 'teacher' // Default role for registration
+          }
         }
       })
 
@@ -47,9 +59,21 @@ export default function LoginPage() {
       }
 
       setState('sent')
-    } catch (err) {
-      console.error('Magic link error:', err)
-      setError('Det gick inte att skicka e-postlänken. Försök igen.')
+    } catch (err: unknown) {
+      console.error('Registration error:', err)
+      
+      // Provide Swedish error messages
+      let errorMessage = 'Det gick inte att skapa kontot. Försök igen.'
+      
+      if (err instanceof Error) {
+        if (err.message?.includes('already registered') || err.message?.includes('already exists')) {
+          errorMessage = 'Ett konto med denna e-postadress finns redan. Prova att logga in istället.'
+        } else if (err.message?.includes('email')) {
+          errorMessage = 'Det gick inte att skicka e-postlänken. Kontrollera att e-postadressen är korrekt.'
+        }
+      }
+      
+      setError(errorMessage)
       setState('error')
     }
   }
@@ -58,6 +82,7 @@ export default function LoginPage() {
     setState('idle')
     setError(null)
     setEmail('')
+    setDisplayName('')
   }
 
   if (state === 'sent') {
@@ -68,25 +93,34 @@ export default function LoginPage() {
             <div className="mx-auto w-12 h-12 bg-success-100 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-6 h-6 text-success-600" />
             </div>
-            <CardTitle>E-post skickad!</CardTitle>
+            <CardTitle>Bekräfta ditt konto</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <Typography variant="body2" className="text-neutral-600">
-              Vi har skickat en inloggningslänk till:
+              Vi har skickat en bekräftelselänk till:
             </Typography>
             <Typography variant="body1" className="font-medium">
               {email}
             </Typography>
             <Typography variant="body2" className="text-neutral-600">
-              Klicka på länken i e-posten för att logga in. Kontrollera även skräpposten om du inte ser meddelandet.
+              Klicka på länken i e-posten för att slutföra registreringen och logga in. 
+              Kontrollera även skräpposten om du inte ser meddelandet.
             </Typography>
             <Button 
               variant="outline" 
               onClick={handleReset}
               className="w-full"
             >
-              Skicka till annan e-postadress
+              Registrera med annan e-postadress
             </Button>
+            <div className="pt-4 border-t border-neutral-200">
+              <Typography variant="caption" className="text-neutral-500">
+                Har du redan ett konto?{' '}
+                <Link href="/login" className="text-primary-600 hover:underline">
+                  Logga in här
+                </Link>
+              </Typography>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -98,23 +132,34 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-            <Mail className="w-6 h-6 text-primary-600" />
+            <UserPlus className="w-6 h-6 text-primary-600" />
           </div>
-          <CardTitle>Logga in med e-post</CardTitle>
+          <CardTitle>Skapa lärarkonto</CardTitle>
           <Typography variant="body2" className="text-neutral-600">
-            Ange din e-postadress så skickar vi en säker inloggningslänk
+            Registrera dig för att börja skapa quiz och hantera klasser
           </Typography>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSendMagicLink} className="space-y-4">
+          <form onSubmit={handleCreateAccount} className="space-y-4">
             <Input
               label="E-postadress"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="namn@exempel.se"
+              placeholder="namn@skolan.se"
               required
               disabled={state === 'sending'}
+            />
+
+            <Input
+              label="Visningsnamn"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Anna Andersson"
+              required
+              disabled={state === 'sending'}
+              helperText="Detta namn kommer att visas för eleverna"
             />
 
             {error && (
@@ -129,14 +174,14 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={state === 'sending' || !email}
+              disabled={state === 'sending' || !email || !displayName}
             >
-              {state === 'sending' ? 'Skickar...' : 'Skicka inloggningslänk'}
+              {state === 'sending' ? 'Skapar konto...' : 'Skapa konto'}
             </Button>
 
             <div className="text-center pt-2">
               <Typography variant="caption" className="text-neutral-500">
-                Genom att logga in godkänner du våra{' '}
+                Genom att skapa ett konto godkänner du våra{' '}
                 <a href="/terms" className="text-primary-600 hover:underline">
                   användarvillkor
                 </a>{' '}
@@ -149,9 +194,9 @@ export default function LoginPage() {
 
             <div className="text-center pt-4 border-t border-neutral-200">
               <Typography variant="caption" className="text-neutral-500">
-                Har du inget konto än?{' '}
-                <Link href="/register" className="text-primary-600 hover:underline">
-                  Skapa lärarkonto här
+                Har du redan ett konto?{' '}
+                <Link href="/login" className="text-primary-600 hover:underline">
+                  Logga in här
                 </Link>
               </Typography>
             </div>

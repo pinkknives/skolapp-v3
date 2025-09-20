@@ -70,10 +70,115 @@ export class MockQuizProvider implements QuizAIProvider {
 // Future provider stubs - ready for real implementation
 export class OpenAIQuizProvider implements QuizAIProvider {
   name = 'OpenAI GPT';
-  isAvailable = false; // Will be true when API key is configured
+  
+  get isAvailable(): boolean {
+    return !!process.env.OPENAI_API_KEY;
+  }
 
-  async generateQuestions(_params: AiParams): Promise<AiQuestion[]> {
-    throw new Error('OpenAI provider not yet implemented');
+  async generateQuestions(params: AiParams): Promise<AiQuestion[]> {
+    if (!this.isAvailable) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    const prompt = this.buildPrompt(params);
+    
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: `Du är en svensk lärare som skapar quiz-frågor. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error('No content returned from OpenAI');
+      }
+
+      // Parse the JSON response
+      const questions = JSON.parse(content) as AiQuestion[];
+      
+      // Validate the structure
+      if (!Array.isArray(questions)) {
+        throw new Error('Invalid response format from OpenAI');
+      }
+
+      return questions;
+    } catch (error) {
+      console.error('OpenAI generation error:', error);
+      throw new Error('Det gick inte att generera frågor med AI just nu');
+    }
+  }
+
+  private buildPrompt(params: AiParams): string {
+    const questionTypes = {
+      'multiple-choice': 'flervalsfrâgor',
+      'free-text': 'fritextfrågor'
+    };
+
+    const difficulties = {
+      'easy': 'lätt',
+      'medium': 'medium',
+      'hard': 'svår'
+    };
+
+    const typeText = questionTypes[params.type] || 'frågor';
+    const difficultyText = difficulties[params.difficulty] || 'medium';
+
+    return `Skapa ${params.count} ${typeText} för ${params.subject} på ${params.grade} nivå med ${difficultyText} svårighetsgrad.
+
+${params.context ? `Kontext: ${params.context}` : ''}
+
+Returnera svaret som en JSON-array med följande struktur:
+
+För flervalsfrâgor:
+{
+  "kind": "multiple-choice",
+  "prompt": "Frågan här",
+  "choices": [
+    {"text": "Alternativ 1", "correct": false},
+    {"text": "Alternativ 2", "correct": true},
+    {"text": "Alternativ 3", "correct": false},
+    {"text": "Alternativ 4", "correct": false}
+  ]
+}
+
+För fritextfrågor:
+{
+  "kind": "free-text",
+  "prompt": "Frågan här",
+  "expectedAnswer": "Förväntat svar eller beskrivning"
+}
+
+Regler:
+- Använd alltid svenska
+- Frågor ska vara pedagogiska och åldersanpassade
+- För flerval: ha alltid 4 alternativ med exakt 1 korrekt svar
+- För fritext: ge en tydlig beskrivning av förväntat svar
+- Gör frågorna engagerande och relevanta för ämnet
+- Svara endast med JSON, inga förklaringar`;
   }
 }
 

@@ -18,7 +18,7 @@ export default function QuizJoinCodePage({ params }: QuizJoinCodePageProps) {
       // Redirect to the main join page with the code as a parameter
       // This allows the main page to handle both direct access and QR code links
       const upperCode = code?.toUpperCase()
-      if (upperCode && /^[A-Z0-9]{4}$/.test(upperCode)) {
+      if (upperCode && /^[A-Z0-9]{6}$/.test(upperCode)) {
         // Store the code temporarily and redirect to the main join page
         sessionStorage.setItem('quiz_join_code', upperCode)
         router.replace('/quiz/join')

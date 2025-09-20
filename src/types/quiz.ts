@@ -6,6 +6,10 @@ export type ExecutionMode = 'self-paced' | 'teacher-controlled' | 'teacher-revie
 
 export type QuizStatus = 'draft' | 'published' | 'archived'
 
+export type SessionStatus = 'lobby' | 'live' | 'ended'
+
+export type ParticipantStatus = 'joined' | 'active' | 'finished' | 'disconnected'
+
 export interface MultipleChoiceOption {
   id: string
   text: string
@@ -111,11 +115,31 @@ export interface QuizSession {
   id: string
   quizId: string
   teacherId: string
+  code: string // 6-character join code
+  status: SessionStatus
+  startedAt?: Date
+  endedAt?: Date
+  settings: Record<string, unknown> // Session-specific settings
   createdAt: Date
-  status: 'waiting' | 'active' | 'completed'
-  participants: string[] // Student IDs
-  currentQuestionIndex?: number // For teacher-controlled mode
-  shareCode: string
+  updatedAt: Date
+  participants?: SessionParticipant[] // Loaded separately for performance
+}
+
+export interface SessionParticipant {
+  id: string
+  sessionId: string
+  studentId?: string // null for guest participants
+  displayName: string
+  joinedAt: Date
+  status: ParticipantStatus
+  lastSeen: Date
+}
+
+export interface SessionSettings {
+  allowLateJoin?: boolean
+  showResults?: boolean
+  maxParticipants?: number
+  timeLimit?: number // Session time limit in minutes
 }
 
 export interface Student {
