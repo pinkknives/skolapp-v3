@@ -15,11 +15,11 @@
  * 8. Cleanup (delete/take down created quiz)
  */
 
-import { test, expect, Page, Browser } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { setupAIMock, resetAIMock, MOCK_QUIZ_DATA, MOCK_AI_QUESTIONS } from '../fixtures/aiMock';
 
 // Test data
-const TEACHER_ACCOUNT = {
+const _TEACHER_ACCOUNT = {
   email: 'test.teacher@skolapp.se',
   name: 'Test Lärare'
 };

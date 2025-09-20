@@ -17,13 +17,17 @@ We have implemented sharp E2E tests that cover the complete user journeys:
 
 - **`tests/core-flows.spec.ts`** - Enhanced core flows with complete E2E scenarios
 - **`tests/quiz-critical-flows.e2e.spec.ts`** - Dedicated critical path tests for quiz lifecycle
+- **`tests/e2e/quiz-ai-flow.spec.ts`** - AI-assisted quiz creation complete flow
 - **`tests/accessibility.a11y.spec.ts`** - Accessibility compliance testing
+- **`tests/fixtures/aiMock.ts`** - Deterministic AI response fixtures
 
 ### Test Coverage
 
 #### Teacher Flows
 - Quiz creation från scratch with Swedish UI validation
-- AI-assisted quiz creation with Swedish disclaimer
+- **AI-assisted quiz creation** with Swedish disclaimer and mock responses
+- AI panel accessibility (focus management, Escape key, ARIA)
+- Question generation, selection, and import flow
 - Quiz preview and publishing
 - Quiz management and status handling
 
@@ -48,6 +52,9 @@ We have implemented sharp E2E tests that cover the complete user journeys:
 # Run all E2E tests across browsers
 npm run e2e
 
+# Run AI-assisted quiz tests with mock
+npm run e2e:ai
+
 # Run specific browser tests
 npm run e2e:chromium
 npm run e2e:firefox  
@@ -59,6 +66,24 @@ npm run test:ui
 # Run with browser visible (headed mode)
 npm run test:headed
 ```
+
+### AI-Assisted Quiz Testing
+
+For testing AI functionality, we use deterministic mocks:
+
+```bash
+# Run AI quiz tests with mock responses
+AI_MODE=mock npm run e2e:ai
+
+# Run specific AI test file
+AI_MODE=mock npx playwright test tests/e2e/quiz-ai-flow.spec.ts
+```
+
+**AI Mock Features:**
+- Deterministic Swedish responses (2 MC + 2 free text questions)
+- No external API calls during testing
+- Consistent behavior across test runs
+- Route interception for `/api/ai/**` endpoints
 
 ### CI Environment
 

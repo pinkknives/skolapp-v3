@@ -7,6 +7,7 @@ Welcome to Skolapp v3! This guide will help you understand our development workf
 - [Development Setup](#development-setup)
 - [Code Quality Standards](#code-quality-standards)
 - [Language Requirements](#language-requirements)
+- [Testing](#testing)
 - [CI/CD Guidelines](#cicd-guidelines)
 - [Dependency Management](#dependency-management)
 - [Performance & PWA](#performance--pwa)
@@ -95,6 +96,50 @@ This script:
 <Button>Spara Quiz</Button>
 <h1>Skapa nytt quiz</h1>
 ```
+
+## Testing
+
+### End-to-End Testing
+
+We use Playwright for comprehensive E2E testing across browsers.
+
+#### Running Tests Locally
+
+```bash
+# Run all E2E tests across browsers
+npm run e2e
+
+# Run AI-assisted quiz tests with deterministic mocks
+npm run e2e:ai
+
+# Run specific browser tests
+npm run e2e:chromium
+npm run e2e:firefox
+npm run e2e:webkit
+
+# Debug mode with browser visible
+npm run test:headed
+
+# Interactive UI mode for debugging
+npm run test:ui
+```
+
+#### AI Testing
+
+AI functionality uses deterministic mocks to ensure stable tests:
+
+- **Mock Provider**: Returns consistent Swedish quiz questions
+- **Environment**: Set `AI_MODE=mock` to activate mocking
+- **Route Interception**: Intercepts `/api/ai/**` calls with static responses
+- **Test Data**: 2 multiple-choice + 2 free-text questions in Swedish
+
+#### Test Structure
+
+- **`tests/core-flows.spec.ts`** - Basic quiz creation and student flows
+- **`tests/e2e/quiz-ai-flow.spec.ts`** - Complete AI-assisted quiz flow
+- **`tests/fixtures/aiMock.ts`** - AI mock responses and setup utilities
+
+For detailed testing documentation, see [`docs/E2E_TESTING.md`](docs/E2E_TESTING.md).
 
 ## CI/CD Guidelines
 
