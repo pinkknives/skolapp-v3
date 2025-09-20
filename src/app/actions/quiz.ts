@@ -188,14 +188,15 @@ export async function createAttemptAction(formData: FormData): Promise<CreateAtt
     let dataMode = 'short' // Default to short-term
     
     if (studentId) {
+      // Use new consent system
       const { data: consent } = await supabase
-        .from('consents')
+        .from('guardian_consents')
         .select('status, expires_at')
         .eq('student_id', studentId)
-        .eq('status', 'approved')
+        .eq('status', 'granted')
         .single()
 
-      if (consent && new Date(consent.expires_at) > new Date()) {
+      if (consent && consent.expires_at && new Date(consent.expires_at) > new Date()) {
         dataMode = 'long'
       }
     }

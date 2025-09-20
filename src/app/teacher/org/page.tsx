@@ -22,6 +22,7 @@ import {
 } from '@/lib/orgs'
 import { Users, Plus, Settings, Mail, Trash2, Copy, Check } from 'lucide-react'
 import { BillingCard } from '@/components/billing/BillingCard'
+import { ConsentSettings } from '@/components/consent/ConsentSettings'
 
 export default function OrganizationPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
@@ -424,6 +425,12 @@ export default function OrganizationPage() {
 
                     {/* Billing */}
                     <BillingCard 
+                      canManage={canManage}
+                    />
+
+                    {/* Consent Settings */}
+                    <ConsentSettings 
+                      orgId={selectedOrg.id}
                       canManage={canManage}
                     />
 
