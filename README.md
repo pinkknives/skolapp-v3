@@ -114,6 +114,80 @@ Skolapp v3 uses Supabase for backend services. To configure the connection:
    - Service role key has admin privileges - keep it secure
    - Only use service role key in server-side code
 
+### Ably Setup (Live Quiz Real-time Features)
+
+Skolapp v3 supports live quiz functionality with real-time communication via Ably. This enables:
+
+- **Live quiz control**: Teachers can start, pause, and advance questions in real-time
+- **Real-time answers**: Student responses are delivered instantly to teachers
+- **Presence awareness**: See who's connected and participating
+- **Multi-device sync**: Works across all devices and browser tabs
+
+#### Configuration Steps
+
+1. **Create an Ably account:**
+   - Go to [Ably.com](https://ably.com) and create a free account
+   - Create a new app in your Ably dashboard
+
+2. **Get your API keys:**
+   - Navigate to your app's API Keys section
+   - Copy the **Root API key** (format: `appId.keyId:keySecret`)
+   - Optionally, create a **subscribe-only key** for read-only displays
+
+3. **Configure environment variables:**
+   ```bash
+   # Ably Root API Key (NEVER commit this - server-side only)
+   ABLY_API_KEY=your_app_id.key_id:key_secret
+   
+   # Token TTL in seconds (default: 3600 = 1 hour)
+   ABLY_TOKEN_TTL_SECONDS=3600
+   
+   # Optional: Subscribe-only key for public displays (safe to expose)
+   NEXT_PUBLIC_ABLY_SUBSCRIBE_KEY=your_subscribe_only_key
+   
+   # Enable live quiz features
+   NEXT_PUBLIC_FEATURE_LIVE_QUIZ=true
+   ```
+
+4. **Test the integration:**
+   - Start the development server: `npm run dev`
+   - Visit the demo at: `http://localhost:3000/demo/live-quiz`
+   - Open teacher and student views in different browser tabs
+   - Test real-time communication
+
+#### Security & Capabilities
+
+The Ably integration uses **token-based authentication** with role-based capabilities:
+
+**Teacher capabilities:**
+- Publish to `quiz:*:control` (start, next, end commands)
+- Subscribe to `quiz:*:answers` (receive student responses)
+- Presence on `quiz:*:room` (see participants)
+
+**Student capabilities:**
+- Subscribe to `quiz:*:control` (receive quiz commands)
+- Publish to `quiz:*:answers` (submit responses)
+- Presence on `quiz:*:room` (join/leave notifications)
+
+**Channel Structure:**
+- `quiz:{quizId}:control` - Teacher control messages
+- `quiz:{quizId}:answers` - Student answer submissions
+- `quiz:{quizId}:room` - Presence and participation
+
+#### Troubleshooting
+
+**Common issues:**
+- **"Token not valid"**: Check that `ABLY_API_KEY` is correctly formatted
+- **"Permission denied"**: Ensure proper role headers in token requests
+- **Connection issues**: Verify network isn't blocking WebSocket connections
+- **Feature not visible**: Confirm `NEXT_PUBLIC_FEATURE_LIVE_QUIZ=true`
+
+**Demo pages:**
+- `/demo/live-quiz` - Overview and links to all views
+- `/demo/live-quiz/teacher` - Teacher control panel
+- `/demo/live-quiz/student` - Student participation view
+- `/demo/live-quiz/display` - Classroom display (read-only)
+
 ## Available Scripts
 
 ### Core Development

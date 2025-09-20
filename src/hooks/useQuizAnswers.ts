@@ -17,10 +17,10 @@ export function useQuizAnswers(quizId: string) {
     const ably = getAbly('teacher-listener', 'teacher')
     const answersChannel = ably.channels.get(`quiz:${quizId}:answers`)
 
-    const handleAnswerMessage = (msg: any) => {
-      if (msg.name === 'answer') {
+    const handleAnswerMessage = (msg: { name?: string; data?: unknown; clientId?: string }) => {
+      if (msg.name === 'answer' && msg.data && msg.clientId) {
         const answerEvent: AnswerEvent = {
-          ...msg.data,
+          ...(msg.data as AnswerMsg),
           clientId: msg.clientId,
           receivedAt: Date.now()
         }
@@ -30,7 +30,7 @@ export function useQuizAnswers(quizId: string) {
         // Update answer counts by question
         setAnswerCounts(prev => ({
           ...prev,
-          [msg.data.questionId]: (prev[msg.data.questionId] || 0) + 1
+          [(msg.data as AnswerMsg).questionId]: (prev[(msg.data as AnswerMsg).questionId] || 0) + 1
         }))
       }
     }

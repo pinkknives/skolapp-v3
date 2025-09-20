@@ -26,8 +26,10 @@ export function useQuizControl(quizId: string, role?: 'teacher' | 'student') {
     const roomChannel = ably.channels.get(`quiz:${quizId}:room`)
 
     // Listen for control messages
-    const handleControlMessage = (msg: any) => {
-      const controlMsg = msg as ControlMsg
+    const handleControlMessage = (msg: { name?: string; data?: unknown }) => {
+      if (!msg.name) return
+      
+      const controlMsg = { name: msg.name, data: msg.data } as ControlMsg
       
       if (controlMsg.name === 'start') {
         setState({ 
@@ -49,7 +51,7 @@ export function useQuizControl(quizId: string, role?: 'teacher' | 'student') {
     const handlePresenceUpdate = async () => {
       try {
         const members = await roomChannel.presence.get()
-        setParticipants(members.map(member => ({
+        setParticipants(members.map((member: { clientId: string; data: unknown }) => ({
           clientId: member.clientId,
           data: member.data as PresenceData
         })))
