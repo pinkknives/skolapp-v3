@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { quizAI, GRADE_LEVELS } from '@/lib/ai/quizProvider'
-import { Question } from '@/types/quiz'
-import { Sparkles, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { Question, QuestionCitation } from '@/types/quiz'
+import { Sparkles, AlertCircle, CheckCircle, X, ExternalLink, BookOpen } from 'lucide-react'
 
 interface AIQuestionGeneratorProps {
   onQuestionsGenerated: (questions: Question[]) => void
@@ -17,6 +17,55 @@ interface AIQuestionGeneratorProps {
 
 type GenerationState = 'form' | 'generating' | 'review' | 'error'
 
+// Citation display component
+function CitationSources({ citations }: { citations: QuestionCitation[] }) {
+  if (!citations || citations.length === 0) return null;
+
+  return (
+    <div className="mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded-md">
+      <div className="flex items-center gap-2 mb-2">
+        <BookOpen className="w-4 h-4 text-neutral-600" />
+        <Typography variant="body2" className="font-medium text-neutral-700">
+          Källor från läroplaner:
+        </Typography>
+      </div>
+      <div className="space-y-2">
+        {citations.map((citation, index) => (
+          <div key={index} className="flex items-start gap-2 text-sm">
+            <span className="text-neutral-500 font-mono text-xs mt-0.5">[{index + 1}]</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-neutral-700">{citation.sourceTitle}</span>
+                {citation.sourceUrl && (
+                  <a
+                    href={citation.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 hover:text-primary-700"
+                    title="Öppna källa"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+              {citation.license && (
+                <div className="text-xs text-neutral-500 mt-1">
+                  Licens: {citation.license}
+                </div>
+              )}
+              {citation.span && (
+                <div className="text-xs text-neutral-600 mt-1 italic">
+                  "{citation.span}"
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }: AIQuestionGeneratorProps) {
   const [state, setState] = useState<GenerationState>('form')
   const [subject, setSubject] = useState('')
@@ -25,6 +74,7 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
   const [questionType, setQuestionType] = useState<'multiple-choice' | 'free-text' | 'mixed'>('multiple-choice')
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [context, setContext] = useState('')
+  const [useRAG, setUseRAG] = useState(true) // Enable RAG by default
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -45,7 +95,8 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
         type: questionType === 'mixed' ? 'multiple-choice' : questionType, // Handle mixed type
         difficulty,
         context: context.trim() || undefined,
-        locale: 'sv-SE'
+        locale: 'sv-SE',
+        useRAG
       })
 
       setGeneratedQuestions(questions)
@@ -198,6 +249,19 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
                       rows={3}
                     />
                   </div>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-md">
+                    <input
+                      type="checkbox"
+                      id="use-rag"
+                      checked={useRAG}
+                      onChange={(e) => setUseRAG(e.target.checked)}
+                      className="w-4 h-4 text-primary-600 border-primary-300 rounded focus:ring-primary-500"
+                    />
+                    <label htmlFor="use-rag" className="text-sm text-primary-700">
+                      <strong>Använd svenska läroplaner</strong> - Basera frågor på Skolverkets curriculum (rekommenderas)
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -272,6 +336,16 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
                           Förväntat svar: {question.expectedAnswer}
                         </Typography>
                       )}
+                      
+                      {question.explanation && (
+                        <div className="mt-3 p-2 bg-info-50 border border-info-200 rounded-md">
+                          <Typography variant="body2" className="text-info-800">
+                            <strong>Koppling till läroplanen:</strong> {question.explanation}
+                          </Typography>
+                        </div>
+                      )}
+                      
+                      {question.citations && <CitationSources citations={question.citations} />}
                     </CardContent>
                   </Card>
                 ))}
@@ -279,7 +353,7 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
 
               <div className="bg-warning-50 border border-warning-200 rounded-md p-4">
                 <Typography variant="body2" className="text-warning-800">
-                  <strong>Påminnelse:</strong> Granska frågorna noga innan du lägger till dem. Du kan redigera dem efter att du lagt till dem i ditt quiz.
+                  <strong>Dubbelkolla alltid innehållet. AI kan ha fel.</strong> Granska frågorna noga innan du lägger till dem. Du kan redigera dem efter att du lagt till dem i ditt quiz.
                 </Typography>
               </div>
 
