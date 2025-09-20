@@ -81,6 +81,22 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
+    // Check if Syllabus feature is enabled
+    const featureEnabled = process.env.FEATURE_SYLLABUS === 'true';
+    
+    if (!featureEnabled) {
+      console.log('FEATURE_SYLLABUS disabled, returning empty context');
+      return NextResponse.json({
+        retrieved: [],
+        query: { subject: '', gradeBand: '', keywords: '' },
+        performance: {
+          retrievalTime: Date.now() - startTime,
+          resultsCount: 0
+        },
+        featureDisabled: true
+      });
+    }
+    
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
@@ -166,16 +182,16 @@ export async function POST(request: NextRequest) {
           title: string;
           url: string | null;
           license: string | null;
-        };
+        }[];
       }) => ({
         chunkId: result.id,
         text: result.text_content,
         score: 0.5, // Default score for fallback
         source: {
-          id: result.source_docs.id,
-          title: result.source_docs.title,
-          url: result.source_docs.url,
-          license: result.source_docs.license
+          id: result.source_docs[0]?.id || '',
+          title: result.source_docs[0]?.title || 'Okänd källa',
+          url: result.source_docs[0]?.url || null,
+          license: result.source_docs[0]?.license || null
         }
       }));
       

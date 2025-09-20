@@ -1,0 +1,108 @@
+name: Weekly Skolverket Syllabus Refresh
+
+# Run weekly on Sundays at 2 AM UTC (3 AM CET, 4 AM CEST)
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      fresh:
+        description: 'Perform fresh import (clears existing data)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  refresh-syllabus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    env:
+      # Database configuration
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      
+      # Skolverket API configuration
+      FEATURE_SYLLABUS: true
+      SYLLABUS_BASE_URL: https://api.skolverket.se/syllabus
+      
+      # OpenAI for embeddings
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Run Skolverket ETL
+        id: etl
+        run: |
+          if [ "${{ github.event.inputs.fresh }}" = "true" ]; then
+            echo "Running fresh import..."
+            npm run etl:skolverket:fresh
+          else
+            echo "Running incremental import..."
+            npm run etl:skolverket
+          fi
+        continue-on-error: true
+        
+      - name: Check ETL result
+        run: |
+          if [ ${{ steps.etl.outcome }} = "failure" ]; then
+            echo "ETL process failed"
+            exit 1
+          else
+            echo "ETL process completed successfully"
+          fi
+          
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Weekly Skolverket Syllabus Refresh Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            # Automatisk syllabusuppdatering misslyckades
+            
+            **Datum:** ${new Date().toLocaleString('sv-SE')}
+            **Workflow:** Weekly Skolverket Syllabus Refresh
+            **Trigger:** ${context.eventName === 'schedule' ? 'Schemalagd körning' : 'Manuell körning'}
+            
+            ## Felsökning
+            - Kontrollera att Skolverkets API är tillgängligt
+            - Verifiera databasanslutning och behörigheter
+            - Granska workflow-loggar för specifika fel
+            - Kontrollera API-nycklar och konfiguration
+            
+            ## Åtgärder
+            - [ ] Undersök felorsak i workflow-loggar
+            - [ ] Testa manuell ETL-körning lokalt
+            - [ ] Kontrollera Skolverkets API-status
+            - [ ] Uppdatera syllabusdata manuellt om nödvändigt
+            
+            **Workflow-körning:** ${context.payload.workflow_run?.html_url || context.payload.repository.html_url + '/actions'}
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'skolverket', 'automation', 'high-priority']
+            });
+            
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ Skolverket syllabus refresh completed successfully"
+          echo "📊 Check database for updated curriculum data"
+          echo "🕐 Next scheduled run: $(date -d 'next sunday 02:00' --iso-8601=seconds)"

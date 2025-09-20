@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
@@ -75,8 +75,39 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [context, setContext] = useState('')
   const [useRAG, setUseRAG] = useState(true) // Enable RAG by default
+  const [syllabusAvailable, setSyllabusAvailable] = useState<boolean | null>(null) // null = checking, true/false = available/unavailable
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  // Check if syllabus feature is available
+  useEffect(() => {
+    const checkSyllabusAvailability = async () => {
+      try {
+        const response = await fetch('/api/rag/quiz/context', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            subject: 'test',
+            gradeBand: '1-3',
+            k: 1
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setSyllabusAvailable(!data.featureDisabled);
+        } else {
+          setSyllabusAvailable(false);
+        }
+      } catch {
+        setSyllabusAvailable(false);
+      }
+    };
+    
+    checkSyllabusAvailability();
+  }, []);
 
   const handleGenerate = async () => {
     if (!subject.trim() || !gradeLevel) {
@@ -250,18 +281,56 @@ export function AIQuestionGenerator({ onQuestionsGenerated, onClose, className }
                     />
                   </div>
                   
-                  <div className="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-md">
+                  <div className={`flex items-center gap-3 p-3 rounded-md border ${
+                    syllabusAvailable === false 
+                      ? 'bg-neutral-50 border-neutral-200' 
+                      : 'bg-primary-50 border-primary-200'
+                  }`}>
                     <input
                       type="checkbox"
                       id="use-rag"
-                      checked={useRAG}
+                      checked={useRAG && syllabusAvailable !== false}
                       onChange={(e) => setUseRAG(e.target.checked)}
-                      className="w-4 h-4 text-primary-600 border-primary-300 rounded focus:ring-primary-500"
+                      className={`w-4 h-4 rounded focus:ring-primary-500 ${
+                        syllabusAvailable === false 
+                          ? 'text-neutral-400 border-neutral-300 cursor-not-allowed' 
+                          : 'text-primary-600 border-primary-300'
+                      }`}
+                      disabled={syllabusAvailable === false}
                     />
-                    <label htmlFor="use-rag" className="text-sm text-primary-700">
-                      <strong>Använd svenska läroplaner</strong> - Basera frågor på Skolverkets curriculum (rekommenderas)
+                    <label htmlFor="use-rag" className={`text-sm ${
+                      syllabusAvailable === false 
+                        ? 'text-neutral-500' 
+                        : 'text-primary-700'
+                    }`}>
+                      <strong>Använd svenska läroplaner</strong> - 
+                      {syllabusAvailable === null && ' Kontrollerar tillgänglighet...'}
+                      {syllabusAvailable === true && ' Basera frågor på Skolverkets curriculum (rekommenderas)'}
+                      {syllabusAvailable === false && ' Tillgängligt endast när FEATURE_SYLLABUS är aktiverat'}
                     </label>
                   </div>
+                  
+                  {syllabusAvailable === false && (
+                    <div className="p-3 bg-warning-50 border border-warning-200 rounded-md">
+                      <Typography variant="body2" className="text-warning-700">
+                        <strong>Info:</strong> Välj ämne och årskurs för att använda kursplanen som underlag när syllabusdata är tillgänglig.
+                      </Typography>
+                    </div>
+                  )}
+                  
+                  {syllabusAvailable === true && useRAG && subject && gradeLevel && (
+                    <div className="p-3 bg-info-50 border border-info-200 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-info-600" />
+                        <Typography variant="body2" className="font-medium text-info-700">
+                          Underlag från Skolverket
+                        </Typography>
+                      </div>
+                      <Typography variant="caption" className="text-info-600">
+                        Frågor kommer att baseras på officiellt kursmaterial för {subject}, årskurs {gradeLevel}
+                      </Typography>
+                    </div>
+                  )}
                 </div>
               </div>
 
