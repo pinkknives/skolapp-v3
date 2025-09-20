@@ -22,6 +22,111 @@ export type RevealPolicy = 'immediate' | 'after_deadline' | 'never'
 
 export type NotificationType = 'deadline_24h' | 'deadline_1h' | 'deadline_passed' | 'assignment_published'
 
+// Analytics and Results types
+export interface SessionOverview {
+  sessionId: string
+  totalParticipants: number
+  submittedCount: number
+  avgScore: number
+  participationRate: number
+  completionRate: number
+  mode: SessionMode
+  dueAt?: string
+  revealPolicy: RevealPolicy
+  maxAttempts: number
+  isPastDeadline: boolean
+}
+
+export interface StudentResult {
+  sessionId: string
+  userId: string
+  displayName: string
+  studentId?: string
+  bestScore: number
+  questionsAttempted: number
+  lastActivityAt?: string
+  totalAttempts: number
+  avgTimePerQuestion?: number
+  status: ProgressStatus
+}
+
+export interface QuestionAnalysis {
+  sessionId: string
+  questionId: string
+  questionIndex: number
+  questionTitle: string
+  questionType: QuestionType
+  questionPoints: number
+  totalAttempts: number
+  correctCount: number
+  correctRate: number
+  avgScore: number
+  avgTimeSeconds?: number
+}
+
+export interface AttemptDetail {
+  sessionId: string
+  userId: string
+  participantName: string
+  quizTitle: string
+  totalScore: number
+  maxPossibleScore: number
+  percentage: number
+  questionsAnswered: number
+  totalQuestions: number
+  totalTimeSpent: number
+  status: ProgressStatus
+  startedAt?: string
+  submittedAt?: string
+  attemptNo?: number
+  canRevealAnswers: boolean
+  questions: AttemptQuestionDetail[]
+}
+
+export interface AttemptQuestionDetail {
+  questionIndex: number
+  questionId: string
+  questionTitle: string
+  questionType: QuestionType
+  questionPoints: number
+  studentAnswer: string
+  isCorrect: boolean
+  score: number
+  timeSpentSeconds?: number
+  answeredAt?: string
+  attempts: number
+  correctAnswer?: string
+  options?: MultipleChoiceOption[]
+}
+
+export interface AttemptItem {
+  id: string
+  sessionId: string
+  userId: string
+  questionId: string
+  questionIndex: number
+  answer: unknown
+  isCorrect: boolean
+  score: number
+  timeSpentSeconds?: number
+  answeredAt: Date
+  attemptNo: number
+}
+
+// AI Insights types
+export interface AIInsight {
+  type: 'success' | 'concern' | 'opportunity' | 'info'
+  title: string
+  description: string
+  action: string
+}
+
+export interface AIInsightResponse {
+  insights: AIInsight[]
+  disclaimer: string
+  generatedAt: string
+}
+
 export interface MultipleChoiceOption {
   id: string
   text: string
