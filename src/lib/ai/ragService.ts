@@ -136,16 +136,17 @@ Dubbelkolla alltid innehållet. AI kan ha fel.`;
  * Extract citations from AI response
  */
 export function extractCitations(
-  response: any,
+  response: { citations?: unknown[] } & Record<string, unknown>,
   availableContext: RAGContext[]
-): any {
+): Record<string, unknown> {
   if (!response.citations || !Array.isArray(response.citations)) {
     return response;
   }
   
   // Validate and enrich citations with source information
   const validatedCitations = response.citations
-    .map((citation: any) => {
+    .map((citation: { sourceId?: string; span?: string }) => {
+      if (!citation.sourceId) return null;
       const sourceContext = availableContext.find(c => c.source.id === citation.sourceId);
       if (!sourceContext) return null;
       

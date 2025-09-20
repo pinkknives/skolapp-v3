@@ -55,7 +55,7 @@ function CitationSources({ citations }: { citations: QuestionCitation[] }) {
               )}
               {citation.span && (
                 <div className="text-xs text-neutral-600 mt-1 italic">
-                  "{citation.span}"
+                  &ldquo;{citation.span}&rdquo;
                 </div>
               )}
             </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseBrowser } from '@/lib/supabase-browser';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * RAG Context Retrieval for Quiz Generation
@@ -81,7 +81,17 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    const supabase = supabaseBrowser();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { error: 'Databaskonfiguration saknas' },
+        { status: 500 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const body: RAGRequest = await request.json();
     
     const { subject, gradeBand, keywords = '', k = 6 } = body;
@@ -148,7 +158,16 @@ export async function POST(request: NextRequest) {
       }
       
       // Format fallback results
-      const retrieved = (fallbackResults || []).map((result: any) => ({
+      const retrieved = (fallbackResults || []).map((result: {
+        id: string;
+        text_content: string;
+        source_docs: {
+          id: string;
+          title: string;
+          url: string | null;
+          license: string | null;
+        };
+      }) => ({
         chunkId: result.id,
         text: result.text_content,
         score: 0.5, // Default score for fallback
@@ -173,7 +192,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Format search results
-    const retrieved = (searchResults || []).map((result: any) => ({
+    const retrieved = (searchResults || []).map((result: {
+      chunk_id: string;
+      text_content: string;
+      rank_score?: number;
+      similarity_score?: number;
+      source_id: string;
+      source_title: string;
+      source_url: string | null;
+      source_license: string | null;
+    }) => ({
       chunkId: result.chunk_id,
       text: result.text_content,
       score: result.rank_score || result.similarity_score || 0,

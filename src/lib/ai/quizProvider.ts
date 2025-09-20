@@ -365,7 +365,7 @@ export class OpenAIQuizProvider implements QuizAIProvider {
 
       // If using RAG, validate and enrich citations
       if (params.useRAG && contextData.length > 0) {
-        return questions.map(q => extractCitations(q, contextData));
+        return questions.map(q => extractCitations(q, contextData) as AiQuestion);
       }
 
       return questions;
