@@ -105,6 +105,31 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  /* Form Field Tokens */
+  --field-height-sm: 2.75rem; /* 44px */
+  --field-height-md: 3rem;    /* 48px */
+  --field-height-lg: 3.5rem;  /* 56px */
+  
+  --field-padding-x-sm: 0.75rem;
+  --field-padding-x-md: 1rem;
+  --field-padding-x-lg: 1.25rem;
+  
+  --field-border-width: 1px;
+  --field-border-radius: var(--radius-md);
+  
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  
+  /* Form State Colors - Light Mode */
+  --field-bg: 255 255 255;
+  --field-border: var(--color-neutral-300);
+  --field-border-hover: var(--color-neutral-400);
+  --field-border-focus: var(--color-primary-500);
+  --field-placeholder: var(--color-neutral-400);
+  --field-text: var(--color-neutral-900);
+  --field-disabled-bg: var(--color-neutral-100);
+  --field-disabled-text: var(--color-neutral-400);
 }
 
 /* Dark mode support */
@@ -120,6 +145,16 @@
     --color-neutral-700: 229 229 229;
     --color-neutral-800: 245 245 245;
     --color-neutral-900: 250 250 250;
+    
+    /* Form State Colors - Dark Mode */
+    --field-bg: var(--color-neutral-100);
+    --field-border: var(--color-neutral-300);
+    --field-border-hover: var(--color-neutral-400);
+    --field-border-focus: var(--color-primary-500);
+    --field-placeholder: var(--color-neutral-500);
+    --field-text: var(--color-neutral-900);
+    --field-disabled-bg: var(--color-neutral-200);
+    --field-disabled-text: var(--color-neutral-500);
   }
 }
 
@@ -261,6 +296,94 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+
+  /* Form Field Base Classes */
+  .field-base {
+    @apply w-full rounded-md border border-solid bg-white text-sm transition-all duration-200;
+    background-color: rgb(var(--field-bg));
+    border-color: rgb(var(--field-border));
+    color: rgb(var(--field-text));
+  }
+
+  .field-base:hover {
+    border-color: rgb(var(--field-border-hover));
+  }
+
+  .field-base:focus {
+    outline: none;
+    border-color: rgb(var(--field-border-focus));
+    box-shadow: 0 0 0 var(--focus-ring-width) rgb(var(--color-primary-500) / 0.2);
+  }
+
+  .field-base:disabled {
+    background-color: rgb(var(--field-disabled-bg));
+    color: rgb(var(--field-disabled-text));
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .field-base::placeholder {
+    color: rgb(var(--field-placeholder));
+  }
+
+  .field-sm {
+    height: var(--field-height-sm);
+    padding-left: var(--field-padding-x-sm);
+    padding-right: var(--field-padding-x-sm);
+    font-size: 0.875rem;
+  }
+
+  .field-md {
+    height: var(--field-height-md);
+    padding-left: var(--field-padding-x-md);
+    padding-right: var(--field-padding-x-md);
+    font-size: 0.875rem;
+  }
+
+  .field-lg {
+    height: var(--field-height-lg);
+    padding-left: var(--field-padding-x-lg);
+    padding-right: var(--field-padding-x-lg);
+    font-size: 1rem;
+  }
+
+  .label-base {
+    @apply block text-sm font-medium mb-1;
+    color: rgb(var(--color-neutral-700));
+  }
+
+  .help-text {
+    @apply mt-1 text-xs;
+    color: rgb(var(--color-neutral-600));
+  }
+
+  .error-text {
+    @apply mt-1 text-xs;
+    color: rgb(var(--color-error-600));
+  }
+
+  /* Error state for fields */
+  .field-error {
+    border-color: rgb(var(--color-error-500));
+  }
+
+  .field-error:focus {
+    border-color: rgb(var(--color-error-600));
+    box-shadow: 0 0 0 var(--focus-ring-width) rgb(var(--color-error-500) / 0.2);
+  }
+
+  /* Switch component styles */
+  .switch-thumb-sm {
+    @apply translate-x-0 peer-checked:translate-x-4;
+  }
+  
+  .switch-thumb-md {
+    @apply translate-x-0 peer-checked:translate-x-5;
+  }
+  
+  .switch-thumb-lg {
+    @apply translate-x-0 peer-checked:translate-x-5;
   }
 }
 
