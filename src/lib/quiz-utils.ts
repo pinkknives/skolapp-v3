@@ -325,10 +325,11 @@ export async function joinQuiz(request: QuizJoinRequest, user?: User | null): Pr
       id: sessionData.id,
       quizId: quiz.id,
       teacherId: quiz.createdBy,
+      code: quiz.shareCode || request.shareCode,
+      status: 'lobby' as const,
+      settings: {},
       createdAt: new Date(),
-      status: 'waiting',
-      participants: [student.id],
-      shareCode: quiz.shareCode || request.shareCode
+      updatedAt: new Date()
     }
 
     // Store student data with proper retention handling

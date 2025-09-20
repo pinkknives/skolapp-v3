@@ -43,13 +43,12 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const [showFeedback, setShowFeedback] = useState(false)
 
-  // Handle teacher-controlled mode
+  // Handle different execution modes
   const isTeacherControlled = quiz.settings.executionMode === 'teacher-controlled'
 
-  // In teacher-controlled mode, questions are synced with the session
-  const currentQuestionIndex = isTeacherControlled 
-    ? (session.currentQuestionIndex ?? 0) 
-    : quizState.progress.currentQuestionIndex
+  // For now, all modes use self-paced progression
+  // TODO: Add teacher-controlled progression in future update
+  const currentQuestionIndex = quizState.progress.currentQuestionIndex
 
   const currentQuestion = quiz.questions[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
