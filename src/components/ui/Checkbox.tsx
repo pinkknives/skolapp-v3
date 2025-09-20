@@ -24,7 +24,7 @@ const checkboxInputVariants = cva(
 )
 
 const checkboxIndicatorVariants = cva(
-  'flex items-center justify-center border border-solid rounded transition-all duration-200 flex-shrink-0',
+  'flex items-center justify-center border border-solid rounded transition-all duration-200 flex-shrink-0 pointer-events-none',
   {
     variants: {
       size: {

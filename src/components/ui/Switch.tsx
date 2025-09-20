@@ -23,7 +23,7 @@ const switchInputVariants = cva(
 )
 
 const switchTrackVariants = cva(
-  'relative rounded-full border-2 border-transparent transition-all duration-200 cursor-pointer flex-shrink-0',
+  'relative rounded-full border-2 border-transparent transition-all duration-200 cursor-pointer flex-shrink-0 pointer-events-none',
   {
     variants: {
       size: {

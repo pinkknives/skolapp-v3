@@ -23,7 +23,7 @@ const radioInputVariants = cva(
 )
 
 const radioIndicatorVariants = cva(
-  'flex items-center justify-center border border-solid rounded-full transition-all duration-200 flex-shrink-0',
+  'flex items-center justify-center border border-solid rounded-full transition-all duration-200 flex-shrink-0 pointer-events-none',
   {
     variants: {
       size: {

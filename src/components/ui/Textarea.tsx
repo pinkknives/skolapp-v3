@@ -3,12 +3,12 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn, generateId } from '@/lib/utils'
 
 const textareaVariants = cva(
-  'flex min-h-[80px] w-full rounded-md border bg-white px-3 py-2 text-sm transition-all duration-200 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y',
+  'field-base min-h-[80px] resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
   {
     variants: {
       variant: {
-        default: 'border-neutral-300 hover:border-neutral-400 focus:border-primary-500',
-        error: 'border-error-500 focus:border-error-600 focus-visible:ring-error-500',
+        default: '',
+        error: 'field-error focus-visible:ring-error-500',
         success: 'border-success-500 focus:border-success-600 focus-visible:ring-success-500',
       },
       size: {
@@ -62,7 +62,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="mb-1 block text-sm font-medium text-neutral-700"
+            className="label-base"
           >
             {label}
           </label>
@@ -81,7 +81,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {helperText && !hasError && (
           <p
             id={helperTextId}
-            className="mt-1 text-xs text-neutral-600"
+            className="help-text"
           >
             {helperText}
           </p>
@@ -89,7 +89,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {hasError && (
           <p
             id={errorId}
-            className="mt-1 text-xs text-error-600"
+            className="error-text"
             role="alert"
           >
             {errorMessage}

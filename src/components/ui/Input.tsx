@@ -4,18 +4,18 @@ import { cn, generateId } from '@/lib/utils'
 import { Eye, EyeOff } from 'lucide-react'
 
 const inputVariants = cva(
-  'flex w-full rounded-md border bg-white px-3 py-2 text-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'field-base file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
   {
     variants: {
       variant: {
-        default: 'border-neutral-300 hover:border-neutral-400 focus:border-primary-500',
-        error: 'border-error-500 focus:border-error-600 focus-visible:ring-error-500',
+        default: '',
+        error: 'field-error focus-visible:ring-error-500',
         success: 'border-success-500 focus:border-success-600 focus-visible:ring-success-500',
       },
       size: {
-        sm: 'h-11 px-2 text-xs',
-        md: 'h-12 px-3 text-sm',
-        lg: 'h-14 px-4 text-base',
+        sm: 'field-sm',
+        md: 'field-md',
+        lg: 'field-lg',
       },
     },
     defaultVariants: {
@@ -89,7 +89,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="mb-1 block text-sm font-medium text-neutral-700"
+            className="label-base"
           >
             {label}
           </label>
@@ -134,7 +134,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {helperText && !hasError && (
           <p
             id={helperTextId}
-            className="mt-1 text-xs text-neutral-600"
+            className="help-text"
           >
             {helperText}
           </p>
@@ -142,7 +142,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {hasError && (
           <p
             id={errorId}
-            className="mt-1 text-xs text-error-600"
+            className="error-text"
             role="alert"
           >
             {errorMessage}
