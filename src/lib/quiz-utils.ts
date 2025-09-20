@@ -330,6 +330,8 @@ export async function joinQuiz(request: QuizJoinRequest, user?: User | null): Pr
       mode: 'async' as const,
       state: 'idle' as const,
       currentIndex: 0,
+      maxAttempts: 1,
+      revealPolicy: 'after_deadline' as const,
       settings: {},
       createdAt: new Date(),
       updatedAt: new Date()

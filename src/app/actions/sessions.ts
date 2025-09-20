@@ -2,7 +2,34 @@
 
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
-import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt } from '@/types/quiz'
+import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt, RevealPolicy, AssignmentCard, ProgressStatus } from '@/types/quiz'
+
+// Helper function to map database session to QuizSession type
+function mapDatabaseSessionToQuizSession(dbSession: Record<string, unknown>): QuizSession {
+  return {
+    id: dbSession.id as string,
+    quizId: dbSession.quiz_id as string,
+    teacherId: dbSession.teacher_id as string,
+    code: dbSession.code as string,
+    status: dbSession.status as SessionStatus,
+    mode: dbSession.mode as SessionMode,
+    state: dbSession.state as SessionState,
+    currentIndex: (dbSession.current_index as number) || 0,
+    questionWindowSeconds: dbSession.question_window_seconds as number | undefined,
+    questionWindowStartedAt: dbSession.question_window_started_at ? new Date(dbSession.question_window_started_at as string) : undefined,
+    // Async assignment fields with defaults
+    openAt: dbSession.open_at ? new Date(dbSession.open_at as string) : undefined,
+    dueAt: dbSession.due_at ? new Date(dbSession.due_at as string) : undefined,
+    maxAttempts: (dbSession.max_attempts as number) || 1,
+    timeLimitSeconds: dbSession.time_limit_seconds as number | undefined,
+    revealPolicy: (dbSession.reveal_policy as RevealPolicy) || 'after_deadline',
+    startedAt: dbSession.started_at ? new Date(dbSession.started_at as string) : undefined,
+    endedAt: dbSession.ended_at ? new Date(dbSession.ended_at as string) : undefined,
+    settings: (dbSession.settings as Record<string, unknown>) || {},
+    createdAt: new Date(dbSession.created_at as string),
+    updatedAt: new Date(dbSession.updated_at as string)
+  }
+}
 
 export interface CreateSessionResult {
   success: boolean
@@ -42,11 +69,33 @@ export interface SubmitAttemptResult {
 export async function createSessionAction(formData: FormData): Promise<CreateSessionResult> {
   const quizId = formData.get('quizId') as string
   const mode = (formData.get('mode') as SessionMode) || 'async'
+  
+  // Async assignment specific fields
+  const openAt = formData.get('openAt') as string | null
+  const dueAt = formData.get('dueAt') as string | null
+  const maxAttempts = parseInt(formData.get('maxAttempts') as string || '1')
+  const timeLimitSeconds = formData.get('timeLimitSeconds') ? parseInt(formData.get('timeLimitSeconds') as string) : null
+  const revealPolicy = (formData.get('revealPolicy') as RevealPolicy) || 'after_deadline'
 
   if (!quizId) {
     return {
       success: false,
       error: 'Quiz-ID krävs'
+    }
+  }
+
+  // Validate async assignment fields
+  if (mode === 'async' && !dueAt) {
+    return {
+      success: false,
+      error: 'Deadline krävs för asynkrona uppgifter'
+    }
+  }
+
+  if (maxAttempts < 1 || maxAttempts > 10) {
+    return {
+      success: false,
+      error: 'Antal försök måste vara mellan 1 och 10'
     }
   }
 
@@ -94,18 +143,52 @@ export async function createSessionAction(formData: FormData): Promise<CreateSes
       }
     }
 
-    // Create new session
+    // Validate dates for async mode
+    if (mode === 'async' && dueAt) {
+      const dueDate = new Date(dueAt)
+      const now = new Date()
+      
+      if (dueDate <= now) {
+        return {
+          success: false,
+          error: 'Deadline måste vara i framtiden'
+        }
+      }
+
+      if (openAt) {
+        const openDate = new Date(openAt)
+        if (openDate >= dueDate) {
+          return {
+            success: false,
+            error: 'Öppningstid måste vara före deadline'
+          }
+        }
+      }
+    }
+
+    // Create new session with async assignment fields
+    const sessionData: Record<string, unknown> = {
+      quiz_id: quizId,
+      teacher_id: user.id,
+      status: 'lobby',
+      mode: mode,
+      state: 'idle',
+      current_index: 0,
+      settings: {}
+    }
+
+    // Add async assignment fields
+    if (mode === 'async') {
+      if (openAt) sessionData.open_at = openAt
+      if (dueAt) sessionData.due_at = dueAt
+      sessionData.max_attempts = maxAttempts
+      if (timeLimitSeconds) sessionData.time_limit_seconds = timeLimitSeconds
+      sessionData.reveal_policy = revealPolicy
+    }
+
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .insert({
-        quiz_id: quizId,
-        teacher_id: user.id,
-        status: 'lobby',
-        mode: mode,
-        state: 'idle',
-        current_index: 0,
-        settings: {}
-      })
+      .insert(sessionData)
       .select()
       .single()
 
@@ -115,23 +198,7 @@ export async function createSessionAction(formData: FormData): Promise<CreateSes
 
     return {
       success: true,
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error creating session:', error)
@@ -245,23 +312,7 @@ export async function joinSessionAction(formData: FormData): Promise<JoinSession
         status: participant.status as ParticipantStatus,
         lastSeen: new Date(participant.last_seen)
       },
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error joining session:', error)
@@ -336,23 +387,7 @@ export async function updateSessionStatusAction(formData: FormData): Promise<Upd
 
     return {
       success: true,
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error updating session:', error)
@@ -499,23 +534,7 @@ export async function syncControlAction(formData: FormData): Promise<SyncControl
 
     return {
       success: true,
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error controlling sync session:', error)
@@ -637,7 +656,9 @@ export async function submitAttemptAction(formData: FormData): Promise<SubmitAtt
         questionIndex: attempt.question_index,
         answer: attempt.answer,
         isCorrect: attempt.is_correct,
-        answeredAt: new Date(attempt.answered_at)
+        answeredAt: new Date(attempt.answered_at),
+        attemptNo: attempt.attempt_no || 1,
+        durationSeconds: attempt.duration_seconds
       }
     }
   } catch (error) {
@@ -683,21 +704,7 @@ export async function getSessionWithParticipants(sessionId: string): Promise<Qui
     }
 
     return {
-      id: session.id,
-      quizId: session.quiz_id,
-      teacherId: session.teacher_id,
-      code: session.code,
-      status: session.status as SessionStatus,
-      mode: session.mode as SessionMode,
-      state: session.state as SessionState,
-      currentIndex: session.current_index,
-      questionWindowSeconds: session.question_window_seconds,
-      questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-      startedAt: session.started_at ? new Date(session.started_at) : undefined,
-      endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-      settings: session.settings || {},
-      createdAt: new Date(session.created_at),
-      updatedAt: new Date(session.updated_at),
+      ...mapDatabaseSessionToQuizSession(session),
       participants: participants.map(p => ({
         id: p.id,
         sessionId: p.session_id,
@@ -820,6 +827,473 @@ export async function getSessionSummary(sessionId: string) {
     return {
       success: false,
       error: 'Det gick inte att hämta sessionssammanfattning'
+    }
+  }
+}
+
+/**
+ * Start a new attempt for an async assignment
+ */
+export async function startAttemptAction(formData: FormData): Promise<SubmitAttemptResult> {
+  const sessionId = formData.get('sessionId') as string
+  const userId = formData.get('userId') as string
+
+  if (!sessionId || !userId) {
+    return {
+      success: false,
+      error: 'Sessions-ID och användar-ID krävs'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Get session and verify it's async mode
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        error: 'Session hittades inte'
+      }
+    }
+
+    if (session.mode !== 'async') {
+      return {
+        success: false,
+        error: 'Denna funktion är endast tillgänglig för asynkrona uppgifter'
+      }
+    }
+
+    // Check if assignment is open
+    const now = new Date()
+    if (session.open_at && new Date(session.open_at) > now) {
+      return {
+        success: false,
+        error: 'Uppgiften är inte öppen än'
+      }
+    }
+
+    if (session.due_at && new Date(session.due_at) <= now) {
+      return {
+        success: false,
+        error: 'Deadline har passerat'
+      }
+    }
+
+    // Check existing progress and attempt limits
+    const { data: progress } = await supabase
+      .from('session_progress')
+      .select('*')
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+      .single()
+
+    if (progress && progress.status === 'submitted') {
+      return {
+        success: false,
+        error: 'Du har redan skickat in din lösning'
+      }
+    }
+
+    if (progress && progress.current_attempt >= session.max_attempts) {
+      return {
+        success: false,
+        error: `Du har använt alla tillgängliga försök (${session.max_attempts})`
+      }
+    }
+
+    // Create or update progress record
+    const newAttemptNo = (progress?.current_attempt || 0) + 1
+    
+    const { error: progressError } = await supabase
+      .from('session_progress')
+      .upsert({
+        session_id: sessionId,
+        user_id: userId,
+        status: 'in_progress',
+        current_attempt: newAttemptNo,
+        started_at: progress?.started_at || now.toISOString()
+      }, {
+        onConflict: 'session_id,user_id'
+      })
+
+    if (progressError) {
+      throw progressError
+    }
+
+    return {
+      success: true,
+      attempt: {
+        id: `new-${Date.now()}`, // Temporary ID
+        sessionId,
+        userId,
+        questionIndex: 0,
+        answer: null,
+        answeredAt: now,
+        attemptNo: newAttemptNo,
+        durationSeconds: 0
+      }
+    }
+  } catch (error) {
+    console.error('Start attempt error:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att starta försöket'
+    }
+  }
+}
+
+/**
+ * Save progress on an async assignment (autosave)
+ */
+export async function saveAttemptProgressAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const sessionId = formData.get('sessionId') as string
+  const userId = formData.get('userId') as string
+  const questionIndex = parseInt(formData.get('questionIndex') as string)
+  const answer = formData.get('answer') as string
+  const attemptNo = parseInt(formData.get('attemptNo') as string || '1')
+
+  if (!sessionId || !userId || questionIndex === undefined || !answer) {
+    return {
+      success: false,
+      error: 'Alla fält krävs för att spara framsteg'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Verify session is async and still open
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('mode, due_at, max_attempts')
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session || session.mode !== 'async') {
+      return {
+        success: false,
+        error: 'Ogiltig session'
+      }
+    }
+
+    // Check deadline
+    if (session.due_at && new Date(session.due_at) <= new Date()) {
+      return {
+        success: false,
+        error: 'Deadline har passerat'
+      }
+    }
+
+    // Save/update attempt
+    const { error: attemptError } = await supabase
+      .from('session_attempts')
+      .upsert({
+        session_id: sessionId,
+        user_id: userId,
+        question_index: questionIndex,
+        attempt_no: attemptNo,
+        answer: JSON.parse(answer),
+        answered_at: new Date().toISOString()
+      }, {
+        onConflict: 'session_id,user_id,question_index,attempt_no'
+      })
+
+    if (attemptError) {
+      throw attemptError
+    }
+
+    // Update progress timestamp
+    await supabase
+      .from('session_progress')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Save progress error:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att spara framsteg'
+    }
+  }
+}
+
+/**
+ * Submit an async assignment
+ */
+export async function submitAsyncAssignmentAction(formData: FormData): Promise<SubmitAttemptResult> {
+  const sessionId = formData.get('sessionId') as string
+  const userId = formData.get('userId') as string
+  const answers = formData.get('answers') as string // JSON array of all answers
+
+  if (!sessionId || !userId || !answers) {
+    return {
+      success: false,
+      error: 'Sessions-ID, användar-ID och svar krävs'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Get session with quiz questions for grading
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        quizzes(questions)
+      `)
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        error: 'Session hittades inte'
+      }
+    }
+
+    if (session.mode !== 'async') {
+      return {
+        success: false,
+        error: 'Denna funktion är endast tillgänglig för asynkrona uppgifter'
+      }
+    }
+
+    // Check if already submitted
+    const { data: progress } = await supabase
+      .from('session_progress')
+      .select('status, current_attempt')
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+      .single()
+
+    if (progress?.status === 'submitted') {
+      return {
+        success: false,
+        error: 'Du har redan skickat in din lösning'
+      }
+    }
+
+    // Parse answers and calculate score
+    const parsedAnswers = JSON.parse(answers)
+    const questions = session.quizzes?.questions || []
+    let totalScore = 0
+    let totalPoints = 0
+
+    // Grade each answer
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i]
+      const answer = parsedAnswers[i]
+      
+      totalPoints += question.points || 1
+
+      if (question.type === 'multiple-choice' && question.options) {
+        const correctOptions = question.options.filter((opt: { isCorrect: boolean }) => opt.isCorrect)
+        const selectedOptions = Array.isArray(answer) ? answer : [answer]
+        
+        // Simple exact match grading for now
+        if (correctOptions.length === selectedOptions.length &&
+            correctOptions.every((opt: { id: string }) => selectedOptions.includes(opt.id))) {
+          totalScore += question.points || 1
+        }
+      }
+      // TODO: Add grading for free-text questions
+    }
+
+    // Check if submission is late
+    const now = new Date()
+    const isLate = session.due_at && new Date(session.due_at) < now
+
+    // Update progress to submitted
+    const { error: progressError } = await supabase
+      .from('session_progress')
+      .update({
+        status: isLate ? 'late' : 'submitted',
+        submitted_at: now.toISOString()
+      })
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+
+    if (progressError) {
+      throw progressError
+    }
+
+    // Create final attempt record
+    const { data: attempt, error: attemptError } = await supabase
+      .from('session_attempts')
+      .insert({
+        session_id: sessionId,
+        user_id: userId,
+        question_index: -1, // Special marker for final submission
+        attempt_no: progress?.current_attempt || 1,
+        answer: { finalSubmission: true, score: totalScore, totalPoints },
+        answered_at: now.toISOString()
+      })
+      .select()
+      .single()
+
+    if (attemptError) {
+      throw attemptError
+    }
+
+    return {
+      success: true,
+      attempt: {
+        id: attempt.id,
+        sessionId: attempt.session_id,
+        userId: attempt.user_id,
+        questionIndex: attempt.question_index,
+        answer: attempt.answer,
+        isCorrect: totalScore === totalPoints,
+        answeredAt: new Date(attempt.answered_at),
+        attemptNo: attempt.attempt_no || 1,
+        durationSeconds: attempt.duration_seconds
+      }
+    }
+  } catch (error) {
+    console.error('Submit assignment error:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att skicka in uppgiften'
+    }
+  }
+}
+
+/**
+ * Get assignments for a student (based on their class memberships)
+ */
+export async function getStudentAssignments(userId: string): Promise<{ success: boolean; assignments?: AssignmentCard[]; error?: string }> {
+  try {
+    const supabase = supabaseServer()
+
+    // Get all classes the student is a member of
+    const { data: memberships, error: membershipError } = await supabase
+      .from('class_members')
+      .select('class_id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+
+    if (membershipError) {
+      throw membershipError
+    }
+
+    if (!memberships || memberships.length === 0) {
+      return {
+        success: true,
+        assignments: []
+      }
+    }
+
+    const classIds = memberships.map(m => m.class_id)
+
+    // Get async sessions for these classes
+    const { data: sessions, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        id,
+        quiz_id,
+        mode,
+        open_at,
+        due_at,
+        max_attempts,
+        time_limit_seconds,
+        status,
+        quizzes(title),
+        class_sessions!inner(class_id, classes(name))
+      `)
+      .eq('mode', 'async')
+      .in('class_sessions.class_id', classIds)
+      .eq('status', 'lobby') // Only active assignments
+
+    if (sessionError) {
+      throw sessionError
+    }
+
+    if (!sessions) {
+      return {
+        success: true,
+        assignments: []
+      }
+    }
+
+    // Get progress for each session
+    const sessionIds = sessions.map(s => s.id)
+    const { data: progress, error: progressError } = await supabase
+      .from('session_progress')
+      .select('session_id, status, current_attempt')
+      .eq('user_id', userId)
+      .in('session_id', sessionIds)
+
+    if (progressError) {
+      throw progressError
+    }
+
+    const progressMap = new Map(progress?.map(p => [p.session_id, p]) || [])
+
+    // Build assignment cards
+    const now = new Date()
+    const assignments: AssignmentCard[] = sessions.map(session => {
+      const sessionProgress = progressMap.get(session.id)
+      const openAt = session.open_at ? new Date(session.open_at) : null
+      const dueAt = new Date(session.due_at)
+      
+      let status: ProgressStatus = sessionProgress?.status || 'not_started'
+      let canStart = true
+
+      // Check if assignment is open
+      if (openAt && openAt > now) {
+        canStart = false
+      }
+
+      // Check if deadline has passed
+      if (dueAt <= now) {
+        canStart = false
+        if (status === 'in_progress') {
+          status = 'late'
+        }
+      }
+
+      // Check attempt limits
+      const attemptsUsed = sessionProgress?.current_attempt || 0
+      if (attemptsUsed >= session.max_attempts) {
+        canStart = false
+      }
+
+      return {
+        sessionId: session.id,
+        quizTitle: (session.quizzes as unknown as { title: string } | null)?.title || 'Namnlös quiz',
+        className: (session.class_sessions as unknown as Array<{ classes: { name: string } }> | null)?.[0]?.classes?.name,
+        dueAt,
+        openAt,
+        status,
+        attemptsUsed,
+        maxAttempts: session.max_attempts,
+        timeRemaining: dueAt > now ? Math.floor((dueAt.getTime() - now.getTime()) / 1000) : 0,
+        canStart,
+        timeLimitSeconds: session.time_limit_seconds
+      }
+    })
+
+    // Sort by due date (earliest first)
+    assignments.sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())
+
+    return {
+      success: true,
+      assignments
+    }
+  } catch (error) {
+    console.error('Error getting student assignments:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att hämta dina uppgifter'
     }
   }
 }

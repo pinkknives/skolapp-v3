@@ -256,7 +256,7 @@ test.describe('Sync Quiz Accessibility', () => {
 })
 
 // Helper functions for test setup
-async function createMockSyncQuiz(page: any) {
+async function _createMockSyncQuiz(_page: unknown) {
   // Mock quiz creation logic
   // This would be replaced with actual quiz creation when integrated
 }
