@@ -32,8 +32,7 @@ const features = [
     description: 'Organisera dina klasser, hantera elevlister och få översikt över resultat och framsteg.',
     icon: <Users size={24} strokeWidth={2} />,
     href: '/teacher/classes',
-    buttonText: 'Kommer snart',
-    disabled: true
+    buttonText: 'Hantera klasser'
   },
   {
     title: 'Statistik & Rapporter',
@@ -73,9 +72,11 @@ export default function TeacherPage() {
                       Skapa ditt första quiz
                     </Link>
                   </Button>
-                  <Button variant="outline" size="lg" disabled className="gap-x-2">
-                    <Users size={20} strokeWidth={2} />
-                    Lägg till elever (kommer snart)
+                  <Button variant="outline" size="lg" asChild className="gap-x-2">
+                    <Link href="/teacher/classes">
+                      <Users size={20} strokeWidth={2} />
+                      Skapa din första klass
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
