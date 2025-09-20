@@ -1,45 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
-import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Quiz } from '@/types/quiz'
 import { WizardSteps } from './WizardSteps'
 import { motion, AnimatePresence } from 'framer-motion'
-
-// Dynamically import wizard steps for better performance
-const QuizBasicInfoStep = dynamic(() => import('./QuizBasicInfoStep').then(mod => ({ default: mod.QuizBasicInfoStep })), {
-  loading: () => (
-    <div className="space-y-4">
-      <div className="animate-pulse bg-neutral-200 h-6 w-48 rounded"></div>
-      <div className="animate-pulse bg-neutral-200 h-12 w-full rounded"></div>
-      <div className="animate-pulse bg-neutral-200 h-24 w-full rounded"></div>
-    </div>
-  ),
-  ssr: false
-})
-
-const QuizQuestionsStep = dynamic(() => import('./QuizQuestionsStep').then(mod => ({ default: mod.QuizQuestionsStep })), {
-  loading: () => (
-    <div className="space-y-4">
-      <div className="animate-pulse bg-neutral-200 h-6 w-32 rounded"></div>
-      <div className="animate-pulse bg-neutral-200 h-48 w-full rounded"></div>
-    </div>
-  ),
-  ssr: false
-})
-
-const QuizPublishStep = dynamic(() => import('./QuizPublishStep').then(mod => ({ default: mod.QuizPublishStep })), {
-  loading: () => (
-    <div className="space-y-4">
-      <div className="animate-pulse bg-neutral-200 h-6 w-40 rounded"></div>
-      <div className="animate-pulse bg-neutral-200 h-32 w-full rounded"></div>
-    </div>
-  ),
-  ssr: false
-})
+import { QuizBasicInfoStep } from './QuizBasicInfoStep'
+import { QuizQuestionsStep } from './QuizQuestionsStep'
+import { QuizPublishStep } from './QuizPublishStep'
 
 interface QuizCreationWizardProps {
   initialQuiz: Partial<Quiz>

@@ -1,9 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+const { heroui } = require("@heroui/theme");
+
 module.exports = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './node_modules/@heroui/theme/dist/**/*.{js,ts}',
   ],
   theme: {
     extend: {
@@ -126,5 +129,24 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require("tailwindcss-animate"),
+    heroui({
+      themes: {
+        light: {
+          colors: {
+            primary: { DEFAULT: "#377b7b", foreground: "#ffffff" },
+            focus: "#377b7b",
+          },
+          layout: { radius: { small: "8px", medium: "10px", large: "12px" } },
+        },
+        dark: {
+          colors: {
+            primary: { DEFAULT: "#2f6767", foreground: "#001314" },
+            focus: "#2f6767",
+          },
+        },
+      },
+    }),
+  ],
 }

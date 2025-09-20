@@ -1,14 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { Input, Textarea, Button, Select, SelectItem, RadioGroup, Radio } from '@heroui/react'
+import { Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/Textarea'
-import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, ExecutionMode } from '@/types/quiz'
 import { getUserCreatableOrganizations, Organization } from '@/lib/orgs'
 import { TitleSuggestionHint } from './TitleSuggestionHint'
+import { ActionMenu } from '@/components/ui/ActionMenu'
 import { aiAssistant } from '@/locales/sv/quiz'
 import { GRADE_LEVELS } from '@/lib/ai/quizProvider'
 
@@ -147,25 +147,23 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
           {/* Organization selection - only show if user has multiple organizations */}
           {!loadingOrgs && organizations.length > 1 && (
             <div>
-              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-                Organisation <span className="text-red-500">*</span>
-              </Typography>
-              <select
-                value={selectedOrgId}
-                onChange={(e) => handleOrgChange(e.target.value)}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                required
+              <Select
+                label="Organisation"
+                placeholder="Välj organisation"
+                selectedKeys={selectedOrgId ? [selectedOrgId] : []}
+                onSelectionChange={(keys) => {
+                  const selectedKey = Array.from(keys)[0] as string
+                  handleOrgChange(selectedKey || '')
+                }}
+                isRequired
+                description="Välj vilken organisation detta quiz ska tillhöra"
               >
-                <option value="">Välj organisation</option>
                 {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>
+                  <SelectItem key={org.id}>
                     {org.name}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <Typography variant="caption" className="text-neutral-500 mt-1">
-                Välj vilken organisation detta quiz ska tillhöra
-              </Typography>
+              </Select>
             </div>
           )}
 
@@ -189,56 +187,49 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
           {/* Subject and Grade for AI hints */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-                Ämne (för AI-hjälp)
-              </Typography>
-              <select
-                value={currentSubject}
-                onChange={(e) => {
-                  setCurrentSubject(e.target.value)
-                  onAiContextChange?.({ subject: e.target.value, gradeLevel: currentGrade })
+              <Select
+                label="Ämne (för AI-hjälp)"
+                placeholder="Välj ämne"
+                selectedKeys={currentSubject ? [currentSubject] : []}
+                onSelectionChange={(keys) => {
+                  const selectedKey = Array.from(keys)[0] as string
+                  setCurrentSubject(selectedKey || '')
+                  onAiContextChange?.({ subject: selectedKey || '', gradeLevel: currentGrade })
                 }}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                description="Hjälper AI att föreslå relevanta titlar och innehåll"
               >
-                <option value="">Välj ämne</option>
                 {aiAssistant.subjects.map((subject) => (
-                  <option key={subject} value={subject}>{subject}</option>
+                  <SelectItem key={subject}>
+                    {subject}
+                  </SelectItem>
                 ))}
-              </select>
-              <Typography variant="caption" className="text-neutral-500 mt-1">
-                Hjälper AI att föreslå relevanta titlar och innehåll
-              </Typography>
+              </Select>
             </div>
             
             <div>
-              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-                Årskurs (för AI-hjälp)
-              </Typography>
-              <select
-                value={currentGrade}
-                onChange={(e) => {
-                  setCurrentGrade(e.target.value)
-                  onAiContextChange?.({ subject: currentSubject, gradeLevel: e.target.value })
+              <Select
+                label="Årskurs (för AI-hjälp)"
+                placeholder="Välj årskurs"
+                selectedKeys={currentGrade ? [currentGrade] : []}
+                onSelectionChange={(keys) => {
+                  const selectedKey = Array.from(keys)[0] as string
+                  setCurrentGrade(selectedKey || '')
+                  onAiContextChange?.({ subject: currentSubject, gradeLevel: selectedKey || '' })
                 }}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                description="Anpassar AI-förslag till elevernas nivå"
               >
-                <option value="">Välj årskurs</option>
                 {GRADE_LEVELS.map((grade) => (
-                  <option key={grade.value} value={grade.value}>{grade.label}</option>
+                  <SelectItem key={grade.value}>
+                    {grade.label}
+                  </SelectItem>
                 ))}
-              </select>
-              <Typography variant="caption" className="text-neutral-500 mt-1">
-                Anpassar AI-förslag till elevernas nivå
-              </Typography>
+              </Select>
             </div>
           </div>
 
           {/* Title - Required */}
           <div>
             <div className="flex justify-between items-start mb-2">
-              <Typography variant="body2" className="font-medium text-neutral-700">
-                Titel <span className="text-red-500">*</span>
-              </Typography>
               <TitleSuggestionHint
                 quiz={quiz}
                 onQuizUpdate={onChange}
@@ -248,15 +239,16 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
               />
             </div>
             <Input
+              label="Titel"
               placeholder="Ge ditt quiz en tydlig och engagerande titel"
               value={quiz.title || ''}
               onChange={(e) => onChange({ title: e.target.value })}
-              required
-              className="text-lg"
+              isRequired
+              classNames={{
+                input: "text-lg"
+              }}
+              description="En bra titel hjälper eleverna förstå vad quizet handlar om"
             />
-            <Typography variant="caption" className="text-neutral-500 mt-1">
-              En bra titel hjälper eleverna förstå vad quizet handlar om
-            </Typography>
           </div>
 
           {/* Description */}
@@ -281,12 +273,14 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1"
+                classNames={{
+                  base: "flex-1"
+                }}
               />
               <Button 
                 onClick={handleAddTag}
-                disabled={!tagInput.trim()}
-                variant="outline"
+                isDisabled={!tagInput.trim()}
+                variant="bordered"
               >
                 Lägg till
               </Button>
@@ -319,7 +313,7 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
               label="Tidsgräns (minuter)"
               type="number"
               placeholder="Lämna tomt för obegränsad tid"
-              value={quiz.settings?.timeLimit || ''}
+              value={quiz.settings?.timeLimit?.toString() || ''}
               onChange={(e) => {
                 const timeLimit = e.target.value ? parseInt(e.target.value) : undefined
                 onChange({ 
@@ -334,53 +328,80 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
                   } 
                 })
               }}
-              min="1"
-              max="180"
+              description="Rekommenderat: 1-2 minuter per fråga"
             />
-            <Typography variant="caption" className="text-neutral-500 mt-1">
-              Rekommenderat: 1-2 minuter per fråga
-            </Typography>
           </div>
 
           {/* Execution mode */}
           <div>
-            <Typography variant="body2" className="font-medium text-neutral-700 mb-3">
-              Hur ska quizet genomföras?
-            </Typography>
-            <div className="space-y-3">
+            <RadioGroup
+              label="Hur ska quizet genomföras?"
+              value={quiz.settings?.executionMode || 'self-paced'}
+              onValueChange={(value) => onChange({ 
+                settings: { 
+                  allowRetakes: true,
+                  shuffleQuestions: false,
+                  shuffleAnswers: false,
+                  showCorrectAnswers: false,
+                  ...quiz.settings,
+                  executionMode: value as ExecutionMode
+                } 
+              })}
+            >
               {executionModes.map((mode) => (
-                <label
-                  key={mode.value}
-                  className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-neutral-50 transition-colors"
-                >
-                  <input
-                    type="radio"
-                    name="executionMode"
-                    value={mode.value}
-                    checked={quiz.settings?.executionMode === mode.value}
-                    onChange={() => onChange({ 
-                      settings: { 
-                        allowRetakes: true,
-                        shuffleQuestions: false,
-                        shuffleAnswers: false,
-                        showCorrectAnswers: false,
-                        ...quiz.settings,
-                        executionMode: mode.value 
-                      } 
-                    })}
-                    className="mt-1"
-                  />
-                  <div>
-                    <Typography variant="body2" className="font-medium">
-                      {mode.label}
-                    </Typography>
-                    <Typography variant="caption" className="text-neutral-600">
-                      {mode.description}
-                    </Typography>
-                  </div>
-                </label>
+                <Radio key={mode.value} value={mode.value} description={mode.description}>
+                  {mode.label}
+                </Radio>
               ))}
+            </RadioGroup>
+          </div>
+
+          {/* AI Actions */}
+          <div className="border-t pt-6">
+            <Typography variant="body2" className="font-medium text-neutral-700 mb-3">
+              AI-hjälp
+            </Typography>
+            <div className="flex gap-3">
+              <Button 
+                color="primary" 
+                startContent={<Sparkles size={18} />}
+                onPress={() => console.log('Skapa frågor med AI')}
+              >
+                Skapa frågor med AI
+              </Button>
+              <Button 
+                variant="bordered"
+                startContent={<Sparkles size={18} />}
+                onPress={() => console.log('Förbättra beskrivning med AI')}
+              >
+                Förbättra beskrivning
+              </Button>
             </div>
+            <Typography variant="caption" className="text-neutral-500 mt-2">
+              Dubbelkolla alltid innehållet. AI kan ha fel.
+            </Typography>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Action Menu Demo - Modern interaction with keyboard shortcuts */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Typography variant="body2" className="font-medium text-neutral-700 mb-1">
+                Moderna åtgärder med kortkommandon
+              </Typography>
+              <Typography variant="caption" className="text-neutral-600">
+                Prova dropdown-menyn med tangentbordsgenvägar
+              </Typography>
+            </div>
+            <ActionMenu
+              onNew={() => console.log('Skapa nytt quiz')}
+              onCopy={() => console.log('Kopiera länk')}
+              onEdit={() => console.log('Redigera quiz')}
+              onDelete={() => console.log('Radera quiz')}
+            />
           </div>
         </CardContent>
       </Card>
