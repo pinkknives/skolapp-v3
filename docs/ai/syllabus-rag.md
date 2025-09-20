@@ -62,6 +62,25 @@ npm run etl:skolverket:fresh
 - Versionsspårning och metadata
 - Robust felhantering
 
+### 2b. Syllabus Ingest Script (`scripts/ingest-syllabus.ts`)
+
+Ny TypeScript-baserad ingestor för CI/CD:
+
+```bash
+# Grundläggande körning
+npm run ingest:syllabus
+
+# Med filtrering och dry-run
+npm run ingest:syllabus -- --subject=MA --gradeSpan=7-9 --dryRun=true
+```
+
+**Funktioner:**
+- CLI-parametrar för filtrering (subject, gradeSpan)
+- Dry-run mode för testning
+- Strukturerad loggning till `logs/syllabus-ingest-YYYYMMDD.log`
+- Exponential backoff för API-anrop
+- Robust felhantering som inte påverkar app runtime
+
 ### 3. Admin API (`/api/admin/syllabus/refresh`)
 
 Skyddad endpoint för manuell datauppdatering:
@@ -80,9 +99,16 @@ Hämtar relevant läroplanskontext baserat på ämne och årskurs:
 - Filterering på ämne och årskurs
 - Begränsad textmängd för optimal AI-prestanda
 
-### 5. GitHub Action (`.github/workflows/skolverket-refresh.yml`)
+### 5. GitHub Actions
 
-Automatisk veckovis uppdatering:
+**Veckovis automatisk uppdatering** (`.github/workflows/syllabus-ingest.yml`):
+- Körs måndagar 03:00 UTC
+- Manuell triggerning med filtreringsmöjligheter
+- Stöd för dry-run mode
+- Concurrency-skydd mot överlappande körningar
+- Loggartefakter sparas i 7 dagar
+
+**Legacy workflow** (`.github/workflows/skolverket-refresh.yml`):
 - Körs söndagar 02:00 UTC
 - Skapar issue vid fel
 - Manuell triggerning möjlig
@@ -153,6 +179,42 @@ ETL-processen loggar:
 - API-källa (skolverket_api eller mock_data)
 - Senaste lyckade synkronisering
 - Fel och varningar
+
+## Manuell körning
+
+### GitHub Actions (rekommenderas)
+
+1. Gå till GitHub Actions-fliken i repositoryt
+2. Välj "Syllabus Ingest" workflow
+3. Klicka "Run workflow"
+4. Ange valfria parametrar:
+   - **Subject**: Filtrera på ämneskod (t.ex. "MA" för matematik)
+   - **Grade Span**: Filtrera på årskursspann (t.ex. "7-9")
+   - **Dry Run**: Välj "true" för att testa utan databasändringar
+
+### Tolka output
+
+**GitHub Actions Job Summary visar:**
+- Trigger-typ (scheduled/manual)
+- Använda parametrar (subject, gradeSpan, dryRun)
+- Status och körtid
+
+**Loggar innehåller:**
+- Detaljerad processhistorik
+- API-anslutningsstatus
+- Antal bearbetade ämnen och chunks
+- Eventuella fel eller varningar
+
+**Slutsammanfattning visar:**
+```
+=== INGEST SUMMARY ===
+Subjects processed: 5
+Chunks created: 250
+Processing time: 45000ms
+API source: skolverket_api
+Dry run: false
+======================
+```
 
 ## Utveckling
 
