@@ -202,6 +202,7 @@ export default function LiveJoinPage() {
                 className="text-center text-lg font-mono tracking-wider"
                 maxLength={6}
                 autoFocus
+                data-testid="pin-input"
               />
             </div>
 
@@ -216,6 +217,7 @@ export default function LiveJoinPage() {
               disabled={pin.length !== 6 || isLoading}
               className="w-full flex items-center gap-2"
               variant="primary"
+              data-testid="find-session"
             >
               {isLoading ? (
                 <>
@@ -255,6 +257,7 @@ export default function LiveJoinPage() {
                 placeholder="Ange ditt namn"
                 maxLength={50}
                 autoFocus
+                data-testid="display-name"
               />
             </div>
 
@@ -277,6 +280,7 @@ export default function LiveJoinPage() {
                 disabled={!displayName.trim() || isLoading}
                 className="flex-1 flex items-center gap-2"
                 variant="primary"
+                data-testid="join-session"
               >
                 {isLoading ? (
                   <>
