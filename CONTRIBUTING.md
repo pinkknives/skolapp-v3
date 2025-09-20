@@ -99,15 +99,63 @@ This script:
 
 ## Testing
 
+Skolapp v3 uses a comprehensive testing strategy with both unit/component tests (RTL) and end-to-end tests (Playwright).
+
+### Component Testing (React Testing Library)
+
+We use Vitest and React Testing Library for component testing with a focus on accessibility and Swedish language support.
+
+#### Running RTL Tests
+
+```bash
+# Run all component tests
+npm run test
+
+# Watch mode for development
+npm run test:watch
+
+# Interactive UI mode
+npm run test:ui
+
+# Run specific test file
+npm run test tests/components/QuestionTypeButton.test.tsx
+
+# Coverage report
+npm run test:coverage
+```
+
+#### RTL Testing Standards
+
+- **Swedish language**: All test names and test content should be in Swedish
+- **Accessibility-first**: Use `getByRole`, `getByLabelText`, `getByDisplayValue` over test IDs
+- **ARIA testing**: Verify `aria-pressed`, `aria-describedby`, `role="alert"` attributes
+- **Keyboard support**: Test Enter, Space, Tab navigation
+- **Focus management**: Verify proper focus order and focus trapping
+- **Form validation**: Test label associations (`for`/`id`) and error states
+
+#### Test File Structure
+
+```
+tests/
+├── components/          # Component unit tests
+│   ├── QuestionTypeButton.test.tsx
+│   ├── ActionsMenu.test.tsx
+│   └── Input.test.tsx
+└── setup.ts            # Global test setup with @testing-library/jest-dom
+```
+
 ### End-to-End Testing
 
 We use Playwright for comprehensive E2E testing across browsers.
 
-#### Running Tests Locally
+#### Running E2E Tests
 
 ```bash
 # Run all E2E tests across browsers
-npm run e2e
+npm run test:e2e
+
+# Run all browsers (Chromium, Firefox, WebKit)
+npm run test:e2e:all
 
 # Run AI-assisted quiz tests with deterministic mocks
 npm run e2e:ai
@@ -136,8 +184,37 @@ AI functionality uses deterministic mocks to ensure stable tests:
 #### Test Structure
 
 - **`tests/core-flows.spec.ts`** - Basic quiz creation and student flows
+- **`tests/quiz-wizard.e2e.spec.ts`** - Complete quiz wizard flow (non-AI)
 - **`tests/e2e/quiz-ai-flow.spec.ts`** - Complete AI-assisted quiz flow
 - **`tests/fixtures/aiMock.ts`** - AI mock responses and setup utilities
+
+### Testing Debugging
+
+#### Common Issues
+
+**Component tests failing to find elements:**
+```bash
+# Check if element exists with different role
+screen.debug() # Shows current DOM structure
+# Use queryBy* methods to check if element exists
+expect(screen.queryByText('Text')).toBeInTheDocument()
+```
+
+**E2E tests timing out:**
+```bash
+# Increase timeout for slow operations
+await expect(page.getByText('Loading...')).toBeVisible({ timeout: 10000 })
+# Use soft assertions for optional elements
+await expect.soft(page.getByText('Optional')).toBeVisible()
+```
+
+**Browser installation issues:**
+```bash
+# Reinstall browsers
+npx playwright install --with-deps
+# Force browser download
+npx playwright install chromium --force
+```
 
 For detailed testing documentation, see [`docs/E2E_TESTING.md`](docs/E2E_TESTING.md).
 

@@ -123,6 +123,63 @@ Skolapp v3 uses Supabase for backend services. To configure the connection:
 - `npm run type-check` - Run TypeScript compiler check
 - `npm run analyze` - Analyze bundle size och performance
 
+### Testing
+
+Skolapp v3 has comprehensive testing covering both component-level and end-to-end scenarios.
+
+#### Component Tests (React Testing Library)
+
+```bash
+# Run all component tests
+npm run test
+
+# Watch mode for development  
+npm run test:watch
+
+# Interactive test UI
+npm run test:ui
+
+# Coverage report
+npm run test:coverage
+```
+
+**Features:**
+- **Swedish language** support in all tests
+- **Accessibility-first** testing with `getByRole`, `getByLabel`
+- **ARIA attributes** validation (`aria-pressed`, `aria-describedby`)
+- **Keyboard navigation** testing (Enter, Space, Tab)
+- **Form validation** testing with proper label associations
+
+#### End-to-End Tests (Playwright)
+
+```bash
+# Run all E2E tests across browsers
+npm run test:e2e
+
+# Run in all browsers (Chromium, Firefox, WebKit)
+npm run test:e2e:all
+
+# Debug mode with visible browser
+npm run test:headed
+
+# Interactive test runner
+npm run test:e2e:ui
+```
+
+**Cross-browser Testing:**
+- ✅ Chromium (primary)
+- ✅ Firefox
+- ✅ WebKit (Safari)
+
+**Test Coverage:**
+- Quiz creation wizard (complete flow)
+- AI-assisted quiz generation
+- Student quiz-taking flow
+- Accessibility compliance (WCAG 2.1 AA)
+- Swedish language consistency
+
+For detailed testing docs and troubleshooting, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
+
 ### Performance & Quality Tools
 
 #### Lighthouse Performance Testing
