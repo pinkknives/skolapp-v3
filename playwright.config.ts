@@ -11,12 +11,12 @@ export default defineConfig({
   // Per-test timeout (30 seconds for individual tests)
   timeout: 30 * 1000,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['json', { outputFile: 'test-results/results.json' }]
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -28,37 +28,73 @@ export default defineConfig({
   },
 
   projects: [
+    // Visual testing projects for screenshots
+    {
+      name: 'chromium-desktop-light',
+      use: { 
+        ...devices['Desktop Chrome'], 
+        colorScheme: 'light', 
+        viewport: { width: 1280, height: 800 } 
+      },
+      testMatch: /.*visual.*\.spec\.ts/,
+    },
+    {
+      name: 'chromium-mobile-light',
+      use: { 
+        ...devices['iPhone 12'], 
+        colorScheme: 'light',
+        viewport: { width: 390, height: 844 }
+      },
+      testMatch: /.*visual.*\.spec\.ts/,
+    },
+    // Uncomment for dark mode visual testing
+    // {
+    //   name: 'chromium-desktop-dark',
+    //   use: { 
+    //     ...devices['Desktop Chrome'], 
+    //     colorScheme: 'dark',
+    //     viewport: { width: 1280, height: 800 } 
+    //   },
+    //   testMatch: /.*visual.*\.spec\.ts/,
+    // },
+
     // Core desktop browsers for critical flows
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       testMatch: /.*\.(e2e|spec)\.ts/,
+      testIgnore: /.*visual.*\.spec\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
       testMatch: /.*\.(e2e|spec)\.ts/,
+      testIgnore: /.*visual.*\.spec\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
       testMatch: /.*\.(e2e|spec)\.ts/,
+      testIgnore: /.*visual.*\.spec\.ts/,
     },
 
     // Mobile devices
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
+      testIgnore: /.*visual.*\.spec\.ts/,
     },
     {
       name: 'mobile-safari',
       use: { ...devices['iPhone 12'] },
+      testIgnore: /.*visual.*\.spec\.ts/,
     },
 
     // Tablet devices
     {
       name: 'tablet-chrome',
       use: { ...devices['iPad Pro'] },
+      testIgnore: /.*visual.*\.spec\.ts/,
     },
 
     // Accessibility testing
