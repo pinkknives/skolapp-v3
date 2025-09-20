@@ -62,7 +62,7 @@ export async function GET(
     }
 
     // Get quiz with questions separately for better typing
-    const { data: quiz, error: quizError } = await supabase
+    const { data: quiz, error: _quizError } = await supabase
       .from('quizzes')
       .select(`
         id, 
@@ -72,9 +72,9 @@ export async function GET(
       .eq('id', session.quiz_id)
       .single()
 
-    if (sessionError || !session) {
+    if (_quizError || !quiz) {
       return NextResponse.json(
-        { error: 'Session hittades inte eller du har inte behörighet' },
+        { error: 'Quiz hittades inte' },
         { status: 404 }
       )
     }
@@ -144,13 +144,10 @@ export async function GET(
     })
 
     // Build detailed response
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const questions = quiz ? (quiz.questions as any[]).map((question: any, index: number) => {
       const attempts = questionAttempts.get(index) || []
       const latestAttempt = attempts[attempts.length - 1] // Most recent attempt
-      const bestAttempt = attempts.reduce((best: any, current: any) => 
-        (current.score || 0) > (best?.score || 0) ? current : best, 
-        null
-      )
 
       let studentAnswer = null
       let isCorrect = false
@@ -172,6 +169,7 @@ export async function GET(
         if (question.type === 'multiple-choice' && Array.isArray(studentAnswer)) {
           // Map option IDs to option text
           const selectedOptions = studentAnswer.map((optionId: string) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const option = question.options?.find((opt: any) => opt.id === optionId)
             return option ? option.text : optionId
           })
@@ -186,7 +184,9 @@ export async function GET(
       // Get correct answer (for teachers or when reveal policy allows)
       let correctAnswer = null
       if (canRevealAnswers && question.type === 'multiple-choice') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const correctOptions = question.options?.filter((opt: any) => opt.isCorrect) || []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         correctAnswer = correctOptions.map((opt: any) => opt.text).join(', ')
       }
 
@@ -208,9 +208,13 @@ export async function GET(
     }) : []
 
     // Calculate totals
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalScore = questions.reduce((sum: number, q: any) => sum + q.score, 0)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const maxPossibleScore = quiz ? (quiz.questions as any[]).reduce((sum: number, q: any) => sum + q.points, 0) : 0
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalTimeSpent = questions.reduce((sum: number, q: any) => sum + (q.timeSpentSeconds || 0), 0)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const questionsAnswered = questions.filter((q: any) => q.studentAnswer).length
 
     return NextResponse.json({
@@ -224,7 +228,7 @@ export async function GET(
         maxPossibleScore,
         percentage: maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0,
         questionsAnswered,
-        totalQuestions: quiz ? (quiz.questions as any[]).length : 0,
+        totalQuestions: quiz ? (quiz.questions as any[]).length : 0, // eslint-disable-line @typescript-eslint/no-explicit-any
         totalTimeSpent,
         status: progress?.status || 'not_started',
         startedAt: progress?.started_at,

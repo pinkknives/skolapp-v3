@@ -136,11 +136,14 @@ export async function GET(
     })
 
     // Prepare CSV headers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const questionHeaders = (quiz.questions as any[]).map((q: any, index: number) => `Fråga ${index + 1}: ${q.title}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scoreHeaders = (quiz.questions as any[]).map((q: any, index: number) => `Poäng ${index + 1}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const timeHeaders = (quiz.questions as any[]).map((q: any, index: number) => `Tid ${index + 1} (sek)`)
     
-    let headers = [
+    const headers = [
       'Elevnamn',
       'Status',
       'Startade',
@@ -169,6 +172,7 @@ export async function GET(
       
       if (allAttempts) {
         // Show all attempts separately
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const maxAttempts = Math.max(...Array.from(questionMap.values()).map((attempts: any) => attempts.length))
         
         for (let attemptNo = 1; attemptNo <= maxAttempts; attemptNo++) {
@@ -181,12 +185,17 @@ export async function GET(
 
           // Calculate total score for this attempt
           let totalScore = 0
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const answers: any[] = []
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const scores: any[] = []
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const times: any[] = []
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ;(quiz.questions as any[]).forEach((question: any, qIndex: number) => {
             const attempts = questionMap.get(qIndex) || []
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const attempt = attempts.find((a: any) => a.attempt_no === attemptNo)
             
             if (attempt) {
@@ -235,13 +244,18 @@ export async function GET(
         ]
 
         let totalScore = 0
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const answers: any[] = []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const scores: any[] = []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const times: any[] = []
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(quiz.questions as any[]).forEach((question: any, qIndex: number) => {
           const attempts = questionMap.get(qIndex) || []
           // Use the latest/best attempt
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const bestAttempt = attempts.sort((a: any, b: any) => (b.score || 0) - (a.score || 0))[0]
           
           if (bestAttempt) {

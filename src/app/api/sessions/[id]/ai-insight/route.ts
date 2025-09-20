@@ -110,6 +110,7 @@ export async function POST(
  * Generate insights based on question and student data
  * In a real implementation, this would call an AI service like OpenAI
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generateInsights(questions: any[], students: any[]) {
   const insights = []
 

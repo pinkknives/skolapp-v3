@@ -6,6 +6,7 @@ import { Layout, Container, Section } from '@/components/layout/Layout'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Typography, Heading } from '@/components/ui/Typography'
+import { ProgressBar } from '@/components/ui/ProgressBar'
 import { SessionOverview, StudentResult, QuestionAnalysis, AttemptDetail, AIInsightResponse } from '@/types/quiz'
 import { motion } from 'framer-motion'
 import { Download, Eye, FileText, BarChart3, Users, TrendingUp, Brain, AlertCircle, CheckCircle, Info, Lightbulb } from 'lucide-react'
@@ -502,12 +503,11 @@ export default function SessionResultsPage() {
                           )}
                         </div>
                       </div>
-                      <div className="w-full bg-neutral-200 rounded-full h-2">
-                        <div 
-                          className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${question.correctRate}%` }}
-                        />
-                      </div>
+                      <ProgressBar 
+                        value={question.correctRate} 
+                        className="w-full"
+                        size="sm"
+                      />
                     </div>
                   ))}
                 </div>
