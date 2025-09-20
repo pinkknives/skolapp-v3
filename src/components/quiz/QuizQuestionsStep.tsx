@@ -155,7 +155,7 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
                   onClick={() => setShowAIModal(true)}
                   className="bg-primary-600 hover:bg-primary-700 text-white"
                   leftIcon={
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   }
@@ -169,7 +169,7 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
                     onClick={() => setShowPreview(true)}
                     className="border-primary-300 text-primary-700 hover:bg-primary-50"
                     leftIcon={
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 6 16 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
@@ -192,23 +192,24 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {questionTypes.map((type) => (
-              <button
+              <Button
                 key={type.type}
+                variant="outline"
                 onClick={() => addQuestion(type.type)}
-                className="p-4 border border-neutral-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors text-left group"
+                className="h-auto p-4 text-left flex-col items-start justify-start min-h-[88px]"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="text-primary-600 group-hover:text-primary-700">
+                <div className="inline-flex items-center gap-x-2 mb-2 whitespace-nowrap">
+                  <span className="text-primary-600 flex-shrink-0" aria-hidden="true">
                     {type.icon}
-                  </div>
+                  </span>
                   <Typography variant="body2" className="font-medium">
                     {type.label}
                   </Typography>
                 </div>
-                <Typography variant="caption" className="text-neutral-600">
+                <Typography variant="caption" className="text-neutral-600 text-left">
                   {type.description}
                 </Typography>
-              </button>
+              </Button>
             ))}
           </div>
         </CardContent>
