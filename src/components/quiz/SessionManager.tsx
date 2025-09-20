@@ -19,7 +19,7 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
   const [session, setSession] = useState<(QuizSession & { participants: SessionParticipant[] }) | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<'async' | 'sync'>('async')
+  const [mode, setMode] = useState<'async' | 'sync'>('sync')
   
   // Async assignment settings
   const [openAt, setOpenAt] = useState<string>('')
@@ -38,8 +38,38 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
     setIsCreating(true)
     setError(null)
 
-    // Validate async assignment settings
-    if (mode === 'async') {
+    try {
+      // For live (sync) mode, use the new live sessions API
+      if (mode === 'sync') {
+        const response = await fetch('/api/live-sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orgId: quiz.orgId, // Assuming quiz has orgId
+            quizId: quiz.id,
+            settings: {
+              timePerQuestion: 30,
+              showAfterEach: true,
+              autoAdvance: false
+            }
+          })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          setError(result.error || 'Det gick inte att skapa live-sessionen')
+          return
+        }
+
+        // Redirect to live control page
+        window.location.href = `/live/control/${result.session.id}`
+        return
+      }
+
+      // Original async assignment logic
       if (!dueAt) {
         setError('Deadline krävs för asynkrona uppgifter')
         setIsCreating(false)
@@ -69,21 +99,17 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
         setIsCreating(false)
         return
       }
-    }
 
-    try {
       const formData = new FormData()
       formData.append('quizId', quiz.id)
       formData.append('mode', mode)
       
       // Add async assignment settings
-      if (mode === 'async') {
-        if (openAt) formData.append('openAt', openAt)
-        formData.append('dueAt', dueAt)
-        formData.append('maxAttempts', maxAttempts.toString())
-        if (timeLimitMinutes) formData.append('timeLimitSeconds', (Number(timeLimitMinutes) * 60).toString())
-        formData.append('revealPolicy', revealPolicy)
-      }
+      if (openAt) formData.append('openAt', openAt)
+      formData.append('dueAt', dueAt)
+      formData.append('maxAttempts', maxAttempts.toString())
+      if (timeLimitMinutes) formData.append('timeLimitSeconds', (Number(timeLimitMinutes) * 60).toString())
+      formData.append('revealPolicy', revealPolicy)
 
       const result = await createSessionAction(formData)
 
@@ -210,6 +236,30 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
                 </button>
               </div>
             </div>
+
+            {/* Live Session Settings */}
+            {mode === 'sync' && (
+              <div className="space-y-4 p-4 border border-primary-200 bg-primary-50 rounded-lg">
+                <Typography variant="body2" className="font-medium text-primary-800">
+                  Live Quiz inställningar
+                </Typography>
+                
+                <div className="space-y-3">
+                  <Typography variant="caption" className="text-primary-700">
+                    • Du får en unik 6-teckens PIN för eleverna att gå med
+                  </Typography>
+                  <Typography variant="caption" className="text-primary-700">
+                    • QR-kod genereras automatiskt för enkel anslutning
+                  </Typography>
+                  <Typography variant="caption" className="text-primary-700">
+                    • Du styr när varje fråga startar och slutar
+                  </Typography>
+                  <Typography variant="caption" className="text-primary-700">
+                    • Realtidsuppdateringar av svar och deltagare
+                  </Typography>
+                </div>
+              </div>
+            )}
 
             {/* Async Assignment Settings */}
             {mode === 'async' && (
