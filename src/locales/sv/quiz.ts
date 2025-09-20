@@ -292,3 +292,34 @@ export const aiAssistant = {
     'Historia', 'Geografi', 'Samhällskunskap', 'Teknik', 'Slöjd', 'Bild', 'Musik', 'Idrott och hälsa'
   ]
 }
+
+export const questionTypes = {
+  multipleChoice: {
+    label: 'Flerval',
+    description: 'Elever väljer bland flera alternativ'
+  },
+  freeText: {
+    label: 'Fritext', 
+    description: 'Elever skriver eget svar'
+  },
+  image: {
+    label: 'Bild',
+    description: 'Lägg till visuellt innehåll'
+  },
+  picker: {
+    title: 'Lägg till fråga manuellt',
+    ariaLabel: 'Välj frågetyp',
+    selectLabel: 'Välj frågetyp för att lägga till'
+  }
+}
+
+export const actions = {
+  menu: {
+    label: 'Åtgärder',
+    ariaLabel: 'Åtgärder för quiz'
+  },
+  separators: {
+    general: 'Allmänt',
+    danger: 'Farlig zon'
+  }
+}

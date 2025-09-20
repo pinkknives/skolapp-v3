@@ -5,9 +5,11 @@ import dynamic from 'next/dynamic'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
+import { QuestionTypePicker } from '@/components/ui/QuestionTypePicker'
 import { Quiz, Question, QuestionType } from '@/types/quiz'
 import { QuestionEditor } from './QuestionEditor'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
+import { questionTypes } from '@/locales/sv/quiz'
 
 // Dynamically import AI components for better performance
 const AIQuestionGenerator = dynamic(() => import('./AIQuestionGenerator').then(mod => ({ default: mod.AIQuestionGenerator })), {
@@ -99,38 +101,9 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
     setShowAIModal(false)
   }
 
-  const questionTypes: { type: QuestionType; label: string; icon: React.ReactNode; description: string }[] = [
-    {
-      type: 'multiple-choice',
-      label: 'Flerval',
-      description: 'Elever väljer bland flera alternativ',
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      )
-    },
-    {
-      type: 'free-text',
-      label: 'Fritext',
-      description: 'Elever skriver eget svar',
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-      )
-    },
-    {
-      type: 'image',
-      label: 'Bild',
-      description: 'Lägg till visuellt innehåll',
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      )
-    }
-  ]
+  const handleQuestionTypeSelect = (type: QuestionType) => {
+    addQuestion(type)
+  }
 
   return (
     <div className="space-y-6">
@@ -189,31 +162,10 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
       {/* Add Question Options */}
       <Card>
         <CardHeader>
-          <CardTitle>Lägg till fråga manuellt</CardTitle>
+          <CardTitle>{questionTypes.picker.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {questionTypes.map((type) => (
-              <Button
-                key={type.type}
-                variant="outline"
-                onClick={() => addQuestion(type.type)}
-                className="h-auto p-4 text-left flex-col items-start justify-start min-h-[88px]"
-              >
-                <div className="inline-flex items-center gap-x-2 mb-2 whitespace-nowrap">
-                  <span className="text-primary-600 flex-shrink-0" aria-hidden="true">
-                    {type.icon}
-                  </span>
-                  <Typography variant="body2" className="font-medium">
-                    {type.label}
-                  </Typography>
-                </div>
-                <Typography variant="caption" className="text-neutral-600 text-left">
-                  {type.description}
-                </Typography>
-              </Button>
-            ))}
-          </div>
+          <QuestionTypePicker onSelectType={handleQuestionTypeSelect} />
         </CardContent>
       </Card>
 
@@ -237,9 +189,9 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
                         {question.title || 'Ny fråga'}
                       </Typography>
                       <Typography variant="caption" className="text-neutral-500">
-                        {question.type === 'multiple-choice' && 'Flerval'}
-                        {question.type === 'free-text' && 'Fritext'}
-                        {question.type === 'image' && 'Bild'}
+                        {question.type === 'multiple-choice' && questionTypes.multipleChoice.label}
+                        {question.type === 'free-text' && questionTypes.freeText.label}
+                        {question.type === 'image' && questionTypes.image.label}
                         {question.points && ` • ${question.points} poäng`}
                       </Typography>
                     </div>
