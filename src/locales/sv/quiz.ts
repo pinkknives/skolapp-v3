@@ -30,6 +30,142 @@ export const quizResult = {
   }
 }
 
+export const liveSession = {
+  create: {
+    title: 'Starta live-session',
+    description: 'Skapa en realtidssession där elever svarar samtidigt',
+    selectClass: 'Välj klass',
+    selectQuiz: 'Välj quiz',
+    mode: {
+      label: 'Sessiontyp',
+      sync: 'Live (Realtid)',
+      syncDescription: 'Du styr quizet fråga för fråga. Alla elever följer samma takt.',
+      async: 'Självgående',
+      asyncDescription: 'Elever svarar i egen takt. Du kan följa upp resultat efteråt.'
+    },
+    gdpr: {
+      title: 'Datahantering',
+      korttid: 'Korttidsläge',
+      korttidDescription: 'Data raderas automatiskt efter sessionen. Kräver inget samtycke.',
+      langtid: 'Långtidsläge', 
+      langtidDescription: 'Data sparas permanent för analys. Kräver elevernas samtycke.',
+      note: 'Kontrollera att elevernas vårdnadshavare har lämnat samtycke innan du väljer Långtidsläge.'
+    }
+  },
+  lobby: {
+    title: 'Väntar på deltagare',
+    code: 'Sessionskod',
+    qrCode: 'QR-kod',
+    shareLink: 'Dela länk',
+    participants: 'Deltagare online',
+    instructions: {
+      title: 'Så här fungerar det:',
+      items: [
+        'Du får en unik 6-teckens kod och QR-kod',
+        'Elever kan gå med via kod eller genom att skanna QR-koden',
+        'Du ser alla som går med i realtid',
+        'Du kontrollerar när varje fråga startar och avslutas'
+      ]
+    },
+    actions: {
+      start: 'Starta session',
+      cancel: 'Avbryt'
+    }
+  },
+  teacher: {
+    title: 'Lärarpanel - Live Quiz',
+    status: {
+      live: 'Live',
+      ended: 'Avslutad',
+      paused: 'Pausad'
+    },
+    controls: {
+      pause: 'Pausa',
+      resume: 'Fortsätt',
+      next: 'Nästa fråga',
+      previous: 'Föregående fråga',
+      lock: 'Lås svar',
+      unlock: 'Öppna för svar',
+      reveal: 'Visa rätt svar',
+      end: 'Avsluta session'
+    },
+    participants: {
+      title: 'Deltagare online',
+      count: '{count} deltagare',
+      answered: '{answered} har svarat',
+      waiting: 'Väntar på svar...'
+    },
+    question: {
+      title: 'Aktiv fråga',
+      progress: 'Fråga {current} av {total}',
+      responses: 'Svar mottagna: {count}'
+    },
+    results: {
+      title: 'Svarfördelning',
+      correct: 'Rätt: {count}',
+      incorrect: 'Fel: {count}',
+      percentage: '{percentage}% rätt'
+    },
+    confirm: {
+      end: {
+        title: 'Avsluta session?',
+        message: 'Detta kommer att avsluta sessionen för alla deltagare. Är du säker?',
+        confirm: 'Ja, avsluta',
+        cancel: 'Avbryt'
+      }
+    }
+  },
+  student: {
+    join: {
+      title: 'Gå med i quiz',
+      codeLabel: 'Sessionskod',
+      codePlaceholder: 'Ange 6-teckens kod',
+      nameLabel: 'Ditt namn',
+      namePlaceholder: 'Vad vill du kallas?',
+      gdprNotice: {
+        korttid: 'Dina svar sparas tillfälligt och raderas efter sessionen.',
+        langtid: 'Dina svar sparas permanent. Kontakta din lärare för mer information om datahantering.'
+      },
+      submit: 'Gå med'
+    },
+    play: {
+      waiting: 'Väntar på att frågan ska startas...',
+      timeLeft: 'Tid kvar: {time}',
+      locked: 'Svar är låsta',
+      submitted: 'Svar skickat!',
+      nextQuestion: 'Väntar på nästa fråga...',
+      ended: 'Sessionen är avslutad'
+    },
+    answer: {
+      submit: 'Skicka svar',
+      change: 'Ändra svar',
+      confirm: 'Bekräfta svar',
+      submitted: 'Ditt svar har skickats'
+    }
+  },
+  errors: {
+    sessionNotFound: 'Session hittades inte. Kontrollera att koden är korrekt.',
+    sessionEnded: 'Denna session har avslutats.',
+    sessionFull: 'Sessionen är full.',
+    alreadyJoined: 'Du har redan gått med i denna session.',
+    invalidCode: 'Ogiltig sessionskod.',
+    rateLimited: 'Du svarar för snabbt. Vänta ett ögonblick.',
+    alreadyAnswered: 'Du har redan svarat på denna fråga.',
+    answerWhileLocked: 'Svar är för närvarande låsta.',
+    sessionNotActive: 'Sessionen är inte aktiv.',
+    noPermission: 'Du har inte behörighet att utföra denna åtgärd.'
+  },
+  status: {
+    participantJoined: '{name} gick med',
+    participantLeft: '{name} lämnade',
+    questionChanged: 'Ny fråga: {title}',
+    responsesLocked: 'Svar är nu låsta',
+    responsesUnlocked: 'Svar är nu öppna',
+    sessionEnded: 'Sessionen avslutades',
+    answersRevealed: 'Rätta svar visas nu'
+  }
+}
+
 export const aiAssistant = {
   modal: {
     title: 'AI Quiz-assistent',
