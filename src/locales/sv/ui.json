@@ -1,0 +1,17 @@
+{
+  "ui": {
+    "questionTypes": {
+      "multipleChoice": "Flerval",
+      "freeText": "Fritext",
+      "image": "Bild"
+    },
+    "actions": {
+      "actions": "Åtgärder",
+      "new": "Ny fråga",
+      "copy": "Kopiera länk",
+      "edit": "Redigera",
+      "delete": "Ta bort",
+      "dangerZone": "Riskområde"
+    }
+  }
+}
