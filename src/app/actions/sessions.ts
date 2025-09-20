@@ -69,11 +69,33 @@ export interface SubmitAttemptResult {
 export async function createSessionAction(formData: FormData): Promise<CreateSessionResult> {
   const quizId = formData.get('quizId') as string
   const mode = (formData.get('mode') as SessionMode) || 'async'
+  
+  // Async assignment specific fields
+  const openAt = formData.get('openAt') as string | null
+  const dueAt = formData.get('dueAt') as string | null
+  const maxAttempts = parseInt(formData.get('maxAttempts') as string || '1')
+  const timeLimitSeconds = formData.get('timeLimitSeconds') ? parseInt(formData.get('timeLimitSeconds') as string) : null
+  const revealPolicy = (formData.get('revealPolicy') as RevealPolicy) || 'after_deadline'
 
   if (!quizId) {
     return {
       success: false,
       error: 'Quiz-ID krävs'
+    }
+  }
+
+  // Validate async assignment fields
+  if (mode === 'async' && !dueAt) {
+    return {
+      success: false,
+      error: 'Deadline krävs för asynkrona uppgifter'
+    }
+  }
+
+  if (maxAttempts < 1 || maxAttempts > 10) {
+    return {
+      success: false,
+      error: 'Antal försök måste vara mellan 1 och 10'
     }
   }
 
@@ -121,18 +143,52 @@ export async function createSessionAction(formData: FormData): Promise<CreateSes
       }
     }
 
-    // Create new session
+    // Validate dates for async mode
+    if (mode === 'async' && dueAt) {
+      const dueDate = new Date(dueAt)
+      const now = new Date()
+      
+      if (dueDate <= now) {
+        return {
+          success: false,
+          error: 'Deadline måste vara i framtiden'
+        }
+      }
+
+      if (openAt) {
+        const openDate = new Date(openAt)
+        if (openDate >= dueDate) {
+          return {
+            success: false,
+            error: 'Öppningstid måste vara före deadline'
+          }
+        }
+      }
+    }
+
+    // Create new session with async assignment fields
+    const sessionData: Record<string, unknown> = {
+      quiz_id: quizId,
+      teacher_id: user.id,
+      status: 'lobby',
+      mode: mode,
+      state: 'idle',
+      current_index: 0,
+      settings: {}
+    }
+
+    // Add async assignment fields
+    if (mode === 'async') {
+      if (openAt) sessionData.open_at = openAt
+      if (dueAt) sessionData.due_at = dueAt
+      sessionData.max_attempts = maxAttempts
+      if (timeLimitSeconds) sessionData.time_limit_seconds = timeLimitSeconds
+      sessionData.reveal_policy = revealPolicy
+    }
+
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .insert({
-        quiz_id: quizId,
-        teacher_id: user.id,
-        status: 'lobby',
-        mode: mode,
-        state: 'idle',
-        current_index: 0,
-        settings: {}
-      })
+      .insert(sessionData)
       .select()
       .single()
 
@@ -771,6 +827,342 @@ export async function getSessionSummary(sessionId: string) {
     return {
       success: false,
       error: 'Det gick inte att hämta sessionssammanfattning'
+    }
+  }
+}
+
+/**
+ * Start a new attempt for an async assignment
+ */
+export async function startAttemptAction(formData: FormData): Promise<SubmitAttemptResult> {
+  const sessionId = formData.get('sessionId') as string
+  const userId = formData.get('userId') as string
+
+  if (!sessionId || !userId) {
+    return {
+      success: false,
+      error: 'Sessions-ID och användar-ID krävs'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Get session and verify it's async mode
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        error: 'Session hittades inte'
+      }
+    }
+
+    if (session.mode !== 'async') {
+      return {
+        success: false,
+        error: 'Denna funktion är endast tillgänglig för asynkrona uppgifter'
+      }
+    }
+
+    // Check if assignment is open
+    const now = new Date()
+    if (session.open_at && new Date(session.open_at) > now) {
+      return {
+        success: false,
+        error: 'Uppgiften är inte öppen än'
+      }
+    }
+
+    if (session.due_at && new Date(session.due_at) <= now) {
+      return {
+        success: false,
+        error: 'Deadline har passerat'
+      }
+    }
+
+    // Check existing progress and attempt limits
+    const { data: progress } = await supabase
+      .from('session_progress')
+      .select('*')
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+      .single()
+
+    if (progress && progress.status === 'submitted') {
+      return {
+        success: false,
+        error: 'Du har redan skickat in din lösning'
+      }
+    }
+
+    if (progress && progress.current_attempt >= session.max_attempts) {
+      return {
+        success: false,
+        error: `Du har använt alla tillgängliga försök (${session.max_attempts})`
+      }
+    }
+
+    // Create or update progress record
+    const newAttemptNo = (progress?.current_attempt || 0) + 1
+    
+    const { error: progressError } = await supabase
+      .from('session_progress')
+      .upsert({
+        session_id: sessionId,
+        user_id: userId,
+        status: 'in_progress',
+        current_attempt: newAttemptNo,
+        started_at: progress?.started_at || now.toISOString()
+      }, {
+        onConflict: 'session_id,user_id'
+      })
+
+    if (progressError) {
+      throw progressError
+    }
+
+    return {
+      success: true,
+      attempt: {
+        id: `new-${Date.now()}`, // Temporary ID
+        sessionId,
+        userId,
+        questionIndex: 0,
+        answer: null,
+        answeredAt: now,
+        attemptNo: newAttemptNo,
+        durationSeconds: 0
+      }
+    }
+  } catch (error) {
+    console.error('Start attempt error:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att starta försöket'
+    }
+  }
+}
+
+/**
+ * Save progress on an async assignment (autosave)
+ */
+export async function saveAttemptProgressAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  const sessionId = formData.get('sessionId') as string
+  const userId = formData.get('userId') as string
+  const questionIndex = parseInt(formData.get('questionIndex') as string)
+  const answer = formData.get('answer') as string
+  const attemptNo = parseInt(formData.get('attemptNo') as string || '1')
+
+  if (!sessionId || !userId || questionIndex === undefined || !answer) {
+    return {
+      success: false,
+      error: 'Alla fält krävs för att spara framsteg'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Verify session is async and still open
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('mode, due_at, max_attempts')
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session || session.mode !== 'async') {
+      return {
+        success: false,
+        error: 'Ogiltig session'
+      }
+    }
+
+    // Check deadline
+    if (session.due_at && new Date(session.due_at) <= new Date()) {
+      return {
+        success: false,
+        error: 'Deadline har passerat'
+      }
+    }
+
+    // Save/update attempt
+    const { error: attemptError } = await supabase
+      .from('session_attempts')
+      .upsert({
+        session_id: sessionId,
+        user_id: userId,
+        question_index: questionIndex,
+        attempt_no: attemptNo,
+        answer: JSON.parse(answer),
+        answered_at: new Date().toISOString()
+      }, {
+        onConflict: 'session_id,user_id,question_index,attempt_no'
+      })
+
+    if (attemptError) {
+      throw attemptError
+    }
+
+    // Update progress timestamp
+    await supabase
+      .from('session_progress')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Save progress error:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att spara framsteg'
+    }
+  }
+}
+
+/**
+ * Submit an async assignment
+ */
+export async function submitAsyncAssignmentAction(formData: FormData): Promise<SubmitAttemptResult> {
+  const sessionId = formData.get('sessionId') as string
+  const userId = formData.get('userId') as string
+  const answers = formData.get('answers') as string // JSON array of all answers
+
+  if (!sessionId || !userId || !answers) {
+    return {
+      success: false,
+      error: 'Sessions-ID, användar-ID och svar krävs'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Get session with quiz questions for grading
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        quizzes(questions)
+      `)
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        error: 'Session hittades inte'
+      }
+    }
+
+    if (session.mode !== 'async') {
+      return {
+        success: false,
+        error: 'Denna funktion är endast tillgänglig för asynkrona uppgifter'
+      }
+    }
+
+    // Check if already submitted
+    const { data: progress } = await supabase
+      .from('session_progress')
+      .select('status, current_attempt')
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+      .single()
+
+    if (progress?.status === 'submitted') {
+      return {
+        success: false,
+        error: 'Du har redan skickat in din lösning'
+      }
+    }
+
+    // Parse answers and calculate score
+    const parsedAnswers = JSON.parse(answers)
+    const questions = session.quizzes?.questions || []
+    let totalScore = 0
+    let totalPoints = 0
+
+    // Grade each answer
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i]
+      const answer = parsedAnswers[i]
+      
+      totalPoints += question.points || 1
+
+      if (question.type === 'multiple-choice' && question.options) {
+        const correctOptions = question.options.filter((opt: { isCorrect: boolean }) => opt.isCorrect)
+        const selectedOptions = Array.isArray(answer) ? answer : [answer]
+        
+        // Simple exact match grading for now
+        if (correctOptions.length === selectedOptions.length &&
+            correctOptions.every((opt: { id: string }) => selectedOptions.includes(opt.id))) {
+          totalScore += question.points || 1
+        }
+      }
+      // TODO: Add grading for free-text questions
+    }
+
+    // Check if submission is late
+    const now = new Date()
+    const isLate = session.due_at && new Date(session.due_at) < now
+
+    // Update progress to submitted
+    const { error: progressError } = await supabase
+      .from('session_progress')
+      .update({
+        status: isLate ? 'late' : 'submitted',
+        submitted_at: now.toISOString()
+      })
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+
+    if (progressError) {
+      throw progressError
+    }
+
+    // Create final attempt record
+    const { data: attempt, error: attemptError } = await supabase
+      .from('session_attempts')
+      .insert({
+        session_id: sessionId,
+        user_id: userId,
+        question_index: -1, // Special marker for final submission
+        attempt_no: progress?.current_attempt || 1,
+        answer: { finalSubmission: true, score: totalScore, totalPoints },
+        answered_at: now.toISOString()
+      })
+      .select()
+      .single()
+
+    if (attemptError) {
+      throw attemptError
+    }
+
+    return {
+      success: true,
+      attempt: {
+        id: attempt.id,
+        sessionId: attempt.session_id,
+        userId: attempt.user_id,
+        questionIndex: attempt.question_index,
+        answer: attempt.answer,
+        isCorrect: totalScore === totalPoints,
+        answeredAt: new Date(attempt.answered_at),
+        attemptNo: attempt.attempt_no || 1,
+        durationSeconds: attempt.duration_seconds
+      }
+    }
+  } catch (error) {
+    console.error('Submit assignment error:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att skicka in uppgiften'
     }
   }
 }
