@@ -8,18 +8,27 @@ import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, ExecutionMode } from '@/types/quiz'
 import { getUserCreatableOrganizations, Organization } from '@/lib/orgs'
+import { TitleSuggestionHint } from './TitleSuggestionHint'
+import { aiAssistant } from '@/locales/sv/quiz'
+import { GRADE_LEVELS } from '@/lib/ai/quizProvider'
 
 interface QuizBasicInfoStepProps {
   quiz: Partial<Quiz>
   onChange: (updates: Partial<Quiz>) => void
   onValidationChange: (isValid: boolean) => void
+  /** Callback when AI context (subject/grade) changes */
+  onAiContextChange?: (context: { subject?: string; gradeLevel?: string }) => void
 }
 
-export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBasicInfoStepProps) {
+export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiContextChange }: QuizBasicInfoStepProps) {
   const [tagInput, setTagInput] = useState('')
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loadingOrgs, setLoadingOrgs] = useState(true)
   const [selectedOrgId, setSelectedOrgId] = useState<string>('')
+  
+  // Track current subject/grade for AI hints
+  const [currentSubject, setCurrentSubject] = useState('')
+  const [currentGrade, setCurrentGrade] = useState('')
 
   // Load user's organizations
   useEffect(() => {
@@ -177,10 +186,68 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange }: QuizBa
             </div>
           )}
 
+          {/* Subject and Grade for AI hints */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
+                Ämne (för AI-hjälp)
+              </Typography>
+              <select
+                value={currentSubject}
+                onChange={(e) => {
+                  setCurrentSubject(e.target.value)
+                  onAiContextChange?.({ subject: e.target.value, gradeLevel: currentGrade })
+                }}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Välj ämne</option>
+                {aiAssistant.subjects.map((subject) => (
+                  <option key={subject} value={subject}>{subject}</option>
+                ))}
+              </select>
+              <Typography variant="caption" className="text-neutral-500 mt-1">
+                Hjälper AI att föreslå relevanta titlar och innehåll
+              </Typography>
+            </div>
+            
+            <div>
+              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
+                Årskurs (för AI-hjälp)
+              </Typography>
+              <select
+                value={currentGrade}
+                onChange={(e) => {
+                  setCurrentGrade(e.target.value)
+                  onAiContextChange?.({ subject: currentSubject, gradeLevel: e.target.value })
+                }}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Välj årskurs</option>
+                {GRADE_LEVELS.map((grade) => (
+                  <option key={grade.value} value={grade.value}>{grade.label}</option>
+                ))}
+              </select>
+              <Typography variant="caption" className="text-neutral-500 mt-1">
+                Anpassar AI-förslag till elevernas nivå
+              </Typography>
+            </div>
+          </div>
+
           {/* Title - Required */}
           <div>
+            <div className="flex justify-between items-start mb-2">
+              <Typography variant="body2" className="font-medium text-neutral-700">
+                Titel <span className="text-red-500">*</span>
+              </Typography>
+              <TitleSuggestionHint
+                quiz={quiz}
+                onQuizUpdate={onChange}
+                subject={currentSubject}
+                gradeLevel={currentGrade}
+                topics={quiz.tags}
+              />
+            </div>
             <Input
-              label="Titel"
               placeholder="Ge ditt quiz en tydlig och engagerande titel"
               value={quiz.title || ''}
               onChange={(e) => onChange({ title: e.target.value })}

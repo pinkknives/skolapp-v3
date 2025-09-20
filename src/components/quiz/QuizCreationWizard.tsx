@@ -58,6 +58,12 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
   const [currentStep, setCurrentStep] = useState<WizardStep>('info')
   const [quiz, setQuiz] = useState<Partial<Quiz>>(initialQuiz)
   const [isValid, setIsValid] = useState(false)
+  
+  // Track AI context for hints
+  const [aiContext, setAiContext] = useState<{
+    subject?: string
+    gradeLevel?: string
+  }>({})
 
   const updateQuiz = (updates: Partial<Quiz>) => {
     const updatedQuiz = { ...quiz, ...updates }
@@ -166,6 +172,7 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
                 quiz={quiz}
                 onChange={updateQuiz}
                 onValidationChange={setIsValid}
+                onAiContextChange={setAiContext}
               />
             )}
             
@@ -174,6 +181,7 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
                 quiz={quiz}
                 onChange={updateQuiz}
                 onValidationChange={setIsValid}
+                gradeLevel={aiContext.gradeLevel}
               />
             )}
             

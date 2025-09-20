@@ -39,9 +39,11 @@ interface QuizQuestionsStepProps {
   quiz: Partial<Quiz>
   onChange: (updates: Partial<Quiz>) => void
   onValidationChange: (isValid: boolean) => void
+  /** Grade level for AI hints (optional) */
+  gradeLevel?: string
 }
 
-export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQuestionsStepProps) {
+export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLevel }: QuizQuestionsStepProps) {
   const [showAIModal, setShowAIModal] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null)
@@ -271,6 +273,7 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
                     onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
                     onDelete={() => removeQuestion(index)}
                     onDuplicate={() => duplicateQuestion(index)}
+                    gradeLevel={gradeLevel}
                   />
                 </CardContent>
               )}
