@@ -143,6 +143,7 @@ export function SessionJoinForm({ prefilledCode = '', onJoinSuccess, className }
                 autoFocus
                 autoComplete="off"
                 autoCapitalize="characters"
+                data-testid="join-code"
               />
               
               <Button
@@ -150,6 +151,7 @@ export function SessionJoinForm({ prefilledCode = '', onJoinSuccess, className }
                 disabled={!validateCode(code)}
                 fullWidth
                 size="lg"
+                data-testid="join-submit"
               >
                 Fortsätt
               </Button>

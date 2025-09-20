@@ -115,6 +115,7 @@ export default function LoginPage() {
               placeholder="namn@exempel.se"
               required
               disabled={state === 'sending'}
+              data-testid="email"
             />
 
             {error && (
@@ -130,6 +131,7 @@ export default function LoginPage() {
               type="submit"
               className="w-full"
               disabled={state === 'sending' || !email}
+              data-testid="login-submit"
             >
               {state === 'sending' ? 'Skickar...' : 'Skicka inloggningslänk'}
             </Button>
