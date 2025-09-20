@@ -3,10 +3,10 @@ import { getSessionSummary } from '@/app/actions/sessions'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionId = params.id
+    const { id: sessionId } = await context.params
 
     if (!sessionId) {
       return NextResponse.json(

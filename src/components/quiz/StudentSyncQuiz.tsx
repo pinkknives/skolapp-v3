@@ -44,6 +44,46 @@ export function StudentSyncQuiz({ session, quiz, userId, displayName }: StudentS
 
   const currentQuestion = quiz.questions[currentIndex]
 
+  // Check if student has already answered current question
+  const checkExistingAttempt = React.useCallback(async (questionIndex: number) => {
+    try {
+      const response = await fetch(`/api/sessions/${session.id}/summary`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.summary) {
+          const myResult = data.summary.participantResults.find(
+            (p: { user_id: string }) => p.user_id === userId
+          )
+          
+          if (myResult) {
+            const attempt = myResult.attempts.find(
+              (a: { question_index: number }) => a.question_index === questionIndex
+            )
+            
+            if (attempt) {
+              setMyAttempt({
+                questionIndex: attempt.question_index,
+                answer: attempt.answer,
+                isCorrect: attempt.is_correct,
+                answeredAt: new Date(attempt.answered_at)
+              })
+              setHasAnswered(true)
+              
+              // Restore answer state for display
+              if (Array.isArray(attempt.answer)) {
+                setCurrentAnswer(attempt.answer)
+              } else {
+                setFreeTextAnswer(attempt.answer)
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing attempt:', error)
+    }
+  }, [session.id, userId])
+
   // Real-time subscription for session updates
   useEffect(() => {
     const supabase = supabaseBrowser()
@@ -126,46 +166,6 @@ export function StudentSyncQuiz({ session, quiz, userId, displayName }: StudentS
 
     return () => clearInterval(interval)
   }, [session.questionWindowStartedAt, session.questionWindowSeconds])
-
-  // Check if student has already answered current question
-  const checkExistingAttempt = React.useCallback(async (questionIndex: number) => {
-    try {
-      const response = await fetch(`/api/sessions/${session.id}/summary`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.summary) {
-          const myResult = data.summary.participantResults.find(
-            (p: { user_id: string }) => p.user_id === userId
-          )
-          
-          if (myResult) {
-            const attempt = myResult.attempts.find(
-              (a: { question_index: number }) => a.question_index === questionIndex
-            )
-            
-            if (attempt) {
-              setMyAttempt({
-                questionIndex: attempt.question_index,
-                answer: attempt.answer,
-                isCorrect: attempt.is_correct,
-                answeredAt: new Date(attempt.answered_at)
-              })
-              setHasAnswered(true)
-              
-              // Restore answer state for display
-              if (Array.isArray(attempt.answer)) {
-                setCurrentAnswer(attempt.answer)
-              } else {
-                setFreeTextAnswer(attempt.answer)
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking existing attempt:', error)
-    }
-  }, [session.id, userId])
 
   useEffect(() => {
     checkExistingAttempt(currentIndex)
