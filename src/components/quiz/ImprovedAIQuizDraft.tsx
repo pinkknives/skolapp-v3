@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion } from '@/types/quiz'
 import { quizAI, AiParams, GRADE_LEVELS, DIFFICULTY_LEVELS, QUESTION_TYPES } from '@/lib/ai/quizProvider'
+import { aiAssistant } from '@/locales/sv/quiz'
 import { Plus, AlertTriangle, RefreshCw, Copy, Check } from 'lucide-react'
 
 interface ImprovedAIQuizDraftProps {
@@ -256,12 +257,20 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
   const [errorDetails, setErrorDetails] = useState<string>('')
   const [copySuccess, setCopySuccess] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
+  const firstFieldRef = useRef<HTMLSelectElement>(null)
 
   // Focus management for accessibility
   useEffect(() => {
     if (modalRef.current) {
       modalRef.current.focus()
     }
+    // Focus first field after a short delay to ensure modal is rendered
+    const timer = setTimeout(() => {
+      if (firstFieldRef.current) {
+        firstFieldRef.current.focus()
+      }
+    }, 100)
+    return () => clearTimeout(timer)
   }, [])
 
   // Handle ESC key to close modal
@@ -278,11 +287,6 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
   }, [onClose])
 
   // Load saved draft from localStorage (removed to simplify implementation)
-
-  const subjectOptions = [
-    'Matematik', 'Svenska', 'Engelska', 'Naturkunskap', 'Biologi', 'Fysik', 'Kemi',
-    'Historia', 'Geografi', 'Samhällskunskap', 'Teknik', 'Slöjd', 'Bild', 'Musik', 'Idrott och hälsa'
-  ]
 
   const handleGenerate = async () => {
     setStep('generating')
@@ -388,7 +392,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
         className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         role="dialog"
         aria-labelledby="ai-modal-title"
-        aria-describedby="ai-modal-description"
+        aria-describedby="ai-modal-description ai-disclaimer"
         tabIndex={-1}
       >
         <Card className="border-0">
@@ -401,9 +405,9 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   </svg>
                 </div>
                 <div>
-                  <CardTitle id="ai-modal-title" className="text-xl">AI Quiz-assistent</CardTitle>
+                  <CardTitle id="ai-modal-title" className="text-xl">{aiAssistant.modal.title}</CardTitle>
                   <Typography variant="caption" className="text-neutral-600" id="ai-modal-description">
-                    Generera frågor automatiskt baserat på dina inställningar
+                    {aiAssistant.modal.description}
                   </Typography>
                 </div>
               </div>
@@ -411,7 +415,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                 variant="outline" 
                 size="sm" 
                 onClick={onClose}
-                aria-label="Stäng AI-assistent"
+                aria-label={aiAssistant.modal.closeLabel}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -422,15 +426,15 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
           <CardContent className="space-y-6">
             {/* AI Disclaimer */}
-            <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+            <div id="ai-disclaimer" className="bg-warning-50 border border-warning-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-warning-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <Typography variant="body2" className="font-semibold text-warning-800 mb-1">
-                    Dubbelkolla alltid innehållet. AI kan ha fel.
+                    {aiAssistant.disclaimer.title}
                   </Typography>
                   <Typography variant="caption" className="text-warning-700">
-                    Granska frågorna noga innan du lägger till dem i ditt quiz. Se till att de passar din undervisning och elevernas nivå.
+                    {aiAssistant.disclaimer.description}
                   </Typography>
                 </div>
               </div>
@@ -443,29 +447,30 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   {/* Subject */}
                   <div>
                     <Typography variant="body2" className="font-medium mb-2">
-                      Ämne <span className="text-error-500">*</span>
+                      {aiAssistant.form.subject.label} <span className="text-error-500">*</span>
                     </Typography>
                     <select
+                      ref={firstFieldRef}
                       value={formData.subject}
                       onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                       className="w-full p-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       aria-required="true"
                       aria-describedby="subject-help"
                     >
-                      <option value="">Välj ämne</option>
-                      {subjectOptions.map((subject) => (
+                      <option value="">{aiAssistant.form.subject.placeholder}</option>
+                      {aiAssistant.subjects.map((subject) => (
                         <option key={subject} value={subject}>{subject}</option>
                       ))}
                     </select>
                     <Typography variant="caption" className="text-neutral-500 mt-1" id="subject-help">
-                      Välj det ämne som frågorna ska handla om
+                      {aiAssistant.form.subject.help}
                     </Typography>
                   </div>
 
                   {/* Grade Level */}
                   <div>
                     <Typography variant="body2" className="font-medium mb-2">
-                      Årskurs <span className="text-error-500">*</span>
+                      {aiAssistant.form.grade.label} <span className="text-error-500">*</span>
                     </Typography>
                     <select
                       value={formData.grade}
@@ -474,20 +479,20 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       aria-required="true"
                       aria-describedby="grade-help"
                     >
-                      <option value="">Välj årskurs</option>
+                      <option value="">{aiAssistant.form.grade.placeholder}</option>
                       {GRADE_LEVELS.map((grade) => (
                         <option key={grade.value} value={grade.value}>{grade.label}</option>
                       ))}
                     </select>
                     <Typography variant="caption" className="text-neutral-500 mt-1" id="grade-help">
-                      Välj målgrupp för att anpassa frågors svårighetsgrad
+                      {aiAssistant.form.grade.help}
                     </Typography>
                   </div>
 
                   {/* Question Count */}
                   <div>
                     <Typography variant="body2" className="font-medium mb-2">
-                      Antal frågor
+                      {aiAssistant.form.count.label}
                     </Typography>
                     <Input
                       type="number"
@@ -498,14 +503,14 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       aria-describedby="count-help"
                     />
                     <Typography variant="caption" className="text-neutral-500 mt-1" id="count-help">
-                      Mellan 1-10 frågor (standard: 5)
+                      {aiAssistant.form.count.help}
                     </Typography>
                   </div>
 
                   {/* Question Type */}
                   <div>
                     <Typography variant="body2" className="font-medium mb-2">
-                      Frågetyp
+                      {aiAssistant.form.type.label}
                     </Typography>
                     <select
                       value={formData.type}
@@ -518,7 +523,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       ))}
                     </select>
                     <Typography variant="caption" className="text-neutral-500 mt-1" id="type-help">
-                      Välj typ av frågor som ska genereras
+                      {aiAssistant.form.type.help}
                     </Typography>
                   </div>
                 </div>
@@ -527,7 +532,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   {/* Difficulty */}
                   <div>
                     <Typography variant="body2" className="font-medium mb-2">
-                      Svårighetsgrad
+                      {aiAssistant.form.difficulty.label}
                     </Typography>
                     <select
                       value={formData.difficulty}
@@ -540,7 +545,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       ))}
                     </select>
                     <Typography variant="caption" className="text-neutral-500 mt-1" id="difficulty-help">
-                      Anpassa svårighetsgraden till din grupp
+                      {aiAssistant.form.difficulty.help}
                     </Typography>
                   </div>
                 </div>
@@ -548,33 +553,33 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                 {/* Topics */}
                 <div>
                   <Typography variant="body2" className="font-medium mb-2">
-                    Specifika områden (valfritt)
+                    {aiAssistant.form.topics.label}
                   </Typography>
                   <Input
-                    placeholder="t.ex. multiplikationstabeller, fraktioner, geometri"
+                    placeholder={aiAssistant.form.topics.placeholder}
                     value={formData.topics}
                     onChange={(e) => setFormData(prev => ({ ...prev, topics: e.target.value }))}
                     aria-describedby="topics-help"
                   />
                   <Typography variant="caption" className="text-neutral-500 mt-1" id="topics-help">
-                    Separera med kommatecken för att specificera vad frågorna ska fokusera på
+                    {aiAssistant.form.topics.help}
                   </Typography>
                 </div>
 
                 {/* Context */}
                 <div>
                   <Typography variant="body2" className="font-medium mb-2">
-                    Extra kontext (valfritt)
+                    {aiAssistant.form.context.label}
                   </Typography>
                   <Textarea
                     rows={3}
-                    placeholder="Beskriv eventuella speciella krav eller fokus för frågorna..."
+                    placeholder={aiAssistant.form.context.placeholder}
                     value={formData.context}
                     onChange={(e) => setFormData(prev => ({ ...prev, context: e.target.value }))}
                     aria-describedby="context-help"
                   />
                   <Typography variant="caption" className="text-neutral-500 mt-1" id="context-help">
-                    Lägg till extra information för att förbättra AI-genereringen
+                    {aiAssistant.form.context.help}
                   </Typography>
                 </div>
               </div>
@@ -589,10 +594,13 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   </svg>
                 </div>
                 <Typography variant="h6" className="mb-2">
-                  Genererar {formData.count} frågor...
+                  {aiAssistant.states.generating.replace('{count}', formData.count.toString())}
                 </Typography>
                 <Typography variant="body2" className="text-neutral-600">
-                  AI:n skapar frågor baserat på {formData.subject} för {formData.grade}
+                  {aiAssistant.states.generatingDescription
+                    .replace('{subject}', formData.subject)
+                    .replace('{grade}', formData.grade)
+                  }
                 </Typography>
               </div>
             )}
@@ -603,7 +611,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   <AlertTriangle className="h-8 w-8 text-error-600" />
                 </div>
                 <Typography variant="h6" className="mb-2 text-error-800">
-                  Något gick fel
+                  {aiAssistant.states.errorTitle}
                 </Typography>
                 <Typography variant="body2" className="text-neutral-600 mb-4">
                   {errorMessage}
@@ -613,24 +621,24 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 mb-4 text-left max-w-md mx-auto">
                     <div className="flex items-center justify-between mb-2">
                       <Typography variant="body2" className="font-medium text-neutral-800">
-                        Teknisk information:
+                        {aiAssistant.states.errorTechnical}
                       </Typography>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={copyErrorDetails}
                         className="gap-1 h-8 px-2"
-                        aria-label="Kopiera felinfo"
+                        aria-label={aiAssistant.actions.copyError}
                       >
                         {copySuccess ? (
                           <>
                             <Check className="h-3 w-3" />
-                            Kopierat
+                            {aiAssistant.states.copied}
                           </>
                         ) : (
                           <>
                             <Copy className="h-3 w-3" />
-                            Kopiera
+                            {aiAssistant.actions.copyError}
                           </>
                         )}
                       </Button>
@@ -644,7 +652,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                 <div className="flex gap-3 justify-center">
                   <Button onClick={retryGeneration} className="gap-2">
                     <RefreshCw className="h-4 w-4" />
-                    Försök igen
+                    {aiAssistant.actions.tryAgain}
                   </Button>
                 </div>
               </div>
@@ -654,7 +662,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Typography variant="h6">
-                    AI-genererade frågor ({generatedQuestions.length})
+                    {aiAssistant.states.previewTitle.replace('{count}', generatedQuestions.length.toString())}
                   </Typography>
                   <div className="flex items-center gap-2">
                     <Button
@@ -663,7 +671,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       onClick={selectAllQuestions}
                       disabled={selectedQuestions.size === generatedQuestions.length}
                     >
-                      Välj alla
+                      {aiAssistant.actions.selectAll}
                     </Button>
                     <Button
                       size="sm"
@@ -671,13 +679,13 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       onClick={deselectAllQuestions}
                       disabled={selectedQuestions.size === 0}
                     >
-                      Välj ingen
+                      {aiAssistant.actions.selectNone}
                     </Button>
                   </div>
                 </div>
 
                 <Typography variant="caption" className="text-neutral-500 block">
-                  Välj vilka frågor du vill lägga till
+                  {aiAssistant.states.previewDescription}
                 </Typography>
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -775,12 +783,12 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                                     e.stopPropagation()
                                     setEditingQuestion(question.id)
                                   }}
-                                  aria-label={`Redigera fråga ${index + 1}`}
+                                  aria-label={`${aiAssistant.actions.edit} fråga ${index + 1}`}
                                 >
                                   <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
-                                  Redigera
+                                  {aiAssistant.actions.edit}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -790,12 +798,12 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                                     deleteQuestion(question.id)
                                   }}
                                   className="text-error-600 hover:text-error-700 hover:border-error-300"
-                                  aria-label={`Ta bort fråga ${index + 1}`}
+                                  aria-label={`${aiAssistant.actions.delete} fråga ${index + 1}`}
                                 >
                                   <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
-                                  Ta bort
+                                  {aiAssistant.actions.delete}
                                 </Button>
                               </div>
                             </>
@@ -808,7 +816,10 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
                 <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                   <Typography variant="body2" className="text-primary-800">
-                    {selectedQuestions.size} av {generatedQuestions.length} frågor valda
+                    {aiAssistant.states.selectedCount
+                      .replace('{selected}', selectedQuestions.size.toString())
+                      .replace('{total}', generatedQuestions.length.toString())
+                    }
                   </Typography>
                 </div>
               </div>
@@ -826,9 +837,9 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   onClick={handleGenerate}
                   disabled={!isFormValid}
                   className="bg-primary-600 hover:bg-primary-700"
-                  aria-describedby="ai-form-disclaimer"
+                  aria-describedby="ai-disclaimer"
                 >
-                  Generera
+                  {aiAssistant.actions.generate}
                 </Button>
               )}
 
@@ -838,7 +849,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   className="bg-primary-600 hover:bg-primary-700 gap-2"
                 >
                   <RefreshCw className="h-4 w-4" />
-                  Försök igen
+                  {aiAssistant.actions.tryAgain}
                 </Button>
               )}
 
@@ -852,14 +863,15 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       setSelectedQuestions(new Set())
                     }}
                   >
-                    Generera nya
+                    {aiAssistant.actions.generateNew}
                   </Button>
                   <Button
                     onClick={handleAcceptQuestions}
                     disabled={selectedQuestions.size === 0}
                     className="bg-success-600 hover:bg-success-700"
+                    aria-label={`${aiAssistant.actions.addSelected} (${selectedQuestions.size})`}
                   >
-                    Lägg till valda ({selectedQuestions.size})
+                    {aiAssistant.actions.addSelected} ({selectedQuestions.size})
                   </Button>
                 </>
               )}
