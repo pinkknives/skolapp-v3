@@ -416,6 +416,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                 size="sm" 
                 onClick={onClose}
                 aria-label={aiAssistant.modal.closeLabel}
+                data-testid="ai-modal-close"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -426,7 +427,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
           <CardContent className="space-y-6">
             {/* AI Disclaimer */}
-            <div id="ai-disclaimer" className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+            <div id="ai-disclaimer" className="bg-warning-50 border border-warning-200 rounded-lg p-4" data-testid="ai-disclaimer">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-warning-600 mt-0.5 flex-shrink-0" />
                 <div>
@@ -456,6 +457,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       className="w-full p-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       aria-required="true"
                       aria-describedby="subject-help"
+                      data-testid="ai-subject-select"
                     >
                       <option value="">{aiAssistant.form.subject.placeholder}</option>
                       {aiAssistant.subjects.map((subject) => (
@@ -478,6 +480,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       className="w-full p-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       aria-required="true"
                       aria-describedby="grade-help"
+                      data-testid="ai-grade-select"
                     >
                       <option value="">{aiAssistant.form.grade.placeholder}</option>
                       {GRADE_LEVELS.map((grade) => (
@@ -670,6 +673,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                       variant="outline"
                       onClick={selectAllQuestions}
                       disabled={selectedQuestions.size === generatedQuestions.length}
+                      data-testid="ai-select-all-questions"
                     >
                       {aiAssistant.actions.selectAll}
                     </Button>
@@ -838,6 +842,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   disabled={!isFormValid}
                   className="bg-primary-600 hover:bg-primary-700"
                   aria-describedby="ai-disclaimer"
+                  data-testid="ai-generate-questions"
                 >
                   {aiAssistant.actions.generate}
                 </Button>
@@ -870,6 +875,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                     disabled={selectedQuestions.size === 0}
                     className="bg-success-600 hover:bg-success-700"
                     aria-label={`${aiAssistant.actions.addSelected} (${selectedQuestions.size})`}
+                    data-testid="ai-import-questions"
                   >
                     {aiAssistant.actions.addSelected} ({selectedQuestions.size})
                   </Button>
