@@ -62,7 +62,7 @@ export async function POST(
       .from('sessions')
       .select(`
         *,
-        quizzes(questions)
+        quizzes!inner(questions)
       `)
       .eq('id', sessionId)
       .single()
@@ -90,8 +90,8 @@ export async function POST(
 
     // For sync sessions, verify the question is the current active question
     if (session.mode === 'sync') {
-      const questions = session.quizzes?.questions || []
-      const currentQuestion = questions[session.current_index]
+      const questions = Array.isArray(session.quizzes) ? session.quizzes[0]?.questions : session.quizzes?.questions
+      const currentQuestion = questions?.[session.current_index]
       
       if (!currentQuestion || currentQuestion.id !== questionId) {
         return NextResponse.json(
@@ -135,14 +135,14 @@ export async function POST(
     }
 
     // Determine if answer is correct (for auto-grading)
-    const questions = session.quizzes?.questions || []
-    const question = questions.find((q: any) => q.id === questionId)
+    const questions = Array.isArray(session.quizzes) ? session.quizzes[0]?.questions : session.quizzes?.questions
+    const question = questions?.find((q: { id: string }) => q.id === questionId)
     let isCorrect = false
 
     if (question) {
       if (question.type === 'multiple-choice') {
         const selectedOptions = Array.isArray(answer) ? answer : [answer]
-        const correctOptions = question.options?.filter((opt: any) => opt.isCorrect).map((opt: any) => opt.id) || []
+        const correctOptions = question.options?.filter((opt: { isCorrect: boolean }) => opt.isCorrect).map((opt: { id: string }) => opt.id) || []
         isCorrect = selectedOptions.length === correctOptions.length && 
                    selectedOptions.every((id: string) => correctOptions.includes(id))
       } else if (question.type === 'free-text') {

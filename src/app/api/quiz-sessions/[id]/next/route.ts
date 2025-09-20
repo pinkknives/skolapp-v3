@@ -22,7 +22,7 @@ export async function POST(
       .from('sessions')
       .select(`
         *,
-        quizzes(questions)
+        quizzes!inner(questions)
       `)
       .eq('id', sessionId)
       .eq('teacher_id', user.id)
@@ -49,7 +49,7 @@ export async function POST(
       )
     }
 
-    const questions = session.quizzes?.questions || []
+    const questions = Array.isArray(session.quizzes) ? session.quizzes[0]?.questions : session.quizzes?.questions
     const currentIndex = session.current_index || 0
     const nextIndex = currentIndex + 1
 

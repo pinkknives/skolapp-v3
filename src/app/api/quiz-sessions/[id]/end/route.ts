@@ -72,14 +72,14 @@ export async function POST(
       })
 
     // Get final summary for response
-    const { data: participantCount } = await supabase
+    const { count: participantCount } = await supabase
       .from('session_participants')
-      .select('id', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
       .eq('session_id', sessionId)
 
-    const { data: responseCount } = await supabase
+    const { count: responseCount } = await supabase
       .from('session_answers')
-      .select('id', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
       .eq('session_id', sessionId)
 
     // Publish realtime event to notify all participants
@@ -103,8 +103,8 @@ export async function POST(
         status: updatedSession.status,
         endedAt: updatedSession.ended_at,
         summary: {
-          totalParticipants: participantCount?.count || 0,
-          totalResponses: responseCount?.count || 0
+          totalParticipants: participantCount || 0,
+          totalResponses: responseCount || 0
         }
       }
     })

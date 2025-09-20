@@ -22,7 +22,7 @@ export async function GET(
       .from('sessions')
       .select(`
         *,
-        quizzes(id, title, questions),
+        quizzes!inner(id, title, questions),
         classes(id, name)
       `)
       .eq('id', sessionId)
@@ -66,37 +66,25 @@ export async function GET(
       console.error('Error fetching participants:', participantsError)
     }
 
-    // Get aggregated answer data
-    const { data: aggregates, error: aggregatesError } = await supabase
-      .from('session_aggregates')
-      .select('*')
-      .eq('session_id', sessionId)
-
-    if (aggregatesError) {
-      console.error('Error fetching aggregates:', aggregatesError)
-    }
-
     // Get detailed answer counts per question
-    const { data: answerCounts, error: answersError } = await supabase
+    const { data: answerCounts } = await supabase
       .from('session_answers')
       .select('question_id, is_correct, answer')
       .eq('session_id', sessionId)
 
-    if (answersError) {
-      console.error('Error fetching answer counts:', answersError)
-    }
-
     // Process question-level statistics
-    const questions = session.quizzes?.questions || []
-    const questionStats = questions.map((question: any, index: number) => {
+    const quiz = Array.isArray(session.quizzes) ? session.quizzes[0] : session.quizzes
+    const classData = Array.isArray(session.classes) ? session.classes[0] : session.classes
+    const questions = quiz?.questions || []
+    const questionStats = questions.map((question: { id: string; title: string; type: string; options?: Array<{ id: string; text: string; isCorrect: boolean }> }, index: number) => {
       const questionAnswers = answerCounts?.filter(a => a.question_id === question.id) || []
       const correctCount = questionAnswers.filter(a => a.is_correct).length
       const totalCount = questionAnswers.length
       
       // For multiple choice, get option distribution
-      let optionDistribution: Record<string, number> = {}
+      const optionDistribution: Record<string, number> = {}
       if (question.type === 'multiple-choice') {
-        question.options?.forEach((option: any) => {
+        question.options?.forEach((option: { id: string }) => {
           optionDistribution[option.id] = 0
         })
         
@@ -139,13 +127,13 @@ export async function GET(
         startedAt: session.started_at,
         endedAt: session.ended_at,
         quiz: {
-          id: session.quizzes?.id,
-          title: session.quizzes?.title,
+          id: quiz?.id,
+          title: quiz?.title,
           totalQuestions: questions.length
         },
-        class: session.classes ? {
-          id: session.classes.id,
-          name: session.classes.name
+        class: classData ? {
+          id: classData.id,
+          name: classData.name
         } : null
       },
       participants: participants?.map(p => ({
