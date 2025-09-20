@@ -35,8 +35,7 @@ export async function GET(
         mode, 
         due_at, 
         reveal_policy, 
-        quiz_id,
-        quizzes(id, title, questions(id, title, type, points))
+        quiz_id
       `)
       .eq('id', sessionId)
       .eq('teacher_id', user.id)
@@ -49,8 +48,17 @@ export async function GET(
       )
     }
 
-    const quiz = session.quizzes
-    if (!quiz) {
+    // Get quiz with questions separately
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select(`
+        id, 
+        title, 
+        questions(id, title, type, points)
+      `)
+      .eq('id', session.quiz_id)
+      .single()
+    if (quizError || !quiz) {
       return NextResponse.json(
         { error: 'Quiz hittades inte' },
         { status: 404 }
@@ -128,9 +136,9 @@ export async function GET(
     })
 
     // Prepare CSV headers
-    const questionHeaders = quiz.questions.map((q, index) => `Fråga ${index + 1}: ${q.title}`)
-    const scoreHeaders = quiz.questions.map((q, index) => `Poäng ${index + 1}`)
-    const timeHeaders = quiz.questions.map((q, index) => `Tid ${index + 1} (sek)`)
+    const questionHeaders = (quiz.questions as any[]).map((q: any, index: number) => `Fråga ${index + 1}: ${q.title}`)
+    const scoreHeaders = (quiz.questions as any[]).map((q: any, index: number) => `Poäng ${index + 1}`)
+    const timeHeaders = (quiz.questions as any[]).map((q: any, index: number) => `Tid ${index + 1} (sek)`)
     
     let headers = [
       'Elevnamn',
@@ -161,7 +169,7 @@ export async function GET(
       
       if (allAttempts) {
         // Show all attempts separately
-        const maxAttempts = Math.max(...Array.from(questionMap.values()).map(attempts => attempts.length))
+        const maxAttempts = Math.max(...Array.from(questionMap.values()).map((attempts: any) => attempts.length))
         
         for (let attemptNo = 1; attemptNo <= maxAttempts; attemptNo++) {
           const row = [
@@ -173,13 +181,13 @@ export async function GET(
 
           // Calculate total score for this attempt
           let totalScore = 0
-          const answers = []
-          const scores = []
-          const times = []
+          const answers: any[] = []
+          const scores: any[] = []
+          const times: any[] = []
 
-          quiz.questions.forEach((question, qIndex) => {
+          ;(quiz.questions as any[]).forEach((question: any, qIndex: number) => {
             const attempts = questionMap.get(qIndex) || []
-            const attempt = attempts.find(a => a.attempt_no === attemptNo)
+            const attempt = attempts.find((a: any) => a.attempt_no === attemptNo)
             
             if (attempt) {
               let answerText = ''
@@ -227,14 +235,14 @@ export async function GET(
         ]
 
         let totalScore = 0
-        const answers = []
-        const scores = []
-        const times = []
+        const answers: any[] = []
+        const scores: any[] = []
+        const times: any[] = []
 
-        quiz.questions.forEach((question, qIndex) => {
+        ;(quiz.questions as any[]).forEach((question: any, qIndex: number) => {
           const attempts = questionMap.get(qIndex) || []
           // Use the latest/best attempt
-          const bestAttempt = attempts.sort((a, b) => (b.score || 0) - (a.score || 0))[0]
+          const bestAttempt = attempts.sort((a: any, b: any) => (b.score || 0) - (a.score || 0))[0]
           
           if (bestAttempt) {
             let answerText = ''
@@ -283,7 +291,7 @@ export async function GET(
     ).join('\n')
 
     // Set headers for file download
-    const filename = `resultat-${quiz.title.replace(/[^a-zA-Z0-9åäöÅÄÖ]/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`
+    const filename = `resultat-${(quiz.title as string).replace(/[^a-zA-Z0-9åäöÅÄÖ]/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`
     
     return new Response(csvContent, {
       status: 200,

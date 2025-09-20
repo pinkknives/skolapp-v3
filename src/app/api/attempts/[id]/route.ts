@@ -48,15 +48,28 @@ export async function GET(
         mode, 
         due_at, 
         reveal_policy, 
-        quiz_id,
-        quizzes(
-          id, 
-          title, 
-          questions(id, title, type, points, options)
-        )
+        quiz_id
       `)
       .eq('id', sessionId)
       .eq('teacher_id', user.id)
+      .single()
+
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { error: 'Session hittades inte eller du har inte behörighet' },
+        { status: 404 }
+      )
+    }
+
+    // Get quiz with questions separately for better typing
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select(`
+        id, 
+        title, 
+        questions(id, title, type, points, options)
+      `)
+      .eq('id', session.quiz_id)
       .single()
 
     if (sessionError || !session) {
@@ -121,7 +134,6 @@ export async function GET(
     }
 
     // Process attempt data by question
-    const quiz = session.quizzes
     const questionAttempts = new Map()
 
     attemptItems?.forEach(item => {
@@ -132,10 +144,10 @@ export async function GET(
     })
 
     // Build detailed response
-    const questions = quiz.questions.map((question, index) => {
+    const questions = quiz ? (quiz.questions as any[]).map((question: any, index: number) => {
       const attempts = questionAttempts.get(index) || []
       const latestAttempt = attempts[attempts.length - 1] // Most recent attempt
-      const bestAttempt = attempts.reduce((best, current) => 
+      const bestAttempt = attempts.reduce((best: any, current: any) => 
         (current.score || 0) > (best?.score || 0) ? current : best, 
         null
       )
@@ -159,8 +171,8 @@ export async function GET(
       if (studentAnswer) {
         if (question.type === 'multiple-choice' && Array.isArray(studentAnswer)) {
           // Map option IDs to option text
-          const selectedOptions = studentAnswer.map(optionId => {
-            const option = question.options?.find(opt => opt.id === optionId)
+          const selectedOptions = studentAnswer.map((optionId: string) => {
+            const option = question.options?.find((opt: any) => opt.id === optionId)
             return option ? option.text : optionId
           })
           formattedAnswer = selectedOptions.join(', ')
@@ -174,8 +186,8 @@ export async function GET(
       // Get correct answer (for teachers or when reveal policy allows)
       let correctAnswer = null
       if (canRevealAnswers && question.type === 'multiple-choice') {
-        const correctOptions = question.options?.filter(opt => opt.isCorrect) || []
-        correctAnswer = correctOptions.map(opt => opt.text).join(', ')
+        const correctOptions = question.options?.filter((opt: any) => opt.isCorrect) || []
+        correctAnswer = correctOptions.map((opt: any) => opt.text).join(', ')
       }
 
       return {
@@ -193,13 +205,13 @@ export async function GET(
         correctAnswer: canRevealAnswers ? correctAnswer : null,
         options: question.options || null
       }
-    })
+    }) : []
 
     // Calculate totals
-    const totalScore = questions.reduce((sum, q) => sum + q.score, 0)
-    const maxPossibleScore = quiz.questions.reduce((sum, q) => sum + q.points, 0)
-    const totalTimeSpent = questions.reduce((sum, q) => sum + (q.timeSpentSeconds || 0), 0)
-    const questionsAnswered = questions.filter(q => q.studentAnswer).length
+    const totalScore = questions.reduce((sum: number, q: any) => sum + q.score, 0)
+    const maxPossibleScore = quiz ? (quiz.questions as any[]).reduce((sum: number, q: any) => sum + q.points, 0) : 0
+    const totalTimeSpent = questions.reduce((sum: number, q: any) => sum + (q.timeSpentSeconds || 0), 0)
+    const questionsAnswered = questions.filter((q: any) => q.studentAnswer).length
 
     return NextResponse.json({
       success: true,
@@ -207,12 +219,12 @@ export async function GET(
         sessionId,
         userId,
         participantName: participant.display_name,
-        quizTitle: quiz.title,
+        quizTitle: quiz?.title || 'Okänd quiz',
         totalScore,
         maxPossibleScore,
         percentage: maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0,
         questionsAnswered,
-        totalQuestions: quiz.questions.length,
+        totalQuestions: quiz ? (quiz.questions as any[]).length : 0,
         totalTimeSpent,
         status: progress?.status || 'not_started',
         startedAt: progress?.started_at,

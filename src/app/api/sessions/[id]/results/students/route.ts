@@ -133,23 +133,23 @@ export async function GET(
     })
 
     // Calculate scores from attempt items
-    const scoresByUser = new Map()
-    const timesByUser = new Map()
+    const scoresByUser = new Map<string, number[]>()
+    const timesByUser = new Map<string, number[]>()
     
     attemptItems?.forEach(item => {
       if (!scoresByUser.has(item.user_id)) {
         scoresByUser.set(item.user_id, [])
         timesByUser.set(item.user_id, [])
       }
-      scoresByUser.get(item.user_id).push(item.score || 0)
+      scoresByUser.get(item.user_id)!.push(item.score || 0)
       if (item.time_spent_seconds) {
-        timesByUser.get(item.user_id).push(item.time_spent_seconds)
+        timesByUser.get(item.user_id)!.push(item.time_spent_seconds)
       }
       
       // Update last activity
       const existing = studentResultsMap.get(item.user_id)
       if (existing) {
-        existing.questionsAttempted = scoresByUser.get(item.user_id).length
+        existing.questionsAttempted = scoresByUser.get(item.user_id)!.length
         if (!existing.lastActivityAt || new Date(item.answered_at) > new Date(existing.lastActivityAt)) {
           existing.lastActivityAt = item.answered_at
         }
@@ -160,10 +160,10 @@ export async function GET(
     scoresByUser.forEach((scores, userId) => {
       const existing = studentResultsMap.get(userId)
       if (existing) {
-        existing.bestScore = scores.reduce((sum, score) => sum + score, 0)
+        existing.bestScore = scores.reduce((sum: number, score: number) => sum + score, 0)
         const times = timesByUser.get(userId) || []
         existing.avgTimePerQuestion = times.length > 0 
-          ? Math.round(times.reduce((sum, time) => sum + time, 0) / times.length)
+          ? Math.round(times.reduce((sum: number, time: number) => sum + time, 0) / times.length)
           : null
       }
     })

@@ -133,15 +133,15 @@ export async function GET(
 
     // Calculate final statistics
     const results = Array.from(questionStatsMap.values()).map(stats => {
-      const question = quiz.questions?.[stats.questionIndex]
-      const correctCount = stats.attempts.filter(attempt => attempt.is_correct).length
+      const question = (quiz.questions as any[])?.[stats.questionIndex]
+      const correctCount = stats.attempts.filter((attempt: any) => attempt.is_correct).length
       const totalAttempts = stats.attempts.length
       const correctRate = totalAttempts > 0 ? (correctCount / totalAttempts) * 100 : 0
       const avgScore = stats.scores.length > 0 
-        ? stats.scores.reduce((sum, score) => sum + score, 0) / stats.scores.length 
+        ? stats.scores.reduce((sum: number, score: number) => sum + score, 0) / stats.scores.length 
         : 0
       const avgTime = stats.times.length > 0 
-        ? stats.times.reduce((sum, time) => sum + time, 0) / stats.times.length 
+        ? stats.times.reduce((sum: number, time: number) => sum + time, 0) / stats.times.length 
         : null
 
       return {
