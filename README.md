@@ -116,12 +116,30 @@ Skolapp v3 uses Supabase for backend services. To configure the connection:
 
 ## Available Scripts
 
+### Core Development
 - `npm run dev` - Start development server på port 3000
 - `npm run build` - Build för production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint med auto-fix
 - `npm run type-check` - Run TypeScript compiler check
 - `npm run analyze` - Analyze bundle size och performance
+
+### Data Management
+- `npm run ingest:syllabus` - Kör Skolverket syllabus ingest (med parametrar)
+- `npm run etl:skolverket` - Legacy ETL för Skolverket data
+- `npm run etl:skolverket:fresh` - Legacy ETL med full återställning
+
+**Syllabus Ingest Parametrar:**
+```bash
+# Grundläggande körning
+npm run ingest:syllabus
+
+# Med filtrering och dry-run  
+npm run ingest:syllabus -- --subject=MA --gradeSpan=7-9 --dryRun=true
+```
+
+**Automatisk körning:**  
+Syllabus-data uppdateras automatiskt varje måndag 03:00 UTC via GitHub Actions. Manuell triggerning möjlig via Actions-fliken.
 
 ### Testing
 
