@@ -243,7 +243,7 @@ function CreateQuizPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle>Frågor</CardTitle>
                     {canUseAI ? (
-                      <Button onClick={() => setShowAIDraft(true)} variant="outline">
+                      <Button onClick={() => setShowAIDraft(true)} variant="outline" data-testid="ai-draft-button">
                         <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>

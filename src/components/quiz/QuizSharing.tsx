@@ -90,7 +90,7 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
             Delningskod
           </Typography>
           <div className="bg-primary-50 rounded-lg p-6 mb-4">
-            <Typography variant="h2" className="font-mono text-primary-800 mb-2 tracking-wider">
+            <Typography variant="h2" className="font-mono text-primary-800 mb-2 tracking-wider" data-testid="quiz-code">
               {quiz.shareCode}
             </Typography>
             <Typography variant="caption" className="text-primary-600">
