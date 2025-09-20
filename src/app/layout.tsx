@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import Providers from './providers'
 
 export const metadata: Metadata = {
   title: {
@@ -118,9 +119,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <Providers>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </Providers>
         
         {/* Service Worker Registration */}
         <script
