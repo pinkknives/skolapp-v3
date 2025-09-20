@@ -145,17 +145,20 @@ export function extractCitations(
   
   // Validate and enrich citations with source information
   const validatedCitations = response.citations
-    .map((citation: { sourceId?: string; span?: string }) => {
-      if (!citation.sourceId) return null;
-      const sourceContext = availableContext.find(c => c.source.id === citation.sourceId);
+    .map((citation: unknown) => {
+      if (typeof citation !== 'object' || citation === null) return null;
+      const typedCitation = citation as { sourceId?: string; span?: string };
+      
+      if (!typedCitation.sourceId) return null;
+      const sourceContext = availableContext.find(c => c.source.id === typedCitation.sourceId);
       if (!sourceContext) return null;
       
       return {
-        sourceId: citation.sourceId,
+        sourceId: typedCitation.sourceId,
         sourceTitle: sourceContext.source.title,
         sourceUrl: sourceContext.source.url,
         license: sourceContext.source.license,
-        span: citation.span || sourceContext.text.substring(0, 100) + '...'
+        span: typedCitation.span || sourceContext.text.substring(0, 100) + '...'
       };
     })
     .filter(Boolean);

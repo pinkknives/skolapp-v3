@@ -111,9 +111,122 @@ function chunkText(text, maxTokens = 400) {
 }
 
 /**
- * Mock Skolverket curriculum data (for MVP without real API)
+ * Check if feature is enabled
  */
-const mockCurriculumData = {
+function isFeatureEnabled() {
+  return process.env.FEATURE_SYLLABUS === 'true';
+}
+
+/**
+ * Fetch curriculum data from Skolverket API or fallback to mock data
+ */
+async function fetchCurriculumData() {
+  if (!isFeatureEnabled()) {
+    console.log('📢 FEATURE_SYLLABUS disabled, using fallback mode');
+    return getMockCurriculumData();
+  }
+
+  try {
+    // Import the Skolverket API client
+    const { SkolverketApiClient } = await import('../src/lib/api/skolverket-client.js');
+    const client = new SkolverketApiClient();
+    
+    // Test API connectivity
+    console.log('🔍 Testing Skolverket API connectivity...');
+    const isHealthy = await client.healthCheck();
+    
+    if (!isHealthy) {
+      console.warn('⚠️  Skolverket API health check failed, falling back to mock data');
+      return getMockCurriculumData();
+    }
+
+    console.log('✅ Skolverket API is accessible, fetching curriculum data...');
+    
+    // Get subjects for grundskola (primary school)
+    const subjects = await client.getSubjects('grundskola');
+    console.log(`📚 Found ${subjects.length} subjects from Skolverket API`);
+    
+    const curriculumData = { subjects: [] };
+    
+    // Process a subset of key subjects to avoid overwhelming the API
+    const keySubjects = subjects.filter(s => 
+      ['GRGRMAT01', 'GRGRSVE01', 'GRGRENG01', 'GRGRBIO01'].includes(s.code) ||
+      s.name.toLowerCase().includes('matematik') ||
+      s.name.toLowerCase().includes('svenska') ||
+      s.name.toLowerCase().includes('engelska') ||
+      s.name.toLowerCase().includes('biologi')
+    ).slice(0, 5); // Limit to 5 subjects for initial import
+    
+    for (const subject of keySubjects) {
+      console.log(`📖 Fetching curriculum for ${subject.name} (${subject.code})`);
+      
+      try {
+        const curriculum = await client.getSubjectCurriculum(subject.code);
+        
+        // Transform API data to our internal format
+        const subjectData = {
+          name: curriculum.subject.name,
+          code: curriculum.subject.code,
+          coreContent: {},
+          knowledgeRequirements: {}
+        };
+        
+        // Group central content by grade span
+        const contentByGrade = {};
+        curriculum.centralContent.forEach(content => {
+          if (!contentByGrade[content.gradeSpan]) {
+            contentByGrade[content.gradeSpan] = [];
+          }
+          contentByGrade[content.gradeSpan].push({
+            title: content.title,
+            body: content.body,
+            sourceUrl: content.sourceUrl,
+            version: content.version
+          });
+        });
+        subjectData.coreContent = contentByGrade;
+        
+        // Group knowledge requirements by grade span and level
+        const requirementsByGrade = {};
+        curriculum.knowledgeRequirements.forEach(req => {
+          if (!requirementsByGrade[req.gradeSpan]) {
+            requirementsByGrade[req.gradeSpan] = [];
+          }
+          requirementsByGrade[req.gradeSpan].push({
+            grade: req.gradeLevel,
+            body: req.body,
+            sourceUrl: req.sourceUrl,
+            version: req.version
+          });
+        });
+        subjectData.knowledgeRequirements = requirementsByGrade;
+        
+        curriculumData.subjects.push(subjectData);
+        
+        // Add delay between API calls to be respectful
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (error) {
+        console.error(`❌ Failed to fetch curriculum for ${subject.name}:`, error.message);
+        // Continue with other subjects
+      }
+    }
+    
+    console.log(`✅ Successfully fetched data for ${curriculumData.subjects.length} subjects from API`);
+    return curriculumData;
+    
+  } catch (error) {
+    console.error('❌ Error accessing Skolverket API:', error.message);
+    console.log('📦 Falling back to mock curriculum data');
+    return getMockCurriculumData();
+  }
+}
+
+/**
+ * Mock Skolverket curriculum data (fallback when API unavailable)
+ */
+function getMockCurriculumData() {
+  return {
   subjects: [
     {
       name: 'Matematik',
@@ -204,7 +317,10 @@ async function processCurriculumData(fresh = false) {
     console.log('✅ Cleared existing data');
   }
   
-  for (const subjectData of mockCurriculumData.subjects) {
+  // Fetch curriculum data (from API or fallback to mock)
+  const curriculumData = await fetchCurriculumData();
+  
+  for (const subjectData of curriculumData.subjects) {
     console.log(`📚 Processing subject: ${subjectData.name}`);
     
     // Get or create subject
@@ -348,7 +464,28 @@ async function processCurriculumData(fresh = false) {
     console.log(`✅ Completed processing ${subjectData.name}`);
   }
   
+  // Update metadata with successful sync info
+  const syncMetadata = {
+    last_successful_sync: new Date().toISOString(),
+    subjects_processed: curriculumData.subjects.length,
+    api_source: isFeatureEnabled() ? 'skolverket_api' : 'mock_data',
+    etl_version: '1.0.0'
+  };
+  
+  // Store metadata in a dedicated table or use JSON storage
+  await supabase
+    .from('source_docs')
+    .upsert({
+      id: '00000000-0000-0000-0000-000000000001', // Special UUID for metadata
+      title: 'ETL Sync Metadata',
+      source: 'skolapp_etl',
+      language: 'sv',
+      content_type: 'metadata',
+      metadata: syncMetadata
+    });
+  
   console.log('🎉 ETL process completed successfully!');
+  console.log(`📊 Processed ${curriculumData.subjects.length} subjects using ${syncMetadata.api_source}`);
 }
 
 /**
