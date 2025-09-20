@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { Select } from '@/components/ui/Select'
+import { Radio } from '@/components/ui/Radio'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { Quiz, ExecutionMode } from '@/types/quiz'
@@ -146,27 +148,21 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
         <CardContent className="space-y-6">
           {/* Organization selection - only show if user has multiple organizations */}
           {!loadingOrgs && organizations.length > 1 && (
-            <div>
-              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-                Organisation <span className="text-red-500">*</span>
-              </Typography>
-              <select
-                value={selectedOrgId}
-                onChange={(e) => handleOrgChange(e.target.value)}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                required
-              >
-                <option value="">Välj organisation</option>
-                {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-              <Typography variant="caption" className="text-neutral-500 mt-1">
-                Välj vilken organisation detta quiz ska tillhöra
-              </Typography>
-            </div>
+            <Select
+              label="Organisation"
+              placeholder="Välj organisation"
+              value={selectedOrgId}
+              onChange={(e) => handleOrgChange(e.target.value)}
+              options={[
+                { value: '', label: 'Välj organisation' },
+                ...organizations.map((org) => ({ 
+                  value: org.id, 
+                  label: org.name 
+                }))
+              ]}
+              helperText="Välj vilken organisation detta quiz ska tillhöra"
+              required
+            />
           )}
 
           {/* Show selected org for single org users */}
@@ -188,49 +184,41 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
 
           {/* Subject and Grade for AI hints */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-                Ämne (för AI-hjälp)
-              </Typography>
-              <select
-                value={currentSubject}
-                onChange={(e) => {
-                  setCurrentSubject(e.target.value)
-                  onAiContextChange?.({ subject: e.target.value, gradeLevel: currentGrade })
-                }}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="">Välj ämne</option>
-                {aiAssistant.subjects.map((subject) => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-              <Typography variant="caption" className="text-neutral-500 mt-1">
-                Hjälper AI att föreslå relevanta titlar och innehåll
-              </Typography>
-            </div>
+            <Select
+              label="Ämne (för AI-hjälp)"
+              placeholder="Välj ämne"
+              value={currentSubject}
+              onChange={(e) => {
+                setCurrentSubject(e.target.value)
+                onAiContextChange?.({ subject: e.target.value, gradeLevel: currentGrade })
+              }}
+              options={[
+                { value: '', label: 'Välj ämne' },
+                ...aiAssistant.subjects.map((subject) => ({ 
+                  value: subject, 
+                  label: subject 
+                }))
+              ]}
+              helperText="Hjälper AI att föreslå relevanta titlar och innehåll"
+            />
             
-            <div>
-              <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-                Årskurs (för AI-hjälp)
-              </Typography>
-              <select
-                value={currentGrade}
-                onChange={(e) => {
-                  setCurrentGrade(e.target.value)
-                  onAiContextChange?.({ subject: currentSubject, gradeLevel: e.target.value })
-                }}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="">Välj årskurs</option>
-                {GRADE_LEVELS.map((grade) => (
-                  <option key={grade.value} value={grade.value}>{grade.label}</option>
-                ))}
-              </select>
-              <Typography variant="caption" className="text-neutral-500 mt-1">
-                Anpassar AI-förslag till elevernas nivå
-              </Typography>
-            </div>
+            <Select
+              label="Årskurs (för AI-hjälp)"
+              placeholder="Välj årskurs"
+              value={currentGrade}
+              onChange={(e) => {
+                setCurrentGrade(e.target.value)
+                onAiContextChange?.({ subject: currentSubject, gradeLevel: e.target.value })
+              }}
+              options={[
+                { value: '', label: 'Välj årskurs' },
+                ...GRADE_LEVELS.map((grade) => ({ 
+                  value: grade.value, 
+                  label: grade.label 
+                }))
+              ]}
+              helperText="Anpassar AI-förslag till elevernas nivå"
+            />
           </div>
 
           {/* Title - Required */}
@@ -349,12 +337,11 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
             </Typography>
             <div className="space-y-3">
               {executionModes.map((mode) => (
-                <label
+                <div
                   key={mode.value}
-                  className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-neutral-50 transition-colors"
+                  className="flex items-start gap-3 p-4 border rounded-lg hover:bg-neutral-50 transition-colors"
                 >
-                  <input
-                    type="radio"
+                  <Radio
                     name="executionMode"
                     value={mode.value}
                     checked={quiz.settings?.executionMode === mode.value}
@@ -368,7 +355,6 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
                         executionMode: mode.value 
                       } 
                     })}
-                    className="mt-1"
                   />
                   <div>
                     <Typography variant="body2" className="font-medium">
@@ -378,7 +364,7 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
                       {mode.description}
                     </Typography>
                   </div>
-                </label>
+                </div>
               ))}
             </div>
           </div>
