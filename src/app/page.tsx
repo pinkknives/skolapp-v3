@@ -106,7 +106,7 @@ export default function HomePage() {
               </Button>
               {!isAuthenticated && (
                 <Button variant="outline" size="lg" asChild>
-                  <Link href="/teacher">Skapa lärarkonto</Link>
+                  <Link href="/register">Skapa lärarkonto</Link>
                 </Button>
               )}
               {isAuthenticated && canAccessTeacherPortal(user) && (
@@ -166,7 +166,7 @@ export default function HomePage() {
           >
             {!isAuthenticated && (
               <Button size="lg" asChild>
-                <Link href="/teacher">Kom igång som lärare</Link>
+                <Link href="/register">Kom igång som lärare</Link>
               </Button>
             )}
             {isAuthenticated && canAccessTeacherPortal(user) && (
@@ -257,7 +257,7 @@ export default function HomePage() {
                   size="lg"
                   asChild
                 >
-                  <Link href="/teacher">Starta som lärare</Link>
+                  <Link href="/register">Starta som lärare</Link>
                 </Button>
               )}
               {isAuthenticated && canAccessTeacherPortal(user) && (
