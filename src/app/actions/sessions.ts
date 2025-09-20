@@ -2,7 +2,7 @@
 
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
-import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus } from '@/types/quiz'
+import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt } from '@/types/quiz'
 
 export interface CreateSessionResult {
   success: boolean
@@ -24,11 +24,24 @@ export interface UpdateSessionResult {
   error?: string
 }
 
+export interface SyncControlResult {
+  success: boolean
+  session?: QuizSession
+  error?: string
+}
+
+export interface SubmitAttemptResult {
+  success: boolean
+  attempt?: SessionAttempt
+  error?: string
+}
+
 /**
  * Create a new quiz session
  */
 export async function createSessionAction(formData: FormData): Promise<CreateSessionResult> {
   const quizId = formData.get('quizId') as string
+  const mode = (formData.get('mode') as SessionMode) || 'async'
 
   if (!quizId) {
     return {
@@ -88,6 +101,9 @@ export async function createSessionAction(formData: FormData): Promise<CreateSes
         quiz_id: quizId,
         teacher_id: user.id,
         status: 'lobby',
+        mode: mode,
+        state: 'idle',
+        current_index: 0,
         settings: {}
       })
       .select()
@@ -105,6 +121,11 @@ export async function createSessionAction(formData: FormData): Promise<CreateSes
         teacherId: session.teacher_id,
         code: session.code,
         status: session.status as SessionStatus,
+        mode: session.mode as SessionMode,
+        state: session.state as SessionState,
+        currentIndex: session.current_index,
+        questionWindowSeconds: session.question_window_seconds,
+        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
         startedAt: session.started_at ? new Date(session.started_at) : undefined,
         endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
         settings: session.settings || {},
@@ -230,6 +251,11 @@ export async function joinSessionAction(formData: FormData): Promise<JoinSession
         teacherId: session.teacher_id,
         code: session.code,
         status: session.status as SessionStatus,
+        mode: session.mode as SessionMode,
+        state: session.state as SessionState,
+        currentIndex: session.current_index,
+        questionWindowSeconds: session.question_window_seconds,
+        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
         startedAt: session.started_at ? new Date(session.started_at) : undefined,
         endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
         settings: session.settings || {},
@@ -316,6 +342,11 @@ export async function updateSessionStatusAction(formData: FormData): Promise<Upd
         teacherId: session.teacher_id,
         code: session.code,
         status: session.status as SessionStatus,
+        mode: session.mode as SessionMode,
+        state: session.state as SessionState,
+        currentIndex: session.current_index,
+        questionWindowSeconds: session.question_window_seconds,
+        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
         startedAt: session.started_at ? new Date(session.started_at) : undefined,
         endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
         settings: session.settings || {},
@@ -328,6 +359,292 @@ export async function updateSessionStatusAction(formData: FormData): Promise<Upd
     return {
       success: false,
       error: 'Det gick inte att uppdatera sessionen'
+    }
+  }
+}
+
+/**
+ * Control sync quiz session (start, pause, next, reveal, end)
+ */
+export async function syncControlAction(formData: FormData): Promise<SyncControlResult> {
+  const sessionId = formData.get('sessionId') as string
+  const action = formData.get('action') as string
+  const payload = formData.get('payload') ? JSON.parse(formData.get('payload') as string) : {}
+
+  if (!sessionId || !action) {
+    return {
+      success: false,
+      error: 'Sessions-ID och åtgärd krävs'
+    }
+  }
+
+  try {
+    // Verify teacher authentication
+    const user = await requireTeacher()
+    
+    const supabase = supabaseServer()
+
+    // Verify session ownership and get current state
+    const { data: existingSession, error: sessionError } = await supabase
+      .from('sessions')
+      .select('*, quizzes(questions)')
+      .eq('id', sessionId)
+      .eq('teacher_id', user.id)
+      .single()
+
+    if (sessionError || !existingSession) {
+      return {
+        success: false,
+        error: 'Session hittades inte eller du har inte behörighet'
+      }
+    }
+
+    if (existingSession.mode !== 'sync') {
+      return {
+        success: false,
+        error: 'Kontroller är endast tillgängliga för synkroniserade sessioner'
+      }
+    }
+
+    const questions = existingSession.quizzes?.questions || []
+    const currentIndex = existingSession.current_index || 0
+
+    // Prepare update data based on action
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString()
+    }
+
+    // State machine logic
+    switch (action) {
+      case 'start':
+        if (existingSession.state !== 'idle' && existingSession.state !== 'paused') {
+          return { success: false, error: 'Kan inte starta från aktuellt tillstånd' }
+        }
+        updateData.state = 'running'
+        updateData.status = 'live'
+        if (!existingSession.started_at) {
+          updateData.started_at = new Date().toISOString()
+        }
+        if (payload.questionWindowSeconds) {
+          updateData.question_window_seconds = payload.questionWindowSeconds
+          updateData.question_window_started_at = new Date().toISOString()
+        }
+        break
+
+      case 'pause':
+        if (existingSession.state !== 'running') {
+          return { success: false, error: 'Kan inte pausa från aktuellt tillstånd' }
+        }
+        updateData.state = 'paused'
+        break
+
+      case 'next':
+        if (existingSession.state !== 'running' && existingSession.state !== 'paused') {
+          return { success: false, error: 'Kan inte gå till nästa från aktuellt tillstånd' }
+        }
+        if (currentIndex >= questions.length - 1) {
+          // Last question - end session
+          updateData.state = 'ended'
+          updateData.status = 'ended'
+          updateData.ended_at = new Date().toISOString()
+        } else {
+          updateData.current_index = currentIndex + 1
+          updateData.state = 'running'
+          if (payload.questionWindowSeconds) {
+            updateData.question_window_seconds = payload.questionWindowSeconds
+            updateData.question_window_started_at = new Date().toISOString()
+          }
+        }
+        break
+
+      case 'reveal':
+        // Just log the reveal event - state doesn't change
+        break
+
+      case 'end':
+        updateData.state = 'ended'
+        updateData.status = 'ended'
+        updateData.ended_at = new Date().toISOString()
+        break
+
+      default:
+        return {
+          success: false,
+          error: 'Okänd åtgärd'
+        }
+    }
+
+    // Update session
+    const { data: session, error: updateError } = await supabase
+      .from('sessions')
+      .update(updateData)
+      .eq('id', sessionId)
+      .eq('teacher_id', user.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      throw updateError
+    }
+
+    // Log event
+    await supabase
+      .from('session_events')
+      .insert({
+        session_id: sessionId,
+        type: action as SessionEventType,
+        payload: payload,
+        created_by: user.id
+      })
+
+    return {
+      success: true,
+      session: {
+        id: session.id,
+        quizId: session.quiz_id,
+        teacherId: session.teacher_id,
+        code: session.code,
+        status: session.status as SessionStatus,
+        mode: session.mode as SessionMode,
+        state: session.state as SessionState,
+        currentIndex: session.current_index,
+        questionWindowSeconds: session.question_window_seconds,
+        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
+        startedAt: session.started_at ? new Date(session.started_at) : undefined,
+        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
+        settings: session.settings || {},
+        createdAt: new Date(session.created_at),
+        updatedAt: new Date(session.updated_at)
+      }
+    }
+  } catch (error) {
+    console.error('Error controlling sync session:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att kontrollera sessionen'
+    }
+  }
+}
+
+/**
+ * Submit student attempt for current question in sync session
+ */
+export async function submitAttemptAction(formData: FormData): Promise<SubmitAttemptResult> {
+  const sessionId = formData.get('sessionId') as string
+  const answer = formData.get('answer') as string
+  const userId = formData.get('userId') as string
+
+  if (!sessionId || !answer || !userId) {
+    return {
+      success: false,
+      error: 'Sessions-ID, svar och användar-ID krävs'
+    }
+  }
+
+  try {
+    const supabase = supabaseServer()
+
+    // Get session and verify participation
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        quizzes(questions),
+        session_participants(user_id, display_name)
+      `)
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        error: 'Session hittades inte'
+      }
+    }
+
+    // Verify user is participant (or allow guest)
+    const isParticipant = session.session_participants?.some((p: { user_id: string | null; display_name: string }) => 
+      p.user_id === userId || p.user_id === null
+    )
+    
+    if (!isParticipant) {
+      return {
+        success: false,
+        error: 'Du är inte deltagare i denna session'
+      }
+    }
+
+    // Verify session is in running state for sync mode
+    if (session.mode === 'sync' && session.state !== 'running') {
+      return {
+        success: false,
+        error: 'Svar accepteras endast när sessionen körs'
+      }
+    }
+
+    const questions = session.quizzes?.questions || []
+    const currentIndex = session.current_index || 0
+    const currentQuestion = questions[currentIndex]
+
+    if (!currentQuestion) {
+      return {
+        success: false,
+        error: 'Ingen aktiv fråga hittades'
+      }
+    }
+
+    // Parse answer based on question type
+    let parsedAnswer: unknown
+    let isCorrect = false
+
+    if (currentQuestion.type === 'multiple-choice') {
+      parsedAnswer = JSON.parse(answer) // Array of selected option IDs
+      const correctOptions = currentQuestion.options?.filter((opt: { isCorrect: boolean; id: string }) => opt.isCorrect).map((opt: { id: string }) => opt.id) || []
+      isCorrect = JSON.stringify((parsedAnswer as string[]).sort()) === JSON.stringify(correctOptions.sort())
+    } else {
+      parsedAnswer = answer // String for free-text
+      // For free-text, could implement simple string matching or AI grading
+      isCorrect = currentQuestion.expectedAnswer ? 
+        answer.toLowerCase().trim() === currentQuestion.expectedAnswer.toLowerCase().trim() : 
+        false
+    }
+
+    // Insert or update attempt
+    const { data: attempt, error: attemptError } = await supabase
+      .from('session_attempts')
+      .upsert({
+        session_id: sessionId,
+        user_id: userId,
+        question_index: currentIndex,
+        answer: parsedAnswer,
+        is_correct: isCorrect
+      }, {
+        onConflict: 'session_id,user_id,question_index'
+      })
+      .select()
+      .single()
+
+    if (attemptError) {
+      throw attemptError
+    }
+
+    return {
+      success: true,
+      attempt: {
+        id: attempt.id,
+        sessionId: attempt.session_id,
+        userId: attempt.user_id,
+        questionIndex: attempt.question_index,
+        answer: attempt.answer,
+        isCorrect: attempt.is_correct,
+        answeredAt: new Date(attempt.answered_at)
+      }
+    }
+  } catch (error) {
+    console.error('Error submitting attempt:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att skicka svaret'
     }
   }
 }
@@ -371,6 +688,11 @@ export async function getSessionWithParticipants(sessionId: string): Promise<Qui
       teacherId: session.teacher_id,
       code: session.code,
       status: session.status as SessionStatus,
+      mode: session.mode as SessionMode,
+      state: session.state as SessionState,
+      currentIndex: session.current_index,
+      questionWindowSeconds: session.question_window_seconds,
+      questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
       startedAt: session.started_at ? new Date(session.started_at) : undefined,
       endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
       settings: session.settings || {},
@@ -389,5 +711,115 @@ export async function getSessionWithParticipants(sessionId: string): Promise<Qui
   } catch (error) {
     console.error('Error getting session with participants:', error)
     return null
+  }
+}
+
+/**
+ * Get session summary with results for teacher review
+ */
+export async function getSessionSummary(sessionId: string) {
+  try {
+    const user = await requireTeacher()
+    const supabase = supabaseServer()
+
+    // Get session with quiz data
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        quizzes(id, title, questions),
+        session_participants(*),
+        session_attempts(*)
+      `)
+      .eq('id', sessionId)
+      .eq('teacher_id', user.id)
+      .single()
+
+    if (sessionError || !session) {
+      return {
+        success: false,
+        error: 'Session hittades inte eller du har inte behörighet'
+      }
+    }
+
+    const questions = session.quizzes?.questions || []
+    const participants = session.session_participants || []
+    const attempts = session.session_attempts || []
+
+    // Calculate stats
+    const totalParticipants = participants.length
+    const participantsWithAttempts = new Set(attempts.map((a: { user_id: string }) => a.user_id)).size
+    const totalAttempts = attempts.length
+    const correctAttempts = attempts.filter((a: { is_correct: boolean }) => a.is_correct).length
+
+    // Per question stats
+    const questionStats = questions.map((question: { type: string; title: string; options?: { id: string; isCorrect: boolean }[] }, index: number) => {
+      const questionAttempts = attempts.filter((a: { question_index: number }) => a.question_index === index)
+      const correctCount = questionAttempts.filter((a: { is_correct: boolean }) => a.is_correct).length
+      
+      // Answer distribution for MC questions
+      const answerDistribution: Record<string, number> = {}
+      if (question.type === 'multiple-choice') {
+        question.options?.forEach((option: { id: string }) => {
+          answerDistribution[option.id] = questionAttempts.filter((a: { answer: unknown }) =>
+            Array.isArray(a.answer) && a.answer.includes(option.id)
+          ).length
+        })
+      }
+
+      return {
+        questionIndex: index,
+        questionTitle: question.title,
+        totalAttempts: questionAttempts.length,
+        correctAttempts: correctCount,
+        correctPercentage: questionAttempts.length > 0 ? (correctCount / questionAttempts.length) * 100 : 0,
+        answerDistribution
+      }
+    })
+
+    // Participant results
+    const participantResults = participants.map((participant: { user_id: string; [key: string]: unknown }) => {
+      const userAttempts = attempts.filter((a: { user_id: string }) => a.user_id === participant.user_id)
+      const correctCount = userAttempts.filter((a: { is_correct: boolean }) => a.is_correct).length
+      const totalAnswered = userAttempts.length
+      
+      return {
+        ...participant,
+        totalAnswered,
+        correctAnswers: correctCount,
+        score: totalAnswered > 0 ? (correctCount / totalAnswered) * 100 : 0,
+        attempts: userAttempts
+      }
+    })
+
+    return {
+      success: true,
+      summary: {
+        session: {
+          id: session.id,
+          quizTitle: session.quizzes?.title,
+          status: session.status,
+          mode: session.mode,
+          state: session.state,
+          startedAt: session.started_at ? new Date(session.started_at) : undefined,
+          endedAt: session.ended_at ? new Date(session.ended_at) : undefined
+        },
+        stats: {
+          totalParticipants,
+          participantsWithAttempts,
+          totalAttempts,
+          correctAttempts,
+          averageScore: totalAttempts > 0 ? (correctAttempts / totalAttempts) * 100 : 0
+        },
+        questionStats,
+        participantResults
+      }
+    }
+  } catch (error) {
+    console.error('Error getting session summary:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att hämta sessionssammanfattning'
+    }
   }
 }

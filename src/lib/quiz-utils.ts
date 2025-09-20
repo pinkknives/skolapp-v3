@@ -327,6 +327,9 @@ export async function joinQuiz(request: QuizJoinRequest, user?: User | null): Pr
       teacherId: quiz.createdBy,
       code: quiz.shareCode || request.shareCode,
       status: 'lobby' as const,
+      mode: 'async' as const,
+      state: 'idle' as const,
+      currentIndex: 0,
       settings: {},
       createdAt: new Date(),
       updatedAt: new Date()

@@ -8,6 +8,12 @@ export type QuizStatus = 'draft' | 'published' | 'archived'
 
 export type SessionStatus = 'lobby' | 'live' | 'ended'
 
+export type SessionMode = 'async' | 'sync'
+
+export type SessionState = 'idle' | 'running' | 'paused' | 'ended'
+
+export type SessionEventType = 'start' | 'pause' | 'next' | 'reveal' | 'end' | 'join' | 'leave'
+
 export type ParticipantStatus = 'joined' | 'active' | 'finished' | 'disconnected'
 
 export interface MultipleChoiceOption {
@@ -117,6 +123,11 @@ export interface QuizSession {
   teacherId: string
   code: string // 6-character join code
   status: SessionStatus
+  mode: SessionMode // 'async' or 'sync'
+  state: SessionState // For sync mode: 'idle', 'running', 'paused', 'ended'
+  currentIndex: number // Current active question index for sync mode (0-based)
+  questionWindowSeconds?: number // Time limit for current question in sync mode
+  questionWindowStartedAt?: Date // When current question timer started
   startedAt?: Date
   endedAt?: Date
   settings: Record<string, unknown> // Session-specific settings
@@ -133,6 +144,25 @@ export interface SessionParticipant {
   joinedAt: Date
   status: ParticipantStatus
   lastSeen: Date
+}
+
+export interface SessionAttempt {
+  id: string
+  sessionId: string
+  userId: string
+  questionIndex: number // 0-based question index
+  answer: unknown // MC: selected option ids array, free-text: string
+  isCorrect?: boolean // calculated when answer is submitted
+  answeredAt: Date
+}
+
+export interface SessionEvent {
+  id: string
+  sessionId: string
+  type: SessionEventType
+  payload: Record<string, unknown>
+  createdAt: Date
+  createdBy?: string // user ID who triggered the event
 }
 
 export interface SessionSettings {
@@ -327,4 +357,37 @@ export interface ClassSessionResults {
     timeSpent?: number
     completedAt?: Date
   })[]
+}
+
+// Real-time sync quiz interfaces
+export interface SyncQuizState {
+  session: QuizSession
+  quiz: Quiz
+  currentQuestion?: Question
+  participants: SessionParticipant[]
+  attempts: SessionAttempt[]
+  events: SessionEvent[]
+  answerDistribution?: Record<string, number> // For MC questions: optionId -> count
+  isRevealed: boolean // Whether answers have been revealed for current question
+}
+
+export interface SyncQuizControl {
+  action: 'start' | 'pause' | 'next' | 'reveal' | 'end'
+  payload?: Record<string, unknown>
+}
+
+export interface SyncQuizProgress {
+  totalQuestions: number
+  currentIndex: number
+  completedCount: number
+  timeElapsed: number
+  timeRemaining?: number
+}
+
+export interface ParticipantPresence {
+  userId: string
+  displayName: string
+  isOnline: boolean
+  hasAnswered: boolean
+  lastSeen: Date
 }
