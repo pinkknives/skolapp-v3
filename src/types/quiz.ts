@@ -484,11 +484,11 @@ export interface AssignmentCard {
   quizTitle: string
   className?: string
   dueAt: Date
-  openAt?: Date
+  openAt?: Date | null
   status: ProgressStatus
   attemptsUsed: number
   maxAttempts: number
-  timeRemaining?: number // seconds until deadline
+  timeRemaining: number // seconds until deadline
   canStart: boolean // based on openAt, dueAt, and attempts
   timeLimitSeconds?: number
 }

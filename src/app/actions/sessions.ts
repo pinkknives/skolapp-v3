@@ -2,7 +2,7 @@
 
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
-import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt, RevealPolicy } from '@/types/quiz'
+import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt, RevealPolicy, AssignmentCard, ProgressStatus } from '@/types/quiz'
 
 // Helper function to map database session to QuizSession type
 function mapDatabaseSessionToQuizSession(dbSession: Record<string, unknown>): QuizSession {
@@ -1163,6 +1163,137 @@ export async function submitAsyncAssignmentAction(formData: FormData): Promise<S
     return {
       success: false,
       error: 'Det gick inte att skicka in uppgiften'
+    }
+  }
+}
+
+/**
+ * Get assignments for a student (based on their class memberships)
+ */
+export async function getStudentAssignments(userId: string): Promise<{ success: boolean; assignments?: AssignmentCard[]; error?: string }> {
+  try {
+    const supabase = supabaseServer()
+
+    // Get all classes the student is a member of
+    const { data: memberships, error: membershipError } = await supabase
+      .from('class_members')
+      .select('class_id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+
+    if (membershipError) {
+      throw membershipError
+    }
+
+    if (!memberships || memberships.length === 0) {
+      return {
+        success: true,
+        assignments: []
+      }
+    }
+
+    const classIds = memberships.map(m => m.class_id)
+
+    // Get async sessions for these classes
+    const { data: sessions, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        id,
+        quiz_id,
+        mode,
+        open_at,
+        due_at,
+        max_attempts,
+        time_limit_seconds,
+        status,
+        quizzes(title),
+        class_sessions!inner(class_id, classes(name))
+      `)
+      .eq('mode', 'async')
+      .in('class_sessions.class_id', classIds)
+      .eq('status', 'lobby') // Only active assignments
+
+    if (sessionError) {
+      throw sessionError
+    }
+
+    if (!sessions) {
+      return {
+        success: true,
+        assignments: []
+      }
+    }
+
+    // Get progress for each session
+    const sessionIds = sessions.map(s => s.id)
+    const { data: progress, error: progressError } = await supabase
+      .from('session_progress')
+      .select('session_id, status, current_attempt')
+      .eq('user_id', userId)
+      .in('session_id', sessionIds)
+
+    if (progressError) {
+      throw progressError
+    }
+
+    const progressMap = new Map(progress?.map(p => [p.session_id, p]) || [])
+
+    // Build assignment cards
+    const now = new Date()
+    const assignments: AssignmentCard[] = sessions.map(session => {
+      const sessionProgress = progressMap.get(session.id)
+      const openAt = session.open_at ? new Date(session.open_at) : null
+      const dueAt = new Date(session.due_at)
+      
+      let status: ProgressStatus = sessionProgress?.status || 'not_started'
+      let canStart = true
+
+      // Check if assignment is open
+      if (openAt && openAt > now) {
+        canStart = false
+      }
+
+      // Check if deadline has passed
+      if (dueAt <= now) {
+        canStart = false
+        if (status === 'in_progress') {
+          status = 'late'
+        }
+      }
+
+      // Check attempt limits
+      const attemptsUsed = sessionProgress?.current_attempt || 0
+      if (attemptsUsed >= session.max_attempts) {
+        canStart = false
+      }
+
+      return {
+        sessionId: session.id,
+        quizTitle: (session.quizzes as unknown as { title: string } | null)?.title || 'Namnlös quiz',
+        className: (session.class_sessions as unknown as Array<{ classes: { name: string } }> | null)?.[0]?.classes?.name,
+        dueAt,
+        openAt,
+        status,
+        attemptsUsed,
+        maxAttempts: session.max_attempts,
+        timeRemaining: dueAt > now ? Math.floor((dueAt.getTime() - now.getTime()) / 1000) : 0,
+        canStart,
+        timeLimitSeconds: session.time_limit_seconds
+      }
+    })
+
+    // Sort by due date (earliest first)
+    assignments.sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())
+
+    return {
+      success: true,
+      assignments
+    }
+  } catch (error) {
+    console.error('Error getting student assignments:', error)
+    return {
+      success: false,
+      error: 'Det gick inte att hämta dina uppgifter'
     }
   }
 }
