@@ -10,7 +10,7 @@ import { QuestionEditor } from './QuestionEditor'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
 
 // Dynamically import AI components for better performance
-const ImprovedAIQuizDraft = dynamic(() => import('./ImprovedAIQuizDraft').then(mod => ({ default: mod.ImprovedAIQuizDraft })), {
+const AIQuestionGenerator = dynamic(() => import('./AIQuestionGenerator').then(mod => ({ default: mod.AIQuestionGenerator })), {
   loading: () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl p-8 text-center">
@@ -317,8 +317,7 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange }: QuizQu
 
       {/* AI Modal */}
       {showAIModal && (
-        <ImprovedAIQuizDraft
-          quizTitle={quiz.title}
+        <AIQuestionGenerator
           onQuestionsGenerated={handleAIQuestionsGenerated}
           onClose={() => setShowAIModal(false)}
         />

@@ -10,6 +10,8 @@ import { getOrganizationQuizzes, updateQuizWithOrganization, deleteQuizWithOrgan
 import { getUserOrganizations, Organization } from '@/lib/orgs'
 import Link from 'next/link'
 import { Plus, Share2, Play, HelpCircle, Edit, Archive } from 'lucide-react'
+import { SessionManager } from '@/components/quiz/SessionManager'
+import { Quiz } from '@/types/quiz'
 
 // Database quiz interface (simplified from Supabase)
 interface DatabaseQuiz {
@@ -388,9 +390,6 @@ export default function QuizManagementPage() {
                     </div>
                     <div className="mt-3 text-xs text-neutral-500">
                       <div>Skapad: {new Date(quiz.created_at).toLocaleDateString('sv-SE')}</div>
-                      {quiz.join_code && (
-                        <div>Delningskod: <span className="font-mono font-bold">{quiz.join_code}</span></div>
-                      )}
                     </div>
                   </CardHeader>
                   
@@ -408,7 +407,7 @@ export default function QuizManagementPage() {
                         </Link>
                       </Button>
                       
-                      {quiz.status === 'published' && quiz.join_code && (
+                      {quiz.status === 'published' && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -416,7 +415,7 @@ export default function QuizManagementPage() {
                           className="flex-1"
                         >
                           <Share2 size={14} />
-                          <span className="ml-1">Dela</span>
+                          <span className="ml-1">Starta Session</span>
                         </Button>
                       )}
                       
@@ -456,36 +455,53 @@ export default function QuizManagementPage() {
             </div>
           )}
 
-          {/* Sharing Modal */}
+          {/* Session Manager Modal */}
           {showSharing && selectedQuiz && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
-                  <Typography variant="h6" className="mb-4">
-                    Dela &quot;{selectedQuiz.title}&quot;
-                  </Typography>
-                  {selectedQuiz.join_code ? (
-                    <div>
-                      <Typography variant="body1" className="mb-2">
-                        Delningskod: <span className="font-mono font-bold text-lg">{selectedQuiz.join_code}</span>
-                      </Typography>
-                      <Typography variant="body2" className="text-neutral-600 mb-4">
-                        Dela denna kod med dina elever så de kan gå med i quizet.
-                      </Typography>
-                    </div>
-                  ) : (
-                    <Typography variant="body1" className="mb-4">
-                      Detta quiz har ingen delningskod ännu.
+                  <div className="flex items-center justify-between mb-6">
+                    <Typography variant="h6">
+                      Session för &quot;{selectedQuiz.title}&quot;
                     </Typography>
-                  )}
-                  <Button 
-                    onClick={() => {
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowSharing(false)
+                        setSelectedQuiz(null)
+                      }}
+                    >
+                      Stäng
+                    </Button>
+                  </div>
+                  
+                  <SessionManager 
+                    quiz={{
+                      id: selectedQuiz.id,
+                      title: selectedQuiz.title,
+                      description: selectedQuiz.description || '',
+                      status: selectedQuiz.status as 'draft' | 'published' | 'archived',
+                      createdBy: selectedQuiz.owner_id,
+                      orgId: selectedQuiz.org_id,
+                      createdAt: new Date(selectedQuiz.created_at),
+                      updatedAt: new Date(selectedQuiz.updated_at),
+                      settings: {
+                        timeLimit: undefined,
+                        allowRetakes: false,
+                        shuffleQuestions: false,
+                        shuffleAnswers: false,
+                        showCorrectAnswers: false,
+                        executionMode: 'self-paced'
+                      },
+                      questions: [], // Will be loaded when needed
+                      tags: []
+                    } as Quiz}
+                    onClose={() => {
                       setShowSharing(false)
                       setSelectedQuiz(null)
                     }}
-                  >
-                    Stäng
-                  </Button>
+                  />
                 </div>
               </div>
             </div>
