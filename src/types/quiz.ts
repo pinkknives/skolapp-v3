@@ -148,6 +148,15 @@ export interface Rubric {
   updatedAt: Date
 }
 
+// Citation information for RAG-generated content
+export interface QuestionCitation {
+  sourceId: string
+  sourceTitle: string
+  sourceUrl?: string
+  license?: string
+  span?: string // specific text span that was referenced
+}
+
 export interface BaseQuestion {
   id: string
   type: QuestionType
@@ -155,6 +164,8 @@ export interface BaseQuestion {
   points: number
   timeLimit?: number // in seconds
   rubric?: Rubric // Optional rubric for AI grading
+  citations?: QuestionCitation[] // RAG sources used to generate this question
+  explanation?: string // Explanation of how this relates to curriculum
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {

@@ -10,13 +10,35 @@ export type AiParams = {
   topics?: string[];       // specifika områden
   context?: string;        // extra kontext
   locale: 'sv-SE';
+  useRAG?: boolean;        // Enable RAG-powered generation
 };
 
 export type AiChoice = { id: string; text: string; correct?: boolean };
 
+// Citation information for RAG-generated content
+export type AiCitation = {
+  sourceId: string;
+  sourceTitle: string;
+  sourceUrl?: string;
+  license?: string;
+  span?: string; // specific text span that was referenced
+};
+
 export type AiQuestion =
-  | { kind: 'multiple-choice'; prompt: string; choices: AiChoice[] }
-  | { kind: 'free-text'; prompt: string; expectedAnswer: string };
+  | { 
+      kind: 'multiple-choice'; 
+      prompt: string; 
+      choices: AiChoice[];
+      citations?: AiCitation[];
+      explanation?: string;
+    }
+  | { 
+      kind: 'free-text'; 
+      prompt: string; 
+      expectedAnswer: string;
+      citations?: AiCitation[];
+      explanation?: string;
+    };
 
 // New types for AI hints v2
 export type AiTitleSuggestion = {
@@ -263,7 +285,38 @@ export class OpenAIQuizProvider implements QuizAIProvider {
       throw new Error('OpenAI API key not configured');
     }
 
-    const prompt = this.buildPrompt(params);
+    // Import RAG service dynamically to avoid circular dependencies
+    const { retrieveCurriculumContext, buildRAGEnhancedPrompt, extractCitations } = 
+      await import('./ragService');
+
+    let contextData: any[] = [];
+    let prompt = this.buildPrompt(params);
+
+    // Use RAG if enabled and we have subject/grade info
+    if (params.useRAG && params.subject && params.grade) {
+      try {
+        const keywords = params.topics?.join(' ') || params.context;
+        contextData = await retrieveCurriculumContext(
+          params.subject, 
+          params.grade, 
+          keywords,
+          6
+        );
+        
+        if (contextData.length > 0) {
+          prompt = buildRAGEnhancedPrompt(prompt, contextData, {
+            subject: params.subject,
+            grade: params.grade,
+            count: params.count,
+            type: params.type,
+            difficulty: params.difficulty
+          });
+          console.log(`Using RAG with ${contextData.length} curriculum sources for ${params.subject} ${params.grade}`);
+        }
+      } catch (error) {
+        console.warn('RAG retrieval failed, falling back to standard generation:', error);
+      }
+    }
     
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -277,7 +330,9 @@ export class OpenAIQuizProvider implements QuizAIProvider {
           messages: [
             {
               role: 'system',
-              content: `Du är en svensk lärare som skapar quiz-frågor. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
+              content: params.useRAG 
+                ? `Du är en svensk ämneslärare som skapar quiz-frågor baserat på svenska läroplaner. Använd ENDAST tillhandahållen läroplan-kontext. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
+                : `Du är en svensk lärare som skapar quiz-frågor. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
             },
             {
               role: 'user',
@@ -308,6 +363,11 @@ export class OpenAIQuizProvider implements QuizAIProvider {
         throw new Error('Invalid response format from OpenAI');
       }
 
+      // If using RAG, validate and enrich citations
+      if (params.useRAG && contextData.length > 0) {
+        return questions.map(q => extractCitations(q, contextData) as AiQuestion);
+      }
+
       return questions;
     } catch (error) {
       console.error('OpenAI generation error:', error);
@@ -330,13 +390,16 @@ export class OpenAIQuizProvider implements QuizAIProvider {
     const typeText = questionTypes[params.type] || 'frågor';
     const difficultyText = difficulties[params.difficulty] || 'medium';
 
-    return `Skapa ${params.count} ${typeText} för ${params.subject} på ${params.grade} nivå med ${difficultyText} svårighetsgrad.
+    let prompt = `Skapa ${params.count} ${typeText} för ${params.subject} på ${params.grade} nivå med ${difficultyText} svårighetsgrad.\n\n`;
 
-${params.context ? `Kontext: ${params.context}` : ''}
+    if (params.context) {
+      prompt += `Kontext: ${params.context}\n\n`;
+    }
 
-Returnera svaret som en JSON-array med följande struktur:
+    prompt += `Returnera svaret som en JSON-array med följande struktur:\n\n`;
 
-För flervalsfrâgor:
+    if (params.type === 'multiple-choice') {
+      prompt += `För flervalsfrâgor:
 {
   "kind": "multiple-choice",
   "prompt": "Frågan här",
@@ -345,23 +408,33 @@ För flervalsfrâgor:
     {"text": "Alternativ 2", "correct": true},
     {"text": "Alternativ 3", "correct": false},
     {"text": "Alternativ 4", "correct": false}
-  ]
-}
-
-För fritextfrågor:
+  ]${params.useRAG ? ',\n  "citations": [{"sourceId": "käll-id", "span": "relevant text"}],\n  "explanation": "Förklaring av koppling till läroplanen"' : ''}
+}`;
+    } else {
+      prompt += `För fritextfrågor:
 {
   "kind": "free-text",
   "prompt": "Frågan här",
-  "expectedAnswer": "Förväntat svar eller beskrivning"
-}
+  "expectedAnswer": "Förväntat svar eller beskrivning"${params.useRAG ? ',\n  "citations": [{"sourceId": "käll-id", "span": "relevant text"}],\n  "explanation": "Förklaring av koppling till läroplanen"' : ''}
+}`;
+    }
 
-Regler:
+    prompt += `\n\nRegler:
 - Använd alltid svenska
 - Frågor ska vara pedagogiska och åldersanpassade
 - För flerval: ha alltid 4 alternativ med exakt 1 korrekt svar
 - För fritext: ge en tydlig beskrivning av förväntat svar
-- Gör frågorna engagerande och relevanta för ämnet
-- Svara endast med JSON, inga förklaringar`;
+- Gör frågorna engagerande och relevanta för ämnet`;
+
+    if (params.useRAG) {
+      prompt += `\n- Inkludera alltid "citations" med sourceId för källor som användes
+- Lägg till "explanation" som förklarar kopplingen till läroplanen
+- Om kontexten inte räcker: returnera {"insufficient_context": true}`;
+    }
+
+    prompt += `\n- Svara endast med JSON, inga förklaringar`;
+
+    return prompt;
   }
 
   async suggestTitle(_params: { subject: string; grade: string; topics?: string[]; context?: string }): Promise<AiTitleSuggestion[]> {
@@ -455,7 +528,15 @@ class QuizAIService {
         id: `ai_${Date.now()}_${index}`,
         points: 1,
         timeLimit: undefined,
-        rubric: undefined
+        rubric: undefined,
+        citations: aq.citations ? aq.citations.map(c => ({
+          sourceId: c.sourceId,
+          sourceTitle: c.sourceTitle,
+          sourceUrl: c.sourceUrl,
+          license: c.license,
+          span: c.span
+        })) : undefined,
+        explanation: aq.explanation
       };
 
       if (aq.kind === 'multiple-choice') {

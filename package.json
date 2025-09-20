@@ -30,7 +30,9 @@
     "e2e:webkit": "playwright test --project=webkit",
     "e2e:ci": "playwright test --project=chromium --project=firefox --project=webkit --max-failures=5",
     "lighthouse": "lhci autorun",
-    "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse"
+    "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse",
+    "etl:skolverket": "node scripts/etl/skolverket.js",
+    "etl:skolverket:fresh": "node scripts/etl/skolverket.js --fresh"
   },
   "dependencies": {
     "@heroui/react": "^2.8.4",
