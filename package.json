@@ -40,6 +40,7 @@
     "@heroui/theme": "^2.4.22",
     "@supabase/supabase-js": "^2.57.4",
     "@types/qrcode": "^1.5.5",
+    "ably": "^2.13.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.2",
