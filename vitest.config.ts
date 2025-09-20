@@ -10,6 +10,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     css: true,
+    // Exclude Playwright test files
+    exclude: ['**/node_modules/**', '**/dist/**', '**/*.e2e.spec.ts', '**/*.spec.ts'],
+    // Include only RTL component tests
+    include: ['tests/components/**/*.test.tsx', 'tests/**/*.test.ts'],
     // Use Swedish locale for testing  
     env: {
       TZ: 'Europe/Stockholm',
