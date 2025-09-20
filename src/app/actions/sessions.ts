@@ -2,7 +2,34 @@
 
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
-import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt } from '@/types/quiz'
+import { QuizSession, SessionParticipant, SessionStatus, ParticipantStatus, SessionMode, SessionState, SessionEventType, SessionAttempt, RevealPolicy } from '@/types/quiz'
+
+// Helper function to map database session to QuizSession type
+function mapDatabaseSessionToQuizSession(dbSession: Record<string, unknown>): QuizSession {
+  return {
+    id: dbSession.id as string,
+    quizId: dbSession.quiz_id as string,
+    teacherId: dbSession.teacher_id as string,
+    code: dbSession.code as string,
+    status: dbSession.status as SessionStatus,
+    mode: dbSession.mode as SessionMode,
+    state: dbSession.state as SessionState,
+    currentIndex: (dbSession.current_index as number) || 0,
+    questionWindowSeconds: dbSession.question_window_seconds as number | undefined,
+    questionWindowStartedAt: dbSession.question_window_started_at ? new Date(dbSession.question_window_started_at as string) : undefined,
+    // Async assignment fields with defaults
+    openAt: dbSession.open_at ? new Date(dbSession.open_at as string) : undefined,
+    dueAt: dbSession.due_at ? new Date(dbSession.due_at as string) : undefined,
+    maxAttempts: (dbSession.max_attempts as number) || 1,
+    timeLimitSeconds: dbSession.time_limit_seconds as number | undefined,
+    revealPolicy: (dbSession.reveal_policy as RevealPolicy) || 'after_deadline',
+    startedAt: dbSession.started_at ? new Date(dbSession.started_at as string) : undefined,
+    endedAt: dbSession.ended_at ? new Date(dbSession.ended_at as string) : undefined,
+    settings: (dbSession.settings as Record<string, unknown>) || {},
+    createdAt: new Date(dbSession.created_at as string),
+    updatedAt: new Date(dbSession.updated_at as string)
+  }
+}
 
 export interface CreateSessionResult {
   success: boolean
@@ -115,23 +142,7 @@ export async function createSessionAction(formData: FormData): Promise<CreateSes
 
     return {
       success: true,
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error creating session:', error)
@@ -245,23 +256,7 @@ export async function joinSessionAction(formData: FormData): Promise<JoinSession
         status: participant.status as ParticipantStatus,
         lastSeen: new Date(participant.last_seen)
       },
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error joining session:', error)
@@ -336,23 +331,7 @@ export async function updateSessionStatusAction(formData: FormData): Promise<Upd
 
     return {
       success: true,
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error updating session:', error)
@@ -499,23 +478,7 @@ export async function syncControlAction(formData: FormData): Promise<SyncControl
 
     return {
       success: true,
-      session: {
-        id: session.id,
-        quizId: session.quiz_id,
-        teacherId: session.teacher_id,
-        code: session.code,
-        status: session.status as SessionStatus,
-        mode: session.mode as SessionMode,
-        state: session.state as SessionState,
-        currentIndex: session.current_index,
-        questionWindowSeconds: session.question_window_seconds,
-        questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-        startedAt: session.started_at ? new Date(session.started_at) : undefined,
-        endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-        settings: session.settings || {},
-        createdAt: new Date(session.created_at),
-        updatedAt: new Date(session.updated_at)
-      }
+      session: mapDatabaseSessionToQuizSession(session)
     }
   } catch (error) {
     console.error('Error controlling sync session:', error)
@@ -637,7 +600,9 @@ export async function submitAttemptAction(formData: FormData): Promise<SubmitAtt
         questionIndex: attempt.question_index,
         answer: attempt.answer,
         isCorrect: attempt.is_correct,
-        answeredAt: new Date(attempt.answered_at)
+        answeredAt: new Date(attempt.answered_at),
+        attemptNo: attempt.attempt_no || 1,
+        durationSeconds: attempt.duration_seconds
       }
     }
   } catch (error) {
@@ -683,21 +648,7 @@ export async function getSessionWithParticipants(sessionId: string): Promise<Qui
     }
 
     return {
-      id: session.id,
-      quizId: session.quiz_id,
-      teacherId: session.teacher_id,
-      code: session.code,
-      status: session.status as SessionStatus,
-      mode: session.mode as SessionMode,
-      state: session.state as SessionState,
-      currentIndex: session.current_index,
-      questionWindowSeconds: session.question_window_seconds,
-      questionWindowStartedAt: session.question_window_started_at ? new Date(session.question_window_started_at) : undefined,
-      startedAt: session.started_at ? new Date(session.started_at) : undefined,
-      endedAt: session.ended_at ? new Date(session.ended_at) : undefined,
-      settings: session.settings || {},
-      createdAt: new Date(session.created_at),
-      updatedAt: new Date(session.updated_at),
+      ...mapDatabaseSessionToQuizSession(session),
       participants: participants.map(p => ({
         id: p.id,
         sessionId: p.session_id,
