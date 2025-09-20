@@ -1,0 +1,89 @@
+name: Syllabus Ingest
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # måndag 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      subject:
+        description: "Filtrera ämneskod (valfritt, t.ex. MA)"
+        required: false
+        type: string
+      gradeSpan:
+        description: "Filtrera årskursspann (valfritt, t.ex. 7-9)"
+        required: false
+        type: string
+      dryRun:
+        description: "Kör utan att skriva till DB"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+concurrency:
+  group: syllabus-ingest
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_ENV: production
+  FEATURE_SYLLABUS: true
+  SYLLABUS_BASE_URL: https://api.skolverket.se/syllabus
+
+jobs:
+  ingest:
+    name: Ingest Syllabus
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci --legacy-peer-deps
+
+      - name: Run ingest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          INPUT_SUBJECT: ${{ github.event.inputs.subject }}
+          INPUT_GRADE_SPAN: ${{ github.event.inputs.gradeSpan }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dryRun }}
+        run: |
+          echo "Subject=${INPUT_SUBJECT:-ALL}, GradeSpan=${INPUT_GRADE_SPAN:-ALL}, DryRun=${INPUT_DRY_RUN:-false}"
+          npm run ingest:syllabus -- \
+            --subject="${INPUT_SUBJECT:-}" \
+            --gradeSpan="${INPUT_GRADE_SPAN:-}" \
+            --dryRun="${INPUT_DRY_RUN:-false}"
+
+      - name: Upload logs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: syllabus-ingest-logs
+          path: |
+            logs/syllabus-ingest*.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "### Syllabus Ingest" >> $GITHUB_STEP_SUMMARY
+          echo "- Trigger: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Subject: \`${{ github.event.inputs.subject || 'ALL' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- GradeSpan: \`${{ github.event.inputs.gradeSpan || 'ALL' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- DryRun: \`${{ github.event.inputs.dryRun || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: \`${{ job.status }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: $(( $(date +%s) - ${{ github.event.head_commit.timestamp || github.run_started_at }} ))s" >> $GITHUB_STEP_SUMMARY
