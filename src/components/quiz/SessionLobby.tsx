@@ -5,19 +5,21 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
-import { QuizSession, SessionParticipant } from '@/types/quiz'
+import { QuizSession, SessionParticipant, Quiz } from '@/types/quiz'
 import { updateSessionStatusAction } from '@/app/actions/sessions'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import { Users, Play, Square, Clock, Copy, UserCheck, UserX } from 'lucide-react'
+import { SyncQuizControls } from './SyncQuizControls'
 import QRCode from 'qrcode'
 
 interface SessionLobbyProps {
   session: QuizSession & { participants: SessionParticipant[] }
   quizTitle: string
+  quiz?: Quiz // Add quiz prop for sync mode
   onSessionUpdate?: (session: QuizSession) => void
 }
 
-export function SessionLobby({ session, quizTitle, onSessionUpdate }: SessionLobbyProps) {
+export function SessionLobby({ session, quizTitle, quiz, onSessionUpdate }: SessionLobbyProps) {
   const [participants, setParticipants] = useState<SessionParticipant[]>(session.participants)
   const [isStarting, setIsStarting] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
@@ -193,6 +195,7 @@ export function SessionLobby({ session, quizTitle, onSessionUpdate }: SessionLob
               <Typography variant="body2" className="text-neutral-600 mt-1">
                 Status: {session.status === 'lobby' ? 'Väntar på deltagare' : 
                          session.status === 'live' ? 'Pågående' : 'Avslutad'}
+                {session.mode === 'sync' && ` • Live-läge`}
               </Typography>
             </div>
             
@@ -204,11 +207,11 @@ export function SessionLobby({ session, quizTitle, onSessionUpdate }: SessionLob
                   className="gap-2"
                 >
                   <Play className="w-4 h-4" />
-                  {isStarting ? 'Startar...' : 'Starta Quiz'}
+                  {isStarting ? 'Startar...' : session.mode === 'sync' ? 'Starta Live-Quiz' : 'Starta Quiz'}
                 </Button>
               )}
               
-              {session.status === 'live' && (
+              {session.status === 'live' && session.mode !== 'sync' && (
                 <Button
                   variant="outline"
                   onClick={handleEndSession}
@@ -223,6 +226,15 @@ export function SessionLobby({ session, quizTitle, onSessionUpdate }: SessionLob
           </div>
         </CardHeader>
       </Card>
+
+      {/* Sync Quiz Controls - shown when session is live and in sync mode */}
+      {session.status === 'live' && session.mode === 'sync' && quiz && (
+        <SyncQuizControls 
+          session={session}
+          quiz={quiz}
+          onSessionUpdate={onSessionUpdate}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Join Information */}

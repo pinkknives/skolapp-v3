@@ -19,6 +19,7 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
   const [session, setSession] = useState<(QuizSession & { participants: SessionParticipant[] }) | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mode, setMode] = useState<'async' | 'sync'>('async')
 
   // Check for existing active session when component mounts
   useEffect(() => {
@@ -33,6 +34,7 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
     try {
       const formData = new FormData()
       formData.append('quizId', quiz.id)
+      formData.append('mode', mode)
 
       const result = await createSessionAction(formData)
 
@@ -69,6 +71,7 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
         <SessionLobby 
           session={session}
           quizTitle={quiz.title}
+          quiz={quiz}
           onSessionUpdate={handleSessionUpdate}
         />
         
@@ -113,6 +116,52 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
           )}
 
           <div className="space-y-4">
+            {/* Mode Selection */}
+            <div className="space-y-3">
+              <Typography variant="body2" className="font-medium">
+                Välj körläge:
+              </Typography>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => setMode('async')}
+                  className={`p-4 border rounded-lg text-left transition-colors ${
+                    mode === 'async' 
+                      ? 'border-primary-300 bg-primary-50 ring-2 ring-primary-200' 
+                      : 'border-neutral-200 hover:border-neutral-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${mode === 'async' ? 'bg-primary-600' : 'bg-neutral-300'}`} />
+                    <Typography variant="body2" className="font-medium">
+                      Självgående
+                    </Typography>
+                  </div>
+                  <Typography variant="caption" className="text-neutral-600">
+                    Elever svarar i egen takt. Du kan följa upp resultat efteråt.
+                  </Typography>
+                </button>
+
+                <button
+                  onClick={() => setMode('sync')}
+                  className={`p-4 border rounded-lg text-left transition-colors ${
+                    mode === 'sync' 
+                      ? 'border-primary-300 bg-primary-50 ring-2 ring-primary-200' 
+                      : 'border-neutral-200 hover:border-neutral-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${mode === 'sync' ? 'bg-primary-600' : 'bg-neutral-300'}`} />
+                    <Typography variant="body2" className="font-medium">
+                      Live (Realtid)
+                    </Typography>
+                  </div>
+                  <Typography variant="caption" className="text-neutral-600">
+                    Du styr quizet fråga för fråga. Alla elever följer samma takt.
+                  </Typography>
+                </button>
+              </div>
+            </div>
+
             <div className="bg-neutral-50 p-4 rounded-md">
               <Typography variant="body2" className="font-medium mb-2">
                 Så här fungerar det:
@@ -121,7 +170,11 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
                 <li>• Du får en unik 6-teckens kod och QR-kod</li>
                 <li>• Elever kan gå med via kod eller genom att skanna QR-koden</li>
                 <li>• Du ser alla som går med i realtid</li>
-                <li>• Du bestämmer när quizet startar och slutar</li>
+                {mode === 'sync' ? (
+                  <li>• Du kontrollerar när varje fråga startar och avslutas</li>
+                ) : (
+                  <li>• Du bestämmer när quizet startar och slutar</li>
+                )}
               </ul>
             </div>
 
@@ -131,7 +184,7 @@ export function SessionManager({ quiz, onClose, className }: SessionManagerProps
               className="w-full gap-2"
             >
               <Play className="w-4 h-4" />
-              {isCreating ? 'Skapar session...' : 'Skapa Session'}
+              {isCreating ? 'Skapar session...' : mode === 'sync' ? 'Skapa Live-Session' : 'Skapa Session'}
             </Button>
 
             {quiz.status !== 'published' && (
