@@ -4,16 +4,15 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  DropdownSection,
   Button,
   Kbd,
-  Divider,
 } from "@heroui/react";
 import { MoreVertical } from "lucide-react";
 
 export type ActionItem =
   | { key: string; label: string; kbd?: string; onSelect: () => void; disabled?: boolean; danger?: false }
-  | { key: string; label: string; kbd?: string; onSelect: () => void; disabled?: boolean; danger: true }
-  | { key: "__divider__" };
+  | { key: string; label: string; kbd?: string; onSelect: () => void; disabled?: boolean; danger: true };
 
 type Props = {
   triggerLabel?: string;
@@ -21,6 +20,10 @@ type Props = {
 };
 
 export function ActionsMenu({ triggerLabel = "Åtgärder", items }: Props) {
+  // Split items into sections based on danger property
+  const regularItems = items.filter(item => !item.danger);
+  const dangerItems = items.filter(item => item.danger);
+
   return (
     <Dropdown placement="bottom-end" shouldCloseOnInteractOutside={() => true}>
       <DropdownTrigger>
@@ -37,28 +40,39 @@ export function ActionsMenu({ triggerLabel = "Åtgärder", items }: Props) {
         aria-label="Åtgärdsmeny"
         onAction={(key) => {
           const item = items.find((i) => i.key === key);
-          if (item && item.key !== "__divider__") {
-            (item as { onSelect: () => void }).onSelect();
+          if (item) {
+            item.onSelect();
           }
         }}
       >
-        {items.map((it) => {
-          if (it.key === "__divider__") return <Divider key="__divider__" className="my-1" />;
-          
-          const actionItem = it as { key: string; label: string; kbd?: string; onSelect: () => void; disabled?: boolean; danger?: boolean };
-          
-          return (
-            <DropdownItem
-              key={actionItem.key}
-              className={actionItem.danger ? "text-danger" : ""}
-              color={actionItem.danger ? "danger" : "default"}
-              isDisabled={actionItem.disabled}
-              endContent={actionItem.kbd ? <Kbd>{actionItem.kbd}</Kbd> : null}
-            >
-              {actionItem.label}
-            </DropdownItem>
-          );
-        })}
+        {regularItems.length > 0 && (
+          <DropdownSection>
+            {regularItems.map((item) => (
+              <DropdownItem
+                key={item.key}
+                isDisabled={item.disabled}
+                endContent={item.kbd ? <Kbd>{item.kbd}</Kbd> : null}
+              >
+                {item.label}
+              </DropdownItem>
+            ))}
+          </DropdownSection>
+        )}
+        {dangerItems.length > 0 && (
+          <DropdownSection showDivider={regularItems.length > 0}>
+            {dangerItems.map((item) => (
+              <DropdownItem
+                key={item.key}
+                className="text-danger"
+                color="danger"
+                isDisabled={item.disabled}
+                endContent={item.kbd ? <Kbd>{item.kbd}</Kbd> : null}
+              >
+                {item.label}
+              </DropdownItem>
+            ))}
+          </DropdownSection>
+        )}
       </DropdownMenu>
     </Dropdown>
   );

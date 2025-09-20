@@ -9,18 +9,28 @@ import type { QuestionType } from '@/types/quiz';
 import uiStrings from '@/locales/sv/ui.json';
 
 export interface QuestionTypePickerProps {
-  value: QuestionType;
-  onChange: (type: QuestionType) => void;
+  // Stateful usage (controlled component)
+  value?: QuestionType;
+  onChange?: (type: QuestionType) => void;
+  // Action-based usage (for adding questions)
+  onSelectType?: (type: QuestionType) => void;
+  selectedType?: QuestionType;
   className?: string;
 }
 
-// Updated to use the api specified in the issue (value/onChange instead of selectedType/onSelectType)
+// Updated to support both APIs from the issue and existing usage
 export function QuestionTypePicker({
   value,
   onChange,
+  onSelectType,
+  selectedType,
   className
 }: QuestionTypePickerProps) {
   const groupId = React.useId();
+  
+  // Use value/onChange if provided (new API), otherwise fall back to onSelectType/selectedType (existing API)
+  const currentValue = value ?? selectedType;
+  const handleSelect = onChange ?? onSelectType;
 
   const questionTypeConfigs = [
     {
@@ -60,8 +70,8 @@ export function QuestionTypePicker({
             label={config.label}
             description={config.description}
             icon={config.icon}
-            isSelected={value === config.type}
-            onSelect={onChange}
+            isSelected={currentValue === config.type}
+            onSelect={handleSelect || (() => {})}
           />
         ))}
       </div>
