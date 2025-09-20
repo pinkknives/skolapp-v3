@@ -43,6 +43,29 @@ export function SyncQuizControls({ session, quiz, onSessionUpdate }: SyncQuizCon
   const currentQuestion = quiz.questions[session.currentIndex]
   const isLastQuestion = session.currentIndex >= quiz.questions.length - 1
 
+  // Load current attempt statistics
+  const loadAttemptStats = React.useCallback(async () => {
+    try {
+      const response = await fetch(`/api/sessions/${session.id}/summary`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.summary) {
+          const currentQuestionStats = data.summary.questionStats.find(
+            (q: { questionIndex: number }) => q.questionIndex === session.currentIndex
+          )
+          
+          setAttemptStats({
+            totalAnswered: currentQuestionStats?.totalAttempts || 0,
+            totalParticipants: session.participants.length,
+            answerDistribution: currentQuestionStats?.answerDistribution || {}
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error loading attempt stats:', error)
+    }
+  }, [session.id, session.currentIndex, session.participants.length])
+
   // Real-time subscription for session updates
   useEffect(() => {
     const supabase = supabaseBrowser()
@@ -91,29 +114,6 @@ export function SyncQuizControls({ session, quiz, onSessionUpdate }: SyncQuizCon
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.id, onSessionUpdate, loadAttemptStats])
-
-  // Load current attempt statistics
-  const loadAttemptStats = React.useCallback(async () => {
-    try {
-      const response = await fetch(`/api/sessions/${session.id}/summary`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.summary) {
-          const currentQuestionStats = data.summary.questionStats.find(
-            (q: { questionIndex: number }) => q.questionIndex === session.currentIndex
-          )
-          
-          setAttemptStats({
-            totalAnswered: currentQuestionStats?.totalAttempts || 0,
-            totalParticipants: session.participants.length,
-            answerDistribution: currentQuestionStats?.answerDistribution || {}
-          })
-        }
-      }
-    } catch (error) {
-      console.error('Error loading attempt stats:', error)
-    }
-  }, [session.id, session.currentIndex, session.participants.length])
 
   useEffect(() => {
     loadAttemptStats()

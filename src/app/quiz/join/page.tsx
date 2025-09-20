@@ -24,12 +24,29 @@ export default function QuizJoinPage() {
   const handleJoinSuccess = (session: QuizSession, participant: SessionParticipant) => {
     console.log('Successfully joined session:', session, participant)
     
-    // TODO: Redirect to appropriate page based on session status
-    // For now, just show success message
-    // In the future, this could redirect to:
-    // - Waiting room if session is in 'lobby' state
-    // - Quiz taking interface if session is 'live' 
-    // - Results page if session is 'ended'
+    // Store session and participant data for the next page
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('current_session', JSON.stringify(session))
+      sessionStorage.setItem('current_participant', JSON.stringify(participant))
+    }
+    
+    // Redirect based on session mode and status
+    if (session.mode === 'sync') {
+      // For sync mode, go to the sync quiz interface
+      window.location.href = `/quiz/sync/${session.id}`
+    } else {
+      // For async mode, redirect based on session status
+      if (session.status === 'lobby') {
+        // Go to waiting room
+        window.location.href = `/quiz/wait/${session.id}`
+      } else if (session.status === 'live') {
+        // Go to quiz taking interface
+        window.location.href = `/quiz/take/${session.id}`
+      } else {
+        // Session ended or other status
+        window.location.href = `/quiz/join`
+      }
+    }
   }
 
   return (
