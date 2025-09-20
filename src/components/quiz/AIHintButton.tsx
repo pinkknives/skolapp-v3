@@ -39,9 +39,14 @@ export function AIHintButton({
 }: AIHintButtonProps) {
   const [showTooltip, setShowTooltip] = useState(false)
   
-  // Check if AI is available
-  const isAIAvailable = quizAI.isAIAvailable
-  const isDisabled = disabled || !isAIAvailable || loading
+  // Check if AI is available and get status
+  const featureStatus = quizAI.getFeatureStatus()
+  const isDisabled = disabled || !featureStatus.available || loading
+
+  // Use appropriate tooltip based on availability
+  const tooltipText = !featureStatus.available 
+    ? featureStatus.reason || 'AI ej aktiverad'
+    : tooltip
 
   const handleClick = () => {
     if (!isDisabled) {
@@ -72,12 +77,12 @@ export function AIHintButton({
       </Button>
 
       {/* Tooltip */}
-      {(showTooltip && tooltip) && (
+      {(showTooltip && tooltipText) && (
         <div 
           className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-neutral-900 text-white text-sm rounded-lg shadow-lg z-50 whitespace-nowrap"
           role="tooltip"
         >
-          {isAIAvailable ? tooltip : 'AI ej aktiverad'}
+          {tooltipText}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-neutral-900"></div>
         </div>
       )}

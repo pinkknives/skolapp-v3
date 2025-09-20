@@ -564,7 +564,44 @@ class QuizAIService {
 
   // Helper method to check if AI features are available
   get isAIAvailable(): boolean {
-    return this.getAvailableProviders().length > 0;
+    // Check if we have any available providers
+    const hasProviders = this.getAvailableProviders().length > 0
+    
+    // Check environment flag
+    const isEnabled = process.env.NEXT_PUBLIC_AI_FEATURES_ENABLED !== 'false'
+    
+    return hasProviders && isEnabled
+  }
+
+  // Helper method to get feature availability details
+  getFeatureStatus(): { 
+    available: boolean
+    reason?: string
+    providers: Array<{ name: string; available: boolean }>
+  } {
+    const providers = this.providers.map(p => ({ name: p.name, available: p.isAvailable }))
+    const availableProviders = providers.filter(p => p.available)
+    
+    if (process.env.NEXT_PUBLIC_AI_FEATURES_ENABLED === 'false') {
+      return {
+        available: false,
+        reason: 'AI-funktioner är inaktiverade',
+        providers
+      }
+    }
+    
+    if (availableProviders.length === 0) {
+      return {
+        available: false,
+        reason: 'Inga AI-leverantörer är konfigurerade',
+        providers
+      }
+    }
+    
+    return {
+      available: true,
+      providers
+    }
   }
 }
 
