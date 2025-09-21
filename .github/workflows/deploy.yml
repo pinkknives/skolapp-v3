@@ -16,6 +16,25 @@ jobs:
     - name: Install dependencies
       run: npm install
 
+    - name: Test API secrets
+      run: |
+        if [ -z "$OPENAI_API_KEY" ]; then
+          echo "❌ OPENAI_API_KEY not set"
+          exit 1
+        else
+          echo "✅ OPENAI_API_KEY is set"
+        fi
+
+        if [ -z "$ABLY_API_KEY" ]; then
+          echo "❌ ABLY_API_KEY not set"
+          exit 1
+        else
+          echo "✅ ABLY_API_KEY is set"
+        fi
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ABLY_API_KEY: ${{ secrets.ABLY_API_KEY }}
+
     - name: Build project
       env:
         # OpenAI Configuration
