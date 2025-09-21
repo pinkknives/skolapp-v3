@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
@@ -53,6 +53,10 @@ export default function LiveControlPage() {
   const [copySuccess, setCopySuccess] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [channel, setChannel] = useState<RealtimeChannel | null>(null)
+  
+  // Refs for progress bars to avoid inline styles
+  const answerProgressRef = useRef<HTMLDivElement>(null)
+  const sessionProgressRef = useRef<HTMLDivElement>(null)
 
   // Get current user
   useEffect(() => {
@@ -245,6 +249,26 @@ export default function LiveControlPage() {
       initializeSession()
     }
   }, [user, initializeSession])
+
+  // Update answer progress bar
+  useEffect(() => {
+    if (answerProgressRef.current && state?.answerStats) {
+      const percentage = state.answerStats.totalParticipants > 0 
+        ? (state.answerStats.answeredCount / state.answerStats.totalParticipants) * 100
+        : 0
+      answerProgressRef.current.style.setProperty('--progress-width', `${percentage}%`)
+    }
+  }, [state?.answerStats])
+
+  // Update session progress bar
+  useEffect(() => {
+    if (sessionProgressRef.current && state?.session && state?.quiz) {
+      const percentage = (state.session.status === 'ENDED' 
+        ? state.quiz.questions.length 
+        : state.session.currentIndex) / state.quiz.questions.length * 100
+      sessionProgressRef.current.style.setProperty('--progress-width', `${percentage}%`)
+    }
+  }, [state?.session, state?.quiz])
 
   const handleSessionAction = async (action: string) => {
     if (!state) return
@@ -477,12 +501,8 @@ export default function LiveControlPage() {
                 {/* Progress bar */}
                 <div className="w-full bg-neutral-200 rounded-full h-2 mb-2">
                   <div 
+                    ref={answerProgressRef}
                     className="bg-primary-600 h-2 rounded-full transition-all duration-300 progress-bar-dynamic"
-                    style={{ 
-                      '--progress-width': `${state.answerStats.totalParticipants > 0 
-                        ? (state.answerStats.answeredCount / state.answerStats.totalParticipants) * 100
-                        : 0}%` 
-                    } as React.CSSProperties}
                   />
                 </div>
                 <Typography variant="caption" className="text-neutral-600">
@@ -612,10 +632,8 @@ export default function LiveControlPage() {
                 
                 <div className="w-full bg-neutral-200 rounded-full h-2">
                   <div 
+                    ref={sessionProgressRef}
                     className="bg-primary-600 h-2 rounded-full transition-all duration-300 progress-bar-dynamic"
-                    style={{ 
-                      '--progress-width': `${(state.session.status === 'ENDED' ? state.quiz.questions.length : state.session.currentIndex) / state.quiz.questions.length * 100}%` 
-                    } as React.CSSProperties}
                   />
                 </div>
 

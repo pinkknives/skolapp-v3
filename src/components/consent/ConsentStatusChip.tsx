@@ -59,7 +59,7 @@ export function ConsentStatusChip({
           icon: HelpCircle,
           label: 'Ej begärt',
           bgColor: 'bg-neutral-100 dark:bg-neutral-800',
-          textColor: 'text-neutral-800 dark:text-gray-200',
+          textColor: 'text-neutral-800 dark:text-neutral-200',
           iconColor: 'text-neutral-600 dark:text-neutral-400',
         }
     }

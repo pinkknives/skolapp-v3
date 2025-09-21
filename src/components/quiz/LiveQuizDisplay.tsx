@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { Users, BarChart3, Clock } from 'lucide-react'
@@ -29,6 +29,9 @@ export function LiveQuizDisplay({
   const { state, participants, isConnected, studentCount } = useQuizControl(quizId)
   const { getAnswerCountForQuestion } = useQuizAnswers(quizId)
 
+  // Ref for progress bar to avoid inline styles
+  const progressRef = useRef<HTMLDivElement>(null)
+
   const currentQuestion = questions.find(q => q.id === state.questionId)
   const currentQuestionIndex = currentQuestion 
     ? questions.findIndex(q => q.id === currentQuestion.id) 
@@ -41,6 +44,13 @@ export function LiveQuizDisplay({
   const responseRate = studentCount > 0 
     ? Math.round((currentAnswerCount / studentCount) * 100) 
     : 0
+
+  // Update progress bar
+  useEffect(() => {
+    if (progressRef.current) {
+      progressRef.current.style.setProperty('--progress-width', `${Math.min(responseRate, 100)}%`)
+    }
+  }, [responseRate])
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 p-8 ${className}`}>
@@ -118,8 +128,8 @@ export function LiveQuizDisplay({
                 <div className="space-y-4">
                   <div className="w-full bg-neutral-200 rounded-full h-6">
                     <div 
+                      ref={progressRef}
                       className="bg-gradient-to-r from-primary-500 to-primary-600 h-6 rounded-full transition-all duration-500 ease-out flex items-center justify-center progress-bar-dynamic"
-                      style={{ '--progress-width': `${Math.min(responseRate, 100)}%` } as React.CSSProperties}
                     >
                       {responseRate > 10 && (
                         <Typography variant="body2" className="text-white font-medium">
