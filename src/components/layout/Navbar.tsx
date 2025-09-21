@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { canAccessTeacherPortal } from '@/lib/auth-utils'
 import { LogoIcon } from '@/components/brand/Logo'
 import { Menu, X } from 'lucide-react'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 interface NavItem {
   href: string
@@ -174,6 +175,7 @@ export function Navbar({
             {/* Actions */}
             <div className="hidden md:flex items-center space-x-4">
               {actions}
+              <ThemeToggle />
               {!isAuthenticated && (
                 <div className="flex items-center space-x-2">
                   <Button 
@@ -248,6 +250,7 @@ export function Navbar({
             {/* Mobile Auth Actions */}
             <div className="pt-4 pb-3 border-t border-neutral-200">
               <div className="px-2 space-y-2">
+                <ThemeToggle className="w-full justify-center" />
                 {!isAuthenticated && (
                   <>
                     <Button 

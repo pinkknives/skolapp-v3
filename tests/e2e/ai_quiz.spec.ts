@@ -1,16 +1,4 @@
-import { test, expect, Locator } from '@playwright/test';
-
-// Extend expect with custom matcher
-expect.extend({
-  async toHaveCountGreaterThan(locator: Locator, expected: number) {
-    const count = await locator.count();
-    const pass = count > expected;
-    return {
-      pass,
-      message: () => `Expected count > ${expected}, received ${count}`,
-    };
-  },
-});
+import { test, expect } from '@playwright/test';
 
 test('Skapa AI-quiz end-to-end och spara screenshots', async ({ page }) => {
   const base = process.env.BASE_URL!;
@@ -60,7 +48,10 @@ test('Skapa AI-quiz end-to-end och spara screenshots', async ({ page }) => {
 
   // 8) Verifiera att minst 1 fråga visas
   const questions = page.locator('[data-testid="ai-quiz-question"]');
-  await expect(questions).toHaveCountGreaterThan(0);
+  await expect(questions).toHaveCount(1, { timeout: 120_000 }).catch(async () => {
+    const count = await questions.count();
+    expect(count).toBeGreaterThan(0);
+  });
   const count = await questions.count();
   console.log(`Hittade ${count} AI-genererade frågor`);
 

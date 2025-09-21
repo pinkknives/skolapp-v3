@@ -4,9 +4,19 @@ import { Typography, Heading } from '@/components/ui/Typography'
 import { ClassList } from '@/components/classroom/ClassList'
 import { CreateClassButton } from '@/components/classroom/CreateClassButton'
 import { getTeacherClasses } from '@/app/actions/classes'
+import { getCurrentUser } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import { Plus, Users, BookOpen } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TeacherClassesPage() {
+  // Soft redirect to login if not authenticated/teacher
+  const user = await getCurrentUser()
+  if (!user || !user.profile || user.profile.role !== 'teacher') {
+    redirect(`/login?next=${encodeURIComponent('/teacher/classes')}`)
+  }
+
   const classes = await getTeacherClasses()
 
   return (

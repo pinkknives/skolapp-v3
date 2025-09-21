@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Clock, Users, CheckCircle, AlertCircle, Trophy, Loader2 } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase-browser'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 import type { LiveQuizSession, Question } from '@/types/quiz'
 
 interface SessionState {
@@ -36,9 +36,9 @@ export default function LiveSessionPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string>('')
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null)
+  // no channel state needed
 
   // Get current user
   useEffect(() => {
@@ -166,34 +166,37 @@ export default function LiveSessionPage() {
   }, [user, sessionId, supabase])
 
   // Setup real-time subscription
+  const sessionStateId = state?.session.id
   useEffect(() => {
-    if (!user || !state) return
+    if (!user || !sessionStateId) return
 
     const channel = supabase.channel(`live:session:${sessionId}`)
 
     channel
-      .on('broadcast', { event: 'session:start' }, (payload) => {
+      .on('broadcast', { event: 'session:start' }, (_payload) => {
         setState(prev => prev ? {
           ...prev,
           session: { ...prev.session, status: 'ACTIVE' }
         } : null)
       })
       .on('broadcast', { event: 'question:show' }, (payload) => {
-        if (state.quiz.questions[payload.payload.questionIndex]) {
-          setState(prev => prev ? {
+        setState(prev => {
+          if (!prev) return prev
+          const idx = payload.payload.questionIndex
+          if (!prev.quiz.questions[idx]) return prev
+          return {
             ...prev,
-            session: { ...prev.session, currentIndex: payload.payload.questionIndex },
-            currentQuestion: prev.quiz.questions[payload.payload.questionIndex],
+            session: { ...prev.session, currentIndex: idx },
+            currentQuestion: prev.quiz.questions[idx],
             hasAnswered: false,
-            selectedAnswer: '',
             userAnswer: undefined,
             isCorrect: undefined,
             timeRemaining: payload.payload.timeLimit
-          } : null)
-          setSelectedAnswer('')
-        }
+          }
+        })
+        setSelectedAnswer('')
       })
-      .on('broadcast', { event: 'session:end' }, (payload) => {
+      .on('broadcast', { event: 'session:end' }, (_payload) => {
         setState(prev => prev ? {
           ...prev,
           session: { ...prev.session, status: 'ENDED' },
@@ -208,12 +211,10 @@ export default function LiveSessionPage() {
       })
       .subscribe()
 
-    setChannel(channel)
-
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, state?.session.id, sessionId, supabase])
+  }, [user, sessionStateId, sessionId, supabase])
 
   // Timer effect
   useEffect(() => {

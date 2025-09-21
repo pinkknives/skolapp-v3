@@ -88,6 +88,26 @@ export default function RootLayout({
   return (
     <html lang="sv">{/* Changed to Swedish */}
       <head>
+        {/* Pre-render theme application to avoid FOUC */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var key = 'theme';
+                  var saved = localStorage.getItem(key);
+                  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var theme = saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light');
+                  if (theme === 'dark') document.documentElement.classList.add('dark');
+                  var meta = document.querySelector('meta#theme-color');
+                  if (!meta) { meta = document.createElement('meta'); meta.id = 'theme-color'; meta.name = 'theme-color'; document.head.appendChild(meta); }
+                  meta.setAttribute('content', theme === 'dark' ? '#2f6767' : '#377b7b');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+        <meta id="theme-color" name="theme-color" content="#377b7b" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />

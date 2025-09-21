@@ -18,25 +18,25 @@ test.describe('Live Quiz Session Flow', () => {
     password: 'testpass123'
   }
   
-  const mockStudent = {
+  const _mockStudent = {
     email: 'student@test.com', 
     password: 'testpass123'
   }
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     // Skip if not running in test environment
     if (!process.env.NEXT_PUBLIC_APP_URL?.includes('localhost')) {
-      test.skip('Live quiz tests only run in development environment')
+      test.skip(true, 'Live quiz tests only run in development environment')
     }
   })
 
   test('complete live quiz session flow', async ({ browser }) => {
     // Create two browser contexts - one for teacher, one for student
-    const teacherContext = await browser.newContext()
-    const studentContext = await browser.newContext()
+  const teacherContext = await browser.newContext()
+  const studentContext = await browser.newContext()
     
-    const teacherPage = await teacherContext.newPage()
-    const studentPage = await studentContext.newPage()
+  const teacherPage = await teacherContext.newPage()
+  const studentPage = await studentContext.newPage()
 
     try {
       // Step 1: Teacher creates live session
@@ -119,7 +119,7 @@ test.describe('Live Quiz Session Flow', () => {
       expect(submittedText).toContain('Svar inskickat')
       
       // Step 5: Teacher sees answer progress
-      await teacherPage.waitForSelector('[data-testid="answered-count"]')
+  await teacherPage.waitForSelector('[data-testid="answered-count"]')
       const answeredText = await teacherPage.textContent('[data-testid="answered-count"]')
       expect(answeredText).toContain('1 / 1') // 1 of 1 answered
       
@@ -141,33 +141,33 @@ test.describe('Live Quiz Session Flow', () => {
     }
   })
 
-  test('PIN validation works correctly', async ({ page }) => {
-    await page.goto('/live/join')
+  test('PIN validation works correctly', async ({ page: _page }) => {
+    await _page.goto('/live/join')
     
     // Test invalid PIN length
-    await page.fill('[data-testid="pin-input"]', '123')
-    await page.click('[data-testid="find-session"]')
+  await _page.fill('[data-testid="pin-input"]', '123')
+  await _page.click('[data-testid="find-session"]')
     
-    await page.waitForSelector('[data-testid="error-message"]')
-    const errorText = await page.textContent('[data-testid="error-message"]')
+  await _page.waitForSelector('[data-testid="error-message"]')
+  const errorText = await _page.textContent('[data-testid="error-message"]')
     expect(errorText).toContain('PIN måste vara 6 tecken')
     
     // Test non-existent PIN
-    await page.fill('[data-testid="pin-input"]', 'ABCD12')
-    await page.click('[data-testid="find-session"]')
+  await _page.fill('[data-testid="pin-input"]', 'ABCD12')
+  await _page.click('[data-testid="find-session"]')
     
-    await page.waitForSelector('[data-testid="error-message"]')
-    const notFoundText = await page.textContent('[data-testid="error-message"]')
+  await _page.waitForSelector('[data-testid="error-message"]')
+  const notFoundText = await _page.textContent('[data-testid="error-message"]')
     expect(notFoundText).toContain('Ingen session hittades')
   })
 
   test('real-time updates work correctly', async ({ browser }) => {
     // This test verifies that real-time updates work between teacher and student
-    const teacherContext = await browser.newContext()
-    const studentContext = await browser.newContext()
+  const teacherContext = await browser.newContext()
+  const studentContext = await browser.newContext()
     
-    const teacherPage = await teacherContext.newPage()
-    const studentPage = await studentContext.newPage()
+  const _teacherPage = await teacherContext.newPage()
+  const _studentPage = await studentContext.newPage()
 
     try {
       // Setup session (abbreviated version)
@@ -198,12 +198,12 @@ test.describe('Live Quiz Session Flow', () => {
 })
 
 // Helper functions for testing
-async function createMockQuiz(page: any, title: string = 'Test Quiz') {
+async function _createMockQuiz(_page: unknown, _title: string = 'Test Quiz') {
   // Helper to create a quiz for testing
   // This would be expanded based on your quiz creation flow
 }
 
-async function setupMockSession(teacherPage: any) {
+async function _setupMockSession(_teacherPage: unknown) {
   // Helper to create a session and return PIN
   // This would be expanded based on your session creation flow
 }

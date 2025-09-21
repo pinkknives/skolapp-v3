@@ -1,9 +1,26 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 core layers */
+@import "tailwindcss";
 
 /* CSS Custom Properties for Design Tokens */
 :root {
+  /* App theme variables (HSL) expected by many UI libs/components */
+  /* Light theme */
+  --background: 0 0% 100%;
+  --foreground: 222.2 47.4% 11.2%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+
+  --primary: 182 37% 35%; /* approx #377b7b */
+  --primary-foreground: 210 40% 98%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215 16.3% 46.9%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 182 37% 35%;
+
   /* Color Tokens - Updated to Skolapp teal branding */
   --color-primary-50: 230 240 239;
   --color-primary-100: 205 224 223;
@@ -108,8 +125,28 @@
 }
 
 /* Dark mode support */
+/* Prefer class-based dark to avoid accidental OS flips; keep media as enhancement */
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+
+  --primary: 182 37% 30%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 182 37% 40%;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Keep legacy neutral tokens in sync for consumers still using rgb(var(--color-neutral-*))) */
     --color-neutral-50: 23 23 23;
     --color-neutral-100: 38 38 38;
     --color-neutral-200: 64 64 64;
@@ -136,8 +173,12 @@
   body {
     margin: 0;
     line-height: inherit;
+    /* Fallbacks for older tokens first */
     background-color: rgb(var(--color-neutral-50));
     color: rgb(var(--color-neutral-900));
+    /* New theme variables (take precedence) */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   /* Focus styles for accessibility */
@@ -187,7 +228,6 @@
   embed,
   object {
     display: block;
-    vertical-align: middle;
   }
 
   img,

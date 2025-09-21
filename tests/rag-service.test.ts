@@ -70,11 +70,13 @@ describe('RAG Service', () => {
       }
     ];
 
-    const result = extractCitations(mockResponse, mockContext);
+  const result = extractCitations(mockResponse, mockContext);
     
     expect(result.citations).toBeDefined();
     expect(Array.isArray(result.citations)).toBe(true);
-    expect(result.citations[0]).toMatchObject({
+  const citations = (result as { citations?: unknown[] }).citations;
+  const first = Array.isArray(citations) ? citations[0] : undefined;
+    expect(first).toMatchObject({
       sourceId: 'source-1',
       sourceTitle: 'Läroplan Matematik',
       sourceUrl: 'https://example.com',
