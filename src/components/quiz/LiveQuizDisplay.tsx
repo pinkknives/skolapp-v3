@@ -118,8 +118,8 @@ export function LiveQuizDisplay({
                 <div className="space-y-4">
                   <div className="w-full bg-neutral-200 rounded-full h-6">
                     <div 
-                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-6 rounded-full transition-all duration-500 ease-out flex items-center justify-center"
-                      style={{ width: `${Math.min(responseRate, 100)}%` }}
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-6 rounded-full transition-all duration-500 ease-out flex items-center justify-center progress-bar-dynamic"
+                      style={{ '--progress-width': `${Math.min(responseRate, 100)}%` } as React.CSSProperties}
                     >
                       {responseRate > 10 && (
                         <Typography variant="body2" className="text-white font-medium">
