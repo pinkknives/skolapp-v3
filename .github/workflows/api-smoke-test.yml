@@ -34,11 +34,13 @@ jobs:
         run: |
           set -e
           echo "🔍 Hämtar modeller från OpenAI..."
-          # Hämta lista och verifiera att någon gpt-4o* finns
           RESP=$(curl -sS --fail-with-body https://api.openai.com/v1/models \
             -H "Authorization: Bearer $OPENAI_API_KEY")
-          echo "$RESP" | grep -q '"id": "gpt-4o' || echo "$RESP" | grep -q '"id": "gpt-4o-' \
-            || (echo "❌ Kunde inte hitta gpt-4o i models-listan"; exit 1)
+          HAS=$(echo "$RESP" | jq '[.data[].id | strings] | any(index("gpt-4o"))')
+          if [ "$HAS" != "true" ]; then
+            echo "❌ Kunde inte hitta gpt-4o i models-listan"
+            exit 1
+          fi
           echo "✅ OpenAI models OK (gpt-4o hittades)"
 
       - name: OpenAI live call (chat.completions)
@@ -57,9 +59,12 @@ jobs:
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$BODY")
-          # väldigt enkel extraktion utan jq
-          TEXT=$(echo "$RESP" | sed -n 's/.*"content":"\([^"]*\)".*/\1/p' | head -n1)
-          [ -z "$TEXT" ] && (echo "❌ Tomt svar från OpenAI"; echo "$RESP"; exit 1)
+          TEXT=$(echo "$RESP" | jq -r '.choices[0].message.content')
+          if [ -z "$TEXT" ] || [ "$TEXT" = "null" ]; then
+            echo "❌ Tomt svar från OpenAI"
+            echo "$RESP"
+            exit 1
+          fi
           echo "✅ OpenAI svar: $TEXT"
 
       - name: Ably live call (REST time)
@@ -68,8 +73,7 @@ jobs:
         run: |
           set -e
           echo "🔍 Anropar Ably /time..."
-          # /time accepterar API-nyckel via query-parametern ?key=
           RESP=$(curl -sS --fail-with-body "https://rest.ably.io/time?key=$ABLY_API_KEY")
           # Svaret är en JSON-array med ett unix timestamp, t.ex. [1700000000000]
-          echo "$RESP" | grep -qE '^\[[0-9]{10,}\]$' || (echo "❌ Ovänat svar från Ably: $RESP"; exit 1)
+          echo "$RESP" | jq -e 'type=="array" and length==1 and (.[0]|type=="number")' >/dev/null
           echo "✅ Ably time OK: $RESP"
