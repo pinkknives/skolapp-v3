@@ -36,7 +36,8 @@
     "ingest:syllabus": "tsx scripts/ingest-syllabus.ts",
     "health:openai": "tsx scripts/health/openai.ts",
     "health:ably": "tsx scripts/health/ably.ts",
-    "health:all": "npm run health:openai && npm run health:ably"
+    "health:all": "npm run health:openai && npm run health:ably",
+    "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {
     "@heroui/react": "^2.8.4",

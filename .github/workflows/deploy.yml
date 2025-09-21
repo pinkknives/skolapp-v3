@@ -18,9 +18,38 @@ jobs:
 
     - name: Build project
       env:
+        # OpenAI Configuration
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ALBY_API_KEY: ${{ secrets.ALBY_API_KEY }}
+        OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+        
+        # Ably Configuration (för Live Quiz real-time features)
+        ABLY_API_KEY: ${{ secrets.ABLY_API_KEY }}
+        ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
+        
+        # Supabase Configuration
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        
+        # Stripe Configuration
+        STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        NEXT_PUBLIC_STRIPE_PRICE_MONTHLY: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY }}
+        NEXT_PUBLIC_STRIPE_PRICE_ANNUAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL }}
+        
+        # Admin API Key
+        ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+        
+        # Feature flags och andra konfigurationer
+        NEXT_PUBLIC_FEATURE_LIVE_QUIZ: true
+        FEATURE_SYLLABUS: true
+        ABLY_TOKEN_TTL_SECONDS: 3600
+        SYLLABUS_BASE_URL: https://api.skolverket.se/syllabus
+        SYLLABUS_REFRESH_CRON: weekly
       run: npm run build
 
-    - name: Deploy
-      run: npm run deploy
+    # Note: Deployment is typically handled by the hosting platform (Vercel, Netlify, etc.)
+    # automatically when code is pushed to main branch.
+    # If manual deployment is needed, add the appropriate deployment step here.
+    - name: Build completed successfully
+      run: echo "Build completed. Deployment will be handled by the hosting platform."
