@@ -1,0 +1,268 @@
+name: UI Screenshots → Issue comment
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue-number att kommentera i"
+        required: true
+      base_url:
+        description: "Bas-URL (t.ex. https://stage.skolapp.se)"
+        required: true
+
+permissions:
+  contents: write        # för att pusha bilder till branch
+  issues: write          # för att posta kommentar
+  pull-requests: write
+
+concurrency:
+  group: ui-screenshots-comment
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: ${{ github.event.inputs.base_url }}
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: |
+          npm i -D playwright
+          npx playwright install --with-deps
+
+      - name: Generate screenshots with Playwright (3 viewports)
+        run: |
+          node - <<'JS'
+          (async () => {
+            const { chromium } = require('playwright');
+            const fs = require('fs');
+            const path = require('path');
+
+            const OUT_DIR = path.join('ci-screenshots', process.env.GITHUB_RUN_ID);
+            fs.mkdirSync(OUT_DIR, { recursive: true });
+
+            const pages = [
+              { name: 'home', url: '/', title: 'Startsida' },
+              { name: 'login', url: '/login', title: 'Logga in' },
+              { name: 'signup', url: '/register', title: 'Registrera' },
+              { name: 'ai-quiz', url: '/teacher/quiz/create', title: 'Skapa Quiz (AI)' },
+              { name: 'profile', url: '/profile', title: 'Profil' }
+            ];
+
+            const viewports = [
+              { name: 'mobile', width: 375, height: 667, title: 'Mobil (iPhone SE)' },
+              { name: 'tablet', width: 768, height: 1024, title: 'Surfplatta (iPad)' },
+              { name: 'desktop', width: 1280, height: 720, title: 'Desktop' }
+            ];
+
+            const browser = await chromium.launch({
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            
+            const results = [];
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const vp of viewports) {
+              const ctx = await browser.newContext({ 
+                viewport: vp,
+                // Swedish locale
+                locale: 'sv-SE',
+                timezoneId: 'Europe/Stockholm'
+              });
+              const page = await ctx.newPage();
+
+              // Disable animations för konsistent screenshots
+              await page.addStyleTag({
+                content: `
+                  * { 
+                    animation-duration: 1ms !important; 
+                    transition-duration: 1ms !important; 
+                    animation-delay: 0ms !important;
+                    transition-delay: 0ms !important;
+                  }
+                  @media (prefers-reduced-motion: reduce) {
+                    * {
+                      animation-duration: 0.01ms !important;
+                      animation-iteration-count: 1 !important;
+                      transition-duration: 0.01ms !important;
+                      scroll-behavior: auto !important;
+                    }
+                  }
+                `});
+
+              for (const p of pages) {
+                try {
+                  console.log(`📸 Capturing ${p.title} (${p.name}) on ${vp.title}...`);
+                  await page.goto(`${process.env.BASE_URL}${p.url}`, { 
+                    waitUntil: 'networkidle',
+                    timeout: 30000 
+                  });
+                  
+                  // Wait for page to be fully loaded and animations to settle
+                  await page.waitForTimeout(3000);
+                  
+                  const file = path.join(OUT_DIR, `${p.name}-${vp.name}.png`);
+                  await page.screenshot({ 
+                    path: file, 
+                    fullPage: true,
+                    animations: 'disabled'
+                  });
+                  console.log(`✅ Saved ${p.name}-${vp.name}.png`);
+                  results.push({
+                    page: p.name,
+                    viewport: vp.name,
+                    file: `${p.name}-${vp.name}.png`,
+                    title: `${p.title} - ${vp.title}`,
+                    success: true
+                  });
+                  successCount++;
+                } catch (error) {
+                  console.error(`❌ Failed to capture ${p.name} on ${vp.name}:`, error.message);
+                  results.push({
+                    page: p.name,
+                    viewport: vp.name,
+                    file: null,
+                    title: `${p.title} - ${vp.title}`,
+                    success: false,
+                    error: error.message
+                  });
+                  errorCount++;
+                }
+              }
+              await ctx.close();
+            }
+            await browser.close();
+
+            // Skriv en strukturerad index.md med bättre formatering
+            let markdownContent = `# UI Screenshots\n\n`;
+            markdownContent += `**Genererade:** ${new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' })}\n`;
+            markdownContent += `**Framgång:** ${successCount} av ${successCount + errorCount} screenshots\n\n`;
+            
+            // Group by page
+            const pageNames = [...new Set(results.map(r => r.page))];
+            for (const pageName of pageNames) {
+              const pageResults = results.filter(r => r.page === pageName);
+              const pageInfo = pages.find(p => p.name === pageName);
+              
+              markdownContent += `## ${pageInfo.title} (\`${pageInfo.url}\`)\n\n`;
+              
+              const viewportOrder = ['mobile', 'tablet', 'desktop'];
+              for (const vpName of viewportOrder) {
+                const result = pageResults.find(r => r.viewport === vpName);
+                if (result) {
+                  if (result.success) {
+                    markdownContent += `### ${result.title}\n![${result.title}](./${result.file})\n\n`;
+                  } else {
+                    markdownContent += `### ${result.title}\n⚠️ **Fel:** ${result.error}\n\n`;
+                  }
+                }
+              }
+            }
+            
+            fs.writeFileSync(path.join(OUT_DIR, 'index.md'), markdownContent, 'utf8');
+            
+            console.log(`\n📊 Summary: ${successCount} successful, ${errorCount} failed screenshots`);
+            console.log('Generated index.md with structured layout');
+          })().catch(e => { console.error(e); process.exit(1); });
+          JS
+
+      - name: Commit & push screenshots to ci-screenshots branch
+        run: |
+          BRANCH=ci-screenshots
+          
+          # Konfigurera Git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Försök hämta befintlig branch, skapa ny om den inte finns
+          git fetch origin $BRANCH || echo "Branch $BRANCH does not exist yet"
+          
+          # Växla till branch (skapa ny om den inte finns)
+          if git show-ref --verify --quiet refs/remotes/origin/$BRANCH; then
+            git switch $BRANCH
+          else
+            git switch --orphan $BRANCH
+            git rm -rf . || true
+          fi
+          
+          # Kopiera screenshots till korrekt plats
+          mkdir -p ci-screenshots
+          
+          # Lägg till alla filer i ci-screenshots mappen
+          git add ci-screenshots/
+          
+          # Commit om det finns förändringar
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add UI screenshots from workflow run $GITHUB_RUN_ID
+
+            Generated $(date '+%Y-%m-%d %H:%M:%S %Z') from:
+            - Base URL: ${{ github.event.inputs.base_url }}
+            - Trigger: ${{ github.event_name }}
+            - Issue: #${{ github.event.inputs.issue_number }}"
+            
+            # Push med retry logic
+            for i in {1..3}; do
+              if git push -u origin $BRANCH; then
+                echo "Successfully pushed to $BRANCH"
+                break
+              else
+                echo "Push attempt $i failed, retrying..."
+                sleep 2
+              fi
+            done
+          fi
+
+      - name: Create issue comment with inline images
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+            const fs = require('fs');
+            const path = require('path');
+
+            const issue_number = Number(core.getInput('issue_number', { required: false })) || Number(process.env.ISSUE_NUMBER) || Number('${{ github.event.inputs.issue_number }}');
+            const runId = process.env.GITHUB_RUN_ID;
+            const repo = context.repo;
+            const baseRaw = `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/ci-screenshots/ci-screenshots/${runId}`;
+
+            // Läs index.md som listar bilderna
+            const indexPath = path.join('ci-screenshots', runId, 'index.md');
+            let body = `## 📸 UI Screenshots (Workflow Run #${runId})\n\n`;
+            body += `**📍 Base URL:** \`${{ github.event.inputs.base_url }}\`\n`;
+            body += `**🕒 Genererat:** ${new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' })}\n`;
+            body += `**🔗 Workflow:** [Se körning](${context.payload.repository.html_url}/actions/runs/${runId})\n\n`;
+            
+            if (fs.existsSync(indexPath)) {
+              let idx = fs.readFileSync(indexPath, 'utf8');
+              // Ta bort första rubriken eftersom vi har egen
+              idx = idx.replace(/^# UI Screenshots\n\n/, '');
+              // Byt lokala relative-länkar till rå-URL:er så de visar inline i kommentaren
+              idx = idx.replace(/\!\[(.*?)\]\(\.\/(.*?)\)/g, (m, alt, file) => `![${alt}](${baseRaw}/${file})`);
+              body += idx;
+            } else {
+              body += '⚠️ _Inga bilder genererades_\n\n';
+            }
+
+            body += '\n---\n';
+            body += '*Screenshots tagna automatiskt av GitHub Actions. Bilder sparas i `ci-screenshots` branch.*';
+
+            await github.rest.issues.createComment({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number,
+              body
+            });
