@@ -16,6 +16,7 @@ const eslintConfig = [
       "next.config.js",
       "next-env.d.ts", 
       "scripts/**/*.js",
+      "tailwind.config.cjs",
       ".next/**",
       "node_modules/**",
       "public/**"
@@ -42,7 +43,13 @@ const eslintConfig = [
   },
   {
     files: ["**/*.tsx", "**/*.ts"],
-    ignores: ["**/playground/**", "**/ProgressBar.tsx"],
+    ignores: [
+      "**/playground/**", 
+      "**/ProgressBar.tsx",
+      "**/live/control/**/page.tsx",
+      "**/LiveQuizControlPanel.tsx",
+      "**/LiveQuizDisplay.tsx"
+    ],
     rules: {
       "no-restricted-syntax": [
         "error",

@@ -43,14 +43,14 @@ describe('/api/ai/generate-questions', () => {
         })
       }
     }
-    mockSupabase.supabaseBrowser.mockReturnValue(mockSupabaseClient as any)
+    mockSupabase.supabaseBrowser.mockReturnValue(mockSupabaseClient as never)
     
     // Mock successful quota check
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
       status: 200,
       json: vi.fn().mockResolvedValue({ success: true })
-    } as any)
+    } as unknown as Response)
   })
 
   afterEach(() => {
@@ -89,7 +89,7 @@ describe('/api/ai/generate-questions', () => {
         })
       }
     }
-    mockSupabase.supabaseBrowser.mockReturnValue(mockSupabaseClient as any)
+    mockSupabase.supabaseBrowser.mockReturnValue(mockSupabaseClient as never)
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',
@@ -118,7 +118,7 @@ describe('/api/ai/generate-questions', () => {
         error: 'Du har nått din månadsgräns för AI-frågor',
         code: 'QUOTA_EXCEEDED' 
       })
-    } as any)
+    } as unknown as Response)
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',

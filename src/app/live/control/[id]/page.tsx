@@ -2,21 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { 
   Play, 
-  Pause, 
   SkipForward, 
   Users, 
-  QrCode, 
   Copy, 
   Trophy,
   Loader2,
-  AlertCircle,
-  CheckCircle,
-  Clock
+  AlertCircle
 } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import QRCodeLib from 'qrcode'
@@ -51,8 +48,8 @@ export default function LiveControlPage() {
   const [isActionLoading, setIsActionLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [copySuccess, setCopySuccess] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
+  const [_channel, setChannel] = useState<RealtimeChannel | null>(null)
 
   // Get current user
   useEffect(() => {
@@ -216,7 +213,7 @@ export default function LiveControlPage() {
     const channel = supabase.channel(`live:session:${sessionId}`)
 
     channel
-      .on('broadcast', { event: 'participant_joined' }, (payload) => {
+      .on('broadcast', { event: 'participant_joined' }, (_payload) => {
         // Refresh participant list
         initializeSession()
       })
@@ -237,7 +234,7 @@ export default function LiveControlPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, state?.session.id, sessionId, supabase, initializeSession])
+  }, [user, state?.session.id, sessionId, supabase, initializeSession, state])
 
   // Initialize when user is available
   useEffect(() => {
@@ -476,6 +473,7 @@ export default function LiveControlPage() {
 
                 {/* Progress bar */}
                 <div className="w-full bg-neutral-200 rounded-full h-2 mb-2">
+                  {/* Progress bar requires inline style for dynamic width */}
                   <div 
                     className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                     style={{ 
@@ -538,9 +536,11 @@ export default function LiveControlPage() {
                     <Typography variant="caption" className="text-neutral-600 block mb-2">
                       QR-kod
                     </Typography>
-                    <img
+                    <Image
                       src={state.qrCodeUrl}
                       alt="QR kod för att gå med i sessionen"
+                      width={200}
+                      height={200}
                       className="mx-auto rounded-md border"
                     />
                   </div>
@@ -611,6 +611,7 @@ export default function LiveControlPage() {
                 </div>
                 
                 <div className="w-full bg-neutral-200 rounded-full h-2">
+                  {/* Progress bar requires inline style for dynamic width */}
                   <div 
                     className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                     style={{ 

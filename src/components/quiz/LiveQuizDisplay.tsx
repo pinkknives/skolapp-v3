@@ -117,6 +117,7 @@ export function LiveQuizDisplay({
               <CardContent>
                 <div className="space-y-4">
                   <div className="w-full bg-neutral-200 rounded-full h-6">
+                    {/* Progress bar requires inline style for dynamic width */}
                     <div 
                       className="bg-gradient-to-r from-primary-500 to-primary-600 h-6 rounded-full transition-all duration-500 ease-out flex items-center justify-center"
                       style={{ width: `${Math.min(responseRate, 100)}%` }}

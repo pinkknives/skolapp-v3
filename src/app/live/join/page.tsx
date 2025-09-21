@@ -27,7 +27,7 @@ export default function LiveJoinPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
 
   // Get PIN from URL if available
   useEffect(() => {
