@@ -39,7 +39,7 @@ jobs:
           npx playwright install --with-deps
 
       - name: Run Playwright visual tests
-        run: npx playwright test tests/e2e/ui_layout.spec.ts --reporter=line
+        run: npm run test:visual
 
       - name: Upload artifacts (screens/video/trace)
         if: always()
