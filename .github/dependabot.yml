@@ -1,0 +1,142 @@
+version: 2
+updates:
+  # Main dependencies (npm)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Stockholm"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    
+    # Group related updates
+    groups:
+      # Core framework updates
+      next-ecosystem:
+        patterns:
+          - "next*"
+          - "@next/*"
+          - "react*"
+          - "@types/react*"
+      
+      # UI/Design dependencies
+      ui-dependencies:
+        patterns:
+          - "@heroui/*"
+          - "tailwind*"
+          - "framer-motion"
+          - "class-variance-authority"
+          - "tailwind-*"
+          - "clsx"
+          - "lucide-react"
+      
+      # Testing dependencies
+      testing-tools:
+        patterns:
+          - "@playwright/*"
+          - "playwright"
+          - "@testing-library/*"
+          - "vitest*"
+          - "@vitest/*"
+          - "jsdom"
+          - "msw"
+      
+      # Build and development tools
+      dev-tools:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript"
+          - "@types/*"
+          - "autoprefixer"
+          - "postcss"
+          - "tsx"
+      
+      # External service SDKs
+      service-sdks:
+        patterns:
+          - "@supabase/*"
+          - "supabase*"
+          - "openai"
+          - "ably"
+          - "stripe"
+          - "qrcode"
+          - "@types/qrcode"
+
+    # Security updates (allow patch and minor for security)
+    allow:
+      - dependency-type: "direct"
+        update-type: "security"
+      - dependency-type: "indirect"
+        update-type: "security"
+      - dependency-type: "direct"
+        update-type: "version-update:semver-patch"
+      - dependency-type: "direct"
+        update-type: "version-update:semver-minor"
+    
+    # Ignore specific dependencies that need manual handling
+    ignore:
+      # Major version updates that need careful testing
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@heroui/*"
+        update-types: ["version-update:semver-major"]
+      
+      # Known problematic updates
+      - dependency-name: "msw"
+        versions: ["2.x"]  # Breaking changes in v2
+
+    # Custom commit messages
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+
+    # PR settings
+    reviewers:
+      - "pinkknives"
+    labels:
+      - "dependencies"
+      - "automated"
+    
+    # Auto-merge configuration for low-risk updates
+    auto-merge:
+      # Only auto-merge patch updates for non-critical dependencies
+      - match:
+          dependency-type: "direct"
+          update-type: "security"
+      - match:
+          dependency-type: "indirect"
+          update-type: "security"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Stockholm"
+    open-pull-requests-limit: 5
+    
+    # Group GitHub Actions updates
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
+          - "*"
+    
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    
+    reviewers:
+      - "pinkknives"
+    labels:
+      - "ci"
+      - "dependencies"
+      - "automated"

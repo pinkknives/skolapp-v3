@@ -220,7 +220,7 @@ export async function cleanupTestData() {
   }
   
   try {
-    const supabase = supabaseBrowser();
+    const _supabase = supabaseBrowser();
     
     // This would need to be run with service role permissions
     // For now, we just log what we would clean up
@@ -230,15 +230,15 @@ export async function cleanupTestData() {
     // In practice, this should be handled by a server-side cleanup job
     // or a database function with proper permissions
     
-  } catch (error) {
-    console.warn('E2E cleanup failed:', error);
+  } catch (_error) {
+    console.warn('E2E cleanup failed:', _error);
   }
 }
 
 /**
  * Mark test data for cleanup with metadata
  */
-export function getE2EMetadata(additionalData?: Record<string, any>) {
+export function getE2EMetadata(additionalData?: Record<string, unknown>) {
   return {
     ...E2E_USER_METADATA,
     test_run_id: process.env.GITHUB_RUN_ID || 'local',
@@ -256,7 +256,7 @@ export async function waitForTestId(page: Page, testId: string, options?: { time
       timeout: options?.timeout || 10000,
       state: options?.state || 'visible'
     });
-  } catch (error) {
+  } catch (_error) {
     throw new Error(`Failed to find element with data-testid="${testId}". Make sure the element exists and has the correct test ID.`);
   }
 }

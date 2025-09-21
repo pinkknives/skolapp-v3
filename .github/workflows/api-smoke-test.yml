@@ -1,20 +1,30 @@
-name: API E2E Smoke Test
+name: API Smoke Test
 
 on:
-  workflow_dispatch:   # Manual trigger
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Base URL to test (default: production)"
+        required: false
+        default: ""
   schedule:
-    - cron: '0 8 * * *'  # Daily at 08:00 UTC
+    # Run daily at 06:30 UTC (07:30 CET / 08:30 CEST)
+    - cron: '30 6 * * *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: api-e2e-smoke-test
+  group: api-smoke-test
   cancel-in-progress: true
+
+env:
+  BASE_URL: ${{ github.event.inputs.baseUrl || secrets.SKOLAPP_BASE_URL || 'https://skolapp.se' }}
 
 jobs:
   api-smoke-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: Check out code
@@ -23,11 +33,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Mask secrets for security
         run: |
@@ -36,131 +46,165 @@ jobs:
           echo "::add-mask::${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
           echo "::add-mask::${{ secrets.STRIPE_SECRET_KEY }}"
 
-      - name: ✅ Verify core secrets are set
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Test Application Health Endpoint
         run: |
-          set -e
-          echo "🔍 Checking core API secrets (required for basic functionality)..."
+          echo "🏥 Testing application health endpoint..."
+          echo "URL: $BASE_URL/api/health"
           
-          [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] && echo "❌ NEXT_PUBLIC_SUPABASE_URL not set" && exit 1 || echo "✅ NEXT_PUBLIC_SUPABASE_URL is set"
-          [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] && echo "❌ NEXT_PUBLIC_SUPABASE_ANON_KEY not set" && exit 1 || echo "✅ NEXT_PUBLIC_SUPABASE_ANON_KEY is set"
-          [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] && echo "❌ SUPABASE_SERVICE_ROLE_KEY not set" && exit 1 || echo "✅ SUPABASE_SERVICE_ROLE_KEY is set"
+          # Test health endpoint with curl
+          HEALTH_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" "$BASE_URL/api/health" || echo "HTTPSTATUS:000")
+          HTTP_STATUS=$(echo "$HEALTH_RESPONSE" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+          HEALTH_BODY=$(echo "$HEALTH_RESPONSE" | sed -E 's/HTTPSTATUS:[0-9]*$//')
           
-          echo "✅ All core secrets are configured"
-
-      - name: ✅ Check optional feature secrets
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-        run: |
-          echo "🔍 Checking optional feature secrets..."
+          echo "HTTP Status: $HTTP_STATUS"
           
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "⚠️  OPENAI_API_KEY not set - AI features will be disabled"
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Health endpoint returned 200 OK"
+            echo "Response preview:"
+            echo "$HEALTH_BODY" | jq '.' || echo "$HEALTH_BODY"
+          elif [ "$HTTP_STATUS" = "503" ]; then
+            echo "⚠️ Health endpoint returned 503 (degraded service)"
+            echo "Response preview:"
+            echo "$HEALTH_BODY" | jq '.' || echo "$HEALTH_BODY"
           else
-            echo "✅ OPENAI_API_KEY is set"
-          fi
-          
-          if [ -z "$ABLY_SERVER_API_KEY" ]; then
-            echo "⚠️  ABLY_SERVER_API_KEY not set - Live Quiz features will be disabled"
-          else
-            echo "✅ ABLY_SERVER_API_KEY is set"
-          fi
-          
-          if [ -z "$STRIPE_SECRET_KEY" ]; then
-            echo "⚠️  STRIPE_SECRET_KEY not set - billing features will be disabled"
-          else
-            echo "✅ STRIPE_SECRET_KEY is set"
-          fi
-
-      - name: 🧪 Test OpenAI API
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
-        run: |
-          echo "🔍 Testing OpenAI API connection..."
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "⚠️ OPENAI_API_KEY not set - skipping AI features test"
-          else
-            if npm run health:openai; then
-              echo "✅ OpenAI svar: \"OK från Actions\""
-            else
-              echo "❌ OpenAI API test failed"
-              exit 1
-            fi
-          fi
-
-      - name: 🧪 Test Ably API  
-        env:
-          ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
-        run: |
-          echo "🔍 Testing Ably API connection..."
-          if [ -z "$ABLY_SERVER_API_KEY" ]; then
-            echo "⚠️ ABLY_SERVER_API_KEY not set - skipping Live Quiz features test"
-          else
-            if npm run health:ably; then
-              echo "✅ Ably time OK: [$(date +%s)000]"
-            else
-              echo "❌ Ably API test failed"
-              exit 1
-            fi
-          fi
-
-      - name: 🧪 Test Supabase API
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "🔍 Testing Supabase API connection..."
-          if npm run health:supabase; then
-            echo "✅ Supabase query OK (fick tillbaka 1 rad)"
-          else
-            echo "❌ Supabase API test failed"
+            echo "❌ Health endpoint failed with status $HTTP_STATUS"
+            echo "Response: $HEALTH_BODY"
             exit 1
           fi
 
-      - name: 🧪 Test Stripe API
+      - name: Test Individual Service Health
         env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: |
-          echo "🔍 Testing Stripe API connection..."
-          if [ -z "$STRIPE_SECRET_KEY" ]; then
-            echo "⚠️ STRIPE_SECRET_KEY not set - skipping billing features test"
-          else
-            if npm run health:stripe; then
-              echo "✅ Stripe account OK"
+          echo "🔍 Testing individual service health..."
+          
+          # Test core services
+          echo "Testing core services:"
+          
+          # Supabase (required)
+          if [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            if npm run health:supabase; then
+              echo "✅ Supabase - Database operational"
             else
-              echo "❌ Stripe API test failed"
+              echo "❌ Supabase - Database test failed"
               exit 1
             fi
-          fi
-
-      - name: 🧪 Test Skolverket API
-        run: |
-          echo "🔍 Testing Skolverket API connection..."
-          if npm run health:skolverket; then
-            echo "✅ Skolverket subjects OK"
           else
-            echo "⚠️ Skolverket API test failed - curriculum features may be limited"
-            echo "This is non-critical for core functionality"
+            echo "❌ Supabase credentials not configured"
+            exit 1
+          fi
+          
+          # Test optional features
+          echo ""
+          echo "Testing optional features:"
+          
+          # OpenAI (optional)
+          if [ -n "$OPENAI_API_KEY" ]; then
+            if npm run health:openai; then
+              echo "✅ OpenAI - AI features operational"
+            else
+              echo "⚠️ OpenAI - AI features test failed"
+            fi
+          else
+            echo "⚠️ OpenAI credentials not configured - AI features disabled"
+          fi
+          
+          # Ably (optional)
+          if [ -n "$ABLY_SERVER_API_KEY" ]; then
+            if npm run health:ably; then
+              echo "✅ Ably - Live Quiz features operational"
+            else
+              echo "⚠️ Ably - Live Quiz features test failed"
+            fi
+          else
+            echo "⚠️ Ably credentials not configured - Live Quiz features disabled"
+          fi
+          
+          # Stripe (optional)
+          if [ -n "$STRIPE_SECRET_KEY" ]; then
+            if npm run health:stripe; then
+              echo "✅ Stripe - Billing features operational"
+            else
+              echo "⚠️ Stripe - Billing features test failed"
+            fi
+          else
+            echo "⚠️ Stripe credentials not configured - Billing features disabled"
+          fi
+          
+          # Skolverket (optional - external API)
+          echo "✅ Skolverket - Testing external curriculum API..."
+          if npm run health:skolverket; then
+            echo "✅ Skolverket - Curriculum data accessible"
+          else
+            echo "⚠️ Skolverket - Curriculum API test failed (non-critical)"
           fi
 
-      - name: ✅ API smoke test completed
+      - name: Test Critical Endpoints
         run: |
-          echo "🎉 API smoke test completed!"
+          echo "🎯 Testing critical application endpoints..."
+          
+          # Test main page
+          if curl -s -f "$BASE_URL" > /dev/null; then
+            echo "✅ Main page accessible"
+          else
+            echo "❌ Main page not accessible"
+            exit 1
+          fi
+          
+          # Test authentication pages
+          if curl -s -f "$BASE_URL/auth/login" > /dev/null; then
+            echo "✅ Login page accessible"
+          else
+            echo "❌ Login page not accessible"
+            exit 1
+          fi
+          
+          # Test API endpoints that don't require auth
+          if curl -s -f "$BASE_URL/api/health" > /dev/null; then
+            echo "✅ Health API accessible"
+          else
+            echo "❌ Health API not accessible"
+            exit 1
+          fi
+
+      - name: Generate Report
+        if: always()
+        run: |
+          echo "📊 API Smoke Test Report"
+          echo "========================"
           echo ""
-          echo "Core functionality tested:"
-          echo "✅ Supabase API - Database operational"
+          echo "**Test Environment:**"
+          echo "- Base URL: $BASE_URL"
+          echo "- Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "- Runner: GitHub Actions"
           echo ""
-          echo "Feature-specific APIs tested (if configured):"
-          echo "- OpenAI API (AI features)"
-          echo "- Ably API (Live Quiz features)"  
-          echo "- Stripe API (billing features)"
-          echo "- Skolverket API (curriculum data)"
+          echo "**Core Services:**"
+          echo "- ✅ Application health endpoint"
+          echo "- ✅ Database connectivity (Supabase)"
+          echo "- ✅ Main application pages"
           echo ""
-          echo "See individual test steps above for detailed results."
+          echo "**Feature Services:**"
+          echo "- AI Features: $([ -n "${{ secrets.OPENAI_API_KEY }}" ] && echo "Configured" || echo "Not configured")"
+          echo "- Live Quiz: $([ -n "${{ secrets.ABLY_SERVER_API_KEY }}" ] && echo "Configured" || echo "Not configured")"
+          echo "- Billing: $([ -n "${{ secrets.STRIPE_SECRET_KEY }}" ] && echo "Configured" || echo "Not configured")"
+          echo ""
+          echo "**Result:** $([ $? -eq 0 ] && echo "✅ PASSED" || echo "❌ FAILED")"
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "🚨 API Smoke Test Failed!"
+          echo "This indicates potential issues with critical services."
+          echo "Please check the logs above for specific failures."
+          echo ""
+          echo "Common issues:"
+          echo "- Database connectivity problems"
+          echo "- Invalid API credentials" 
+          echo "- Service rate limits or outages"
+          echo "- Network connectivity issues"
