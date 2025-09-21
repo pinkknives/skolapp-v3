@@ -101,6 +101,25 @@ Kopiera `.env.local.example` till `.env.local` och fyll i samma värden som ovan
 5. **Rotera nycklar regelbundet**
 6. **Använd minsta möjliga behörigheter för varje nyckel**
 
+## API Key Validation i Deploy Workflow
+
+Deploy-workflowet (`deploy.yml`) inkluderar automatisk validering av API-nycklar:
+
+- ✅ **Kontrollerar att nycklar är satta**: OPENAI_API_KEY, ABLY_SERVER_API_KEY
+- ✅ **Testar riktig API-anslutning**: Gör faktiska anrop till OpenAI och Ably
+- ✅ **Stoppar deployment tidigt**: Om någon nyckel saknas eller inte fungerar
+- ✅ **Tydliga felmeddelanden**: Med emojis för enkel debugging
+
+**Exempel på output**:
+```
+✅ OPENAI_API_KEY is set
+✅ ABLY_SERVER_API_KEY is set
+🧪 Testing OpenAI API connection...
+✅ OpenAI svar: PONG
+🧪 Testing Ably API connection...
+✅ Ably connection: OK
+```
+
 ## Säkerhet
 
 - ⚠️ Service role keys har admin-behörigheter - håll dem säkra
