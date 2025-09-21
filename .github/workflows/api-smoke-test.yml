@@ -1,0 +1,98 @@
+name: API Smoke Test
+
+on:
+  workflow_dispatch:   # Körs manuellt från Actions-fliken
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-smoke-test
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mask secrets (extra säkerhet)
+        run: |
+          echo "::add-mask::${{ secrets.OPENAI_API_KEY }}"
+          echo "::add-mask::${{ secrets.ABLY_API_KEY }}"
+
+      - name: Check out (för ev. node_modules cache mm)
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install minimal clients
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm i openai ably --silent
+
+      - name: Verify env present
+        run: |
+          fail=0
+          [ -z "$OPENAI_API_KEY" ] && echo "❌ OPENAI_API_KEY not set" && fail=1 || echo "✅ OPENAI_API_KEY is set"
+          [ -z "$ABLY_API_KEY"   ] && echo "❌ ABLY_API_KEY not set"   && fail=1 || echo "✅ ABLY_API_KEY is set"
+          exit $fail
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ABLY_API_KEY:   ${{ secrets.ABLY_API_KEY }}
+
+      - name: OpenAI live call (chat.completions)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          node -e "import OpenAI from 'openai';
+          const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+          (async () => {
+            const r = await client.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [{ role: 'user', content: 'Säg “OK från Actions” och inget mer.' }],
+              max_tokens: 8,
+              temperature: 0
+            });
+            const text = r.choices?.[0]?.message?.content?.trim() || '';
+            if(!text) { throw new Error('Tomt svar från OpenAI'); }
+            console.log('✅ OpenAI svar:', text);
+          })().catch(e => { console.error('❌ OpenAI fel:', e.message); process.exit(1); });"
+
+      - name: OpenAI models endpoint (extra sanity)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          node -e "import OpenAI from 'openai';
+          const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+          (async () => {
+            const m = await client.models.list();
+            const has = m.data?.some(x => x.id?.includes('gpt-4o')) ?? false;
+            console.log('✅ Models tillgängliga. gpt-4o finns:', has);
+          })().catch(e => { console.error('❌ Models-list fel:', e.message); process.exit(1); });"
+
+      - name: Ably live call (REST time)
+        env:
+          ABLY_API_KEY: ${{ secrets.ABLY_API_KEY }}
+        run: |
+          node -e "import Ably from 'ably/promises';
+          const ably = new Ably.Rest(process.env.ABLY_API_KEY);
+          (async () => {
+            const t = await ably.time();
+            if(!t) throw new Error('Ingen tid returnerad');
+            console.log('✅ Ably time:', t);
+          })().catch(e => { console.error('❌ Ably fel:', e.message); process.exit(1); });"
+
+      # (Valfritt) Publicera en testhändelse till ett privat kanalnamn. Kräver att din Ably-app tillåter publish med din key.
+      # - name: Ably publish to channel
+      #   env:
+      #     ABLY_API_KEY: ${{ secrets.ABLY_API_KEY }}
+      #   run: |
+      #     node -e "import Ably from 'ably/promises';
+      #     const ably = new Ably.Rest(process.env.ABLY_API_KEY);
+      #     (async () => {
+      #       const ch = ably.channels.get('actions-smoketest');
+      #       await ch.publish('ping', { ok: true, ts: Date.now() });
+      #       console.log('✅ Ably publish OK');
+      #     })().catch(e => { console.error('❌ Ably publish fel:', e.message); process.exit(1); });"
