@@ -1,14 +1,15 @@
 // scripts/api-health/ably.ts
 import "node:process";
 
-const key = process.env.ABLY_SERVER_API_KEY!;
-const auth = Buffer.from(key).toString("base64");
-const channel = `smoke-ci-${(process.env.GITHUB_SHA || Date.now().toString()).slice(0, 7)}`;
-
 async function main() {
+  const key = process.env.ABLY_SERVER_API_KEY;
+  
   if (!key) {
     throw new Error("ABLY_SERVER_API_KEY saknas");
   }
+
+  const auth = Buffer.from(key).toString("base64");
+  const channel = `smoke-ci-${(process.env.GITHUB_SHA || Date.now().toString()).slice(0, 7)}`;
 
   try {
     const response = await fetch(`https://rest.ably.io/channels/${encodeURIComponent(channel)}/messages`, {
