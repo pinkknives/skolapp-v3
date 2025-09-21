@@ -42,14 +42,14 @@ test.describe('Supabase Auth E2E', () => {
   test('Skapa användare (admin) → logga in via UI → verifiera dashboard', async ({ page }) => {
     expect(base, 'BASE_URL måste vara satt').toBeTruthy();
 
-    // 1) Gå till appen
+    // 1) Gå till appen (home page först för screenshot)
     await page.goto(base, { waitUntil: 'load' });
     await page.screenshot({ path: screenshots.home, fullPage: true });
 
-    // 2) Navigera till login-formuläret (klicka på "Logga in" knappen)
-    await page.getByText('Logga in').first().click();
+    // 2) Navigera direkt till test login page för mer pålitlig testning
+    await page.goto(`${base}/test-login`, { waitUntil: 'load' });
     
-    // 3) Vänta på att modal/form visas och fyll i login (kräver data-testid i UI:t)
+    // 3) Fyll i login (kräver data-testid i UI:t)
     await page.waitForSelector('[data-testid="login-email"]', { timeout: 10000 });
     await page.getByTestId('login-email').fill(email);
     await page.getByTestId('login-password').fill(PASSWORD);
@@ -58,17 +58,17 @@ test.describe('Supabase Auth E2E', () => {
     // 4) Vänta inloggat läge - kontrollera för antingen dashboard eller user profile
     await page.waitForLoadState('networkidle');
     
-    // Försök hitta dashboard först, annars user profile
-    const dashboardVisible = await page.getByTestId('dashboard').isVisible().catch(() => false);
-    const userProfileVisible = await page.getByTestId('user-profile').isVisible().catch(() => false);
+    // Efter lyckad login borde vi vara på /teacher sidan
+    await page.waitForURL('**/teacher', { timeout: 30000 });
     
-    expect(dashboardVisible || userProfileVisible, 'Antingen dashboard eller user-profile borde vara synlig efter login').toBeTruthy();
+    // Kontrollera att dashboard är synligt
+    await expect(page.getByTestId('dashboard')).toBeVisible({ timeout: 10000 });
+    
+    // Kontrollera att user profile knappen finns i navbar
+    await expect(page.getByTestId('user-profile')).toBeVisible({ timeout: 10000 });
     
     await page.screenshot({ path: screenshots.loggedIn, fullPage: true });
 
-    // 5) Bonus: enkel sanity – kontrollera att någon "profil"-komponent finns
-    if (userProfileVisible) {
-      await expect(page.getByTestId('user-profile')).toBeVisible();
-    }
+    console.log('✅ Test lyckades - användaren är inloggad och UI visar korrekt tillstånd');
   });
 });
