@@ -16,8 +16,11 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Test API secrets
+    - name: Test API secrets and calls
       run: |
+        echo "🔍 Testing API secrets and connectivity..."
+        
+        # Check if environment variables are set
         if [ -z "$OPENAI_API_KEY" ]; then
           echo "❌ OPENAI_API_KEY not set"
           exit 1
@@ -25,15 +28,35 @@ jobs:
           echo "✅ OPENAI_API_KEY is set"
         fi
 
-        if [ -z "$ABLY_API_KEY" ]; then
-          echo "❌ ABLY_API_KEY not set"
+        if [ -z "$ABLY_SERVER_API_KEY" ]; then
+          echo "❌ ABLY_SERVER_API_KEY not set"
           exit 1
         else
-          echo "✅ ABLY_API_KEY is set"
+          echo "✅ ABLY_SERVER_API_KEY is set"
         fi
+        
+        # Test actual API calls
+        echo "🧪 Testing OpenAI API connection..."
+        if npm run health:openai; then
+          echo "✅ OpenAI svar: PONG"
+        else
+          echo "❌ OpenAI API call failed"
+          exit 1
+        fi
+        
+        echo "🧪 Testing Ably API connection..."
+        if npm run health:ably; then
+          echo "✅ Ably connection: OK"
+        else
+          echo "❌ Ably API call failed"
+          exit 1
+        fi
+        
+        echo "✅ All API secrets verified and working!"
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ABLY_API_KEY: ${{ secrets.ABLY_API_KEY }}
+        OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+        ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
 
     - name: Build project
       env:
