@@ -47,7 +47,7 @@ const features = [
 export default function TeacherPage() {
   return (
     <Layout>
-      <Section spacing="xl">
+      <Section spacing="xl" data-testid="dashboard">
         <Container>
           <div className="text-center mb-12">
             <Heading level={1} className="mb-6">

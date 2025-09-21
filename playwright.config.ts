@@ -2,24 +2,26 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  timeout: 120_000,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
   // Global timeout for all tests (5 minutes for CI stability)
   globalTimeout: process.env.CI ? 5 * 60 * 1000 : undefined,
-  // Per-test timeout (30 seconds for individual tests)
-  timeout: 30 * 1000,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['json', { outputFile: 'test-results/results.json' }]
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    screenshot: 'on',
+    video: 'on',
+    actionTimeout: 30_000,
+    navigationTimeout: 30_000,
     // Respect reduced motion for accessibility testing
     reducedMotion: 'reduce',
     // Set Swedish locale for testing
@@ -87,6 +89,8 @@ export default defineConfig({
       testMatch: /.*\.perf\.spec\.ts/,
     },
   ],
+
+  outputDir: 'test-results',
 
   webServer: {
     command: 'npm run dev',

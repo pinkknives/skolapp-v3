@@ -1,0 +1,60 @@
+name: E2E Auth (Supabase)
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Bas-URL (t.ex. https://stage.skolapp.se)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-auth-supabase
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL:                   ${{ github.event.inputs.baseUrl || secrets.SKOLAPP_BASE_URL }}
+      SUPABASE_URL:               ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY:  ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ANON_KEY:          ${{ secrets.SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::${SUPABASE_SERVICE_ROLE_KEY}"
+          echo "::add-mask::${SUPABASE_ANON_KEY}"
+
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps (Playwright + Supabase client)
+        run: |
+          npm ci || npm i
+          npm i -D @supabase/supabase-js
+          npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test tests/e2e/auth_supabase.spec.ts --reporter=line
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-auth-artifacts
+          path: |
+            playwright-report/**
+            test-results/**
+            **/screenshots/**
+            **/*.zip
+          if-no-files-found: warn

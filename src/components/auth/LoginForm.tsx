@@ -79,6 +79,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onGuestAccess }: Logi
             errorMessage={validationErrors.email}
             placeholder="din@email.se"
             required
+            data-testid="login-email"
           />
 
           <Input
@@ -89,6 +90,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onGuestAccess }: Logi
             errorMessage={validationErrors.password}
             showPasswordToggle
             required
+            data-testid="login-password"
           />
 
           {/* Demo Credentials Helper */}
@@ -121,6 +123,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onGuestAccess }: Logi
             fullWidth
             loading={isLoading}
             disabled={isLoading}
+            data-testid="login-submit"
           >
             Logga in
           </Button>
