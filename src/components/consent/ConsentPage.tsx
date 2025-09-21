@@ -71,7 +71,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
   // Show result after action
   if (result) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             {result.success ? (
@@ -84,10 +84,10 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-300 mb-6">
+            <Typography variant="body1" className="text-neutral-600 dark:text-neutral-300 mb-6">
               {result.message}
             </Typography>
-            <Typography variant="caption" className="text-gray-500">
+            <Typography variant="caption" className="text-neutral-500">
               Du kan nu stänga denna sida.
             </Typography>
           </CardContent>
@@ -99,17 +99,17 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
   // Show expired state
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <Clock className="w-16 h-16 text-orange-500 mx-auto mb-4" />
             <CardTitle>Länken har gått ut</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-300 mb-4">
+            <Typography variant="body1" className="text-neutral-600 dark:text-neutral-300 mb-4">
               Denna samtyckeslänk har gått ut och kan inte längre användas.
             </Typography>
-            <Typography variant="caption" className="text-gray-500">
+            <Typography variant="caption" className="text-neutral-500">
               Kontakta skolan för att få en ny länk.
             </Typography>
           </CardContent>
@@ -121,17 +121,17 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
   // Show completed state
   if (isCompleted) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <CardTitle>Redan hanterat</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-300 mb-4">
+            <Typography variant="body1" className="text-neutral-600 dark:text-neutral-300 mb-4">
               Du har redan svarat på denna samtyckesförfrågan.
             </Typography>
-            <Typography variant="caption" className="text-gray-500">
+            <Typography variant="caption" className="text-neutral-500">
               Kontakta skolan om du behöver ändra ditt svar.
             </Typography>
           </CardContent>
@@ -142,13 +142,13 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
 
   // Main consent form
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-center text-2xl">
             Samtycke för datalagring
           </CardTitle>
-          <Typography variant="body1" className="text-center text-gray-600 dark:text-gray-300">
+          <Typography variant="body1" className="text-center text-neutral-600 dark:text-neutral-300">
             {orgName}
           </Typography>
         </CardHeader>
@@ -169,18 +169,18 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
 
           <div className="space-y-4">
             <Typography variant="h3">Vad detta handlar om</Typography>
-            <div className="space-y-3 text-gray-700 dark:text-gray-300">
+            <div className="space-y-3 text-neutral-700 dark:text-neutral-300">
               <Typography variant="body1">
                 Din elev använder Skolapp för att delta i quiz och lärande aktiviteter. 
                 Skolan kan använda systemet på två sätt:
               </Typography>
               
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <div className="p-4 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
                   <Typography variant="small" className="font-medium mb-2">
                     Korttidsläge (utan samtycke)
                   </Typography>
-                  <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400">
                     • Data sparas endast under pågående aktivitet<br/>
                     • Automatisk rensning efter 30 dagar<br/>
                     • Begränsad historik och analys
@@ -203,7 +203,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
 
           <div className="space-y-4">
             <Typography variant="h3">Dina rättigheter</Typography>
-            <div className="space-y-2 text-gray-700 dark:text-gray-300">
+            <div className="space-y-2 text-neutral-700 dark:text-neutral-300">
               <Typography variant="small">
                 • Du kan när som helst återkalla ditt samtycke
               </Typography>
@@ -220,7 +220,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
           </div>
 
           <div className="border-t pt-6">
-            <Typography variant="body1" className="text-center mb-6 text-gray-600 dark:text-gray-300">
+            <Typography variant="body1" className="text-center mb-6 text-neutral-600 dark:text-neutral-300">
               Vill du ge samtycke för långsiktig datalagring?
             </Typography>
             
@@ -247,7 +247,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
           </div>
 
           <div className="text-center pt-4 border-t">
-            <Typography variant="caption" className="text-gray-500">
+            <Typography variant="caption" className="text-neutral-500">
               Skickat till: {invite.guardian_email}<br/>
               Gäller till: {new Date(invite.expires_at).toLocaleDateString('sv-SE')}
             </Typography>

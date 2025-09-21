@@ -394,7 +394,7 @@ export default function SessionResultsPage() {
                               student.status === 'submitted' ? 'bg-green-100 text-green-800' :
                               student.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                               student.status === 'late' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
+                              'bg-neutral-100 text-neutral-800'
                             }`}>
                               {student.status === 'submitted' ? 'Inskickad' :
                                student.status === 'in_progress' ? 'Pågår' :

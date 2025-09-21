@@ -58,9 +58,9 @@ export function ConsentStatusChip({
         return {
           icon: HelpCircle,
           label: 'Ej begärt',
-          bgColor: 'bg-gray-100 dark:bg-gray-800',
-          textColor: 'text-gray-800 dark:text-gray-200',
-          iconColor: 'text-gray-600 dark:text-gray-400',
+          bgColor: 'bg-neutral-100 dark:bg-neutral-800',
+          textColor: 'text-neutral-800 dark:text-gray-200',
+          iconColor: 'text-neutral-600 dark:text-neutral-400',
         }
     }
   }
@@ -95,7 +95,7 @@ export function ConsentStatusIndicator({
 }: ConsentStatusIndicatorProps) {
   if (!requiresConsent) {
     return (
-      <div className={`text-gray-500 dark:text-gray-400 ${className}`}>
+      <div className={`text-neutral-500 dark:text-neutral-400 ${className}`}>
         <Typography variant="caption">
           Samtycke ej krävt
         </Typography>
