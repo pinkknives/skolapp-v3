@@ -8,18 +8,20 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   // Global timeout for all tests (5 minutes for CI stability)
   globalTimeout: process.env.CI ? 5 * 60 * 1000 : undefined,
-  // Per-test timeout (30 seconds for individual tests)
+  // Per-test timeout (30 seconds for individual tests, longer for AI tests)
   timeout: 30 * 1000,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['json', { outputFile: 'test-results/results.json' }]
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'on',
+    screenshot: 'on',
+    actionTimeout: 30_000,
+    navigationTimeout: 30_000,
     // Respect reduced motion for accessibility testing
     reducedMotion: 'reduce',
     // Set Swedish locale for testing
@@ -94,4 +96,5 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
+  outputDir: 'test-results',
 });
