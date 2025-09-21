@@ -286,8 +286,34 @@ npm run test:e2e:ui
 - Quiz creation wizard (complete flow)
 - AI-assisted quiz generation
 - Student quiz-taking flow
+- **End-to-end authentication testing**
 - Accessibility compliance (WCAG 2.1 AA)
 - Swedish language consistency
+
+#### E2E Authentication Testing
+
+Skolapp v3 includes dedicated E2E testing for Supabase authentication:
+
+```bash
+# Run the auth E2E test specifically
+npx playwright test tests/e2e/auth_supabase.spec.ts
+
+# Or via GitHub Actions workflow (requires repository secrets)
+# Go to Actions -> "E2E Auth (Supabase)" -> Run workflow
+```
+
+**What it tests:**
+- ✅ Creates test user via Supabase Admin API
+- ✅ Login via UI with email/password 
+- ✅ Verifies dashboard and user profile visibility
+- ✅ Screenshots captured (before/after login)
+- ✅ Automatic test user cleanup
+
+**Required secrets for CI/CD:**
+- `SKOLAPP_BASE_URL` - Target application URL
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Admin key for user creation
+- `SUPABASE_ANON_KEY` - Public anon key (if required)
 
 For detailed testing docs and troubleshooting, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
 

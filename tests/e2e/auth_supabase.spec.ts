@@ -13,12 +13,19 @@ test.describe('Supabase Auth E2E', () => {
   const base = process.env.BASE_URL!;
   const supabaseUrl = process.env.SUPABASE_URL!;
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  
   const admin = createClient(supabaseUrl, serviceRole, { auth: { autoRefreshToken: false, persistSession: false } });
 
   let email = `e2e.${Date.now()}_${unique()}@example.com`;
   let userId: string | undefined;
 
   test.beforeAll(async () => {
+    // Kontrollera att alla nödvändiga environment variables är satta
+    expect(base, 'BASE_URL måste vara satt').toBeTruthy();
+    expect(supabaseUrl, 'SUPABASE_URL måste vara satt').toBeTruthy();
+    expect(serviceRole, 'SUPABASE_SERVICE_ROLE_KEY måste vara satt').toBeTruthy();
+    
+    // Skapa test user via Admin API (skip e-mail confirm)
     // Skapa test user via Admin API (skip e-mail confirm)
     const { data, error } = await admin.auth.admin.createUser({
       email,

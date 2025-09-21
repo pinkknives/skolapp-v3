@@ -110,5 +110,6 @@ coverage/
 .nyc_output/
 test-results/
 playwright-report/
+screenshots/
 
 .env.local
