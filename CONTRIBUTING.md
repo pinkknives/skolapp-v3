@@ -396,6 +396,38 @@ If builds are slow despite caching:
 2. Verify cache key includes source file hashes
 3. Clear cache if corrupted: delete `.next/cache`
 
+#### API Smoke Tests
+
+The API smoke tests (`npm run api:smoke`) validate connectivity to external services. Common issues:
+
+**OpenAI API Issues:**
+- **401 Unauthorized**: Check `OPENAI_API_KEY` is correctly set
+- **403 Forbidden**: Verify API key has sufficient permissions
+- **Timeout**: OpenAI may be experiencing high load, retry after delay
+- **Model not found**: Ensure `OPENAI_MODEL` matches available models (default: gpt-4o-mini)
+
+**Ably API Issues:**
+- **401 Unauthorized**: Check `ABLY_SERVER_API_KEY` format (should be `appId.keyId:keySecret`)
+- **403 Forbidden**: Verify API key has publish capabilities
+- **Channel errors**: Test channel names are auto-generated to avoid conflicts
+
+**Skolverket API Issues:**
+- **Network errors**: APIs may be temporarily unavailable
+- **CORS issues**: Some endpoints may not support browser-based requests
+- **Rate limiting**: Skolverket APIs may have rate limits for public access
+
+**Running individual tests:**
+```bash
+npm run api:openai     # Test OpenAI only
+npm run api:ably       # Test Ably only
+npm run api:skolverket # Test Skolverket APIs only
+```
+
+**CI Environment:**
+- API smoke tests only run with repository secrets (not on forks)
+- Tests are designed to fail fast (5-minute timeout)
+- Skolverket tests use graceful fallback in limited network environments
+
 ### Getting Help
 
 - **Documentation**: Check `/docs` directory

@@ -36,7 +36,11 @@
     "ingest:syllabus": "tsx scripts/ingest-syllabus.ts",
     "health:openai": "tsx scripts/health/openai.ts",
     "health:ably": "tsx scripts/health/ably.ts",
-    "health:all": "npm run health:openai && npm run health:ably"
+    "health:all": "npm run health:openai && npm run health:ably",
+    "api:openai": "tsx scripts/api-health/openai.ts",
+    "api:ably": "tsx scripts/api-health/ably.ts",
+    "api:skolverket": "tsx scripts/api-health/skolverket.ts",
+    "api:smoke": "npm-run-all -s api:openai api:ably api:skolverket"
   },
   "dependencies": {
     "@heroui/react": "^2.8.4",
@@ -80,11 +84,14 @@
     "eslint-config-next": "^15.5.3",
     "jsdom": "^27.0.0",
     "msw": "^1.3.5",
+    "npm-run-all": "^4.1.5",
     "postcss": "^8.5.4",
     "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
-    "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "zod": "^4.1.11"
   },
   "engines": {
     "node": ">=18.0.0"
