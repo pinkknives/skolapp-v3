@@ -5,7 +5,7 @@ async function main() {
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     baseURL: process.env.OPENAI_BASE_URL || undefined,
-    // @ts-ignore – projekt-id är valfritt, sätts bara om det finns
+    // @ts-expect-error – projekt-id är valfritt, sätts bara om det finns
     project: process.env.OPENAI_PROJECT_ID || undefined,
   });
 
