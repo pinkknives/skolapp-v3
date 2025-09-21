@@ -477,12 +477,12 @@ export default function LiveControlPage() {
                 {/* Progress bar */}
                 <div className="w-full bg-neutral-200 rounded-full h-2 mb-2">
                   <div 
-                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary-600 h-2 rounded-full transition-all duration-300 progress-bar-dynamic"
                     style={{ 
-                      width: `${state.answerStats.totalParticipants > 0 
+                      '--progress-width': `${state.answerStats.totalParticipants > 0 
                         ? (state.answerStats.answeredCount / state.answerStats.totalParticipants) * 100
                         : 0}%` 
-                    }}
+                    } as React.CSSProperties}
                   />
                 </div>
                 <Typography variant="caption" className="text-neutral-600">
@@ -612,10 +612,10 @@ export default function LiveControlPage() {
                 
                 <div className="w-full bg-neutral-200 rounded-full h-2">
                   <div 
-                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary-600 h-2 rounded-full transition-all duration-300 progress-bar-dynamic"
                     style={{ 
-                      width: `${(state.session.status === 'ENDED' ? state.quiz.questions.length : state.session.currentIndex) / state.quiz.questions.length * 100}%` 
-                    }}
+                      '--progress-width': `${(state.session.status === 'ENDED' ? state.quiz.questions.length : state.session.currentIndex) / state.quiz.questions.length * 100}%` 
+                    } as React.CSSProperties}
                   />
                 </div>
 

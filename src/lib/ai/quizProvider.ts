@@ -1,5 +1,6 @@
 // AI Quiz Provider - Provider abstraction layer for quiz question generation and hints
 import { Question, MultipleChoiceQuestion, FreeTextQuestion } from '@/types/quiz'
+import type { RAGContext } from './ragService'
 
 export type AiParams = {
   subject: string;
@@ -307,7 +308,7 @@ export class OpenAIQuizProvider implements QuizAIProvider {
         );
         
         if (contextData.length > 0) {
-          prompt = buildRAGEnhancedPrompt(prompt, contextData, {
+          prompt = buildRAGEnhancedPrompt(prompt, contextData as RAGContext[], {
             subject: params.subject,
             grade: params.grade,
             count: params.count,
@@ -357,7 +358,7 @@ export class OpenAIQuizProvider implements QuizAIProvider {
 
       // If using RAG, validate and enrich citations
       if (params.useRAG && contextData.length > 0) {
-        return questions.map(q => extractCitations(q, contextData) as AiQuestion);
+        return questions.map(q => extractCitations(q, contextData as RAGContext[]) as AiQuestion);
       }
 
       return questions;

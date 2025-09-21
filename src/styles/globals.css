@@ -314,6 +314,12 @@
     transition: width 0.3s ease;
   }
 
+  /* Dynamic progress bar utility with CSS custom property */
+  .progress-bar-dynamic {
+    width: var(--progress-width, 0%);
+    transition: width 0.3s ease;
+  }
+
   /* Animation delay utilities */
   .animate-bounce-delay-1 {
     animation: bounce 1s infinite;

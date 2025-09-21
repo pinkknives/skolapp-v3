@@ -162,13 +162,13 @@ export function ConsentSettings({ orgId, canManage, className = '' }: ConsentSet
                 checked={settings.require_guardian_consent}
                 onChange={(e) => updateSetting('require_guardian_consent', e.target.checked)}
                 disabled={!canManage}
-                className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                className="w-4 h-4 text-primary-600 bg-neutral-100 border-neutral-300 rounded focus:ring-primary-500 focus:ring-2"
               />
               <label htmlFor="require_consent" className="flex-1">
                 <Typography variant="small" className="font-medium">
                   Kräv vårdnadshavaresamtycke för Långtidsläge
                 </Typography>
-                <Typography variant="caption" className="text-gray-600 dark:text-gray-400 mt-1">
+                <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400 mt-1">
                   När aktiverat måste vårdnadshavare ge samtycke innan elevdata kan lagras långsiktigt
                 </Typography>
               </label>
@@ -192,7 +192,7 @@ export function ConsentSettings({ orgId, canManage, className = '' }: ConsentSet
               disabled={!canManage}
               className="w-32"
             />
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400">
               Hur länge ett samtycke är giltigt innan det behöver förnyas
             </Typography>
           </div>
@@ -214,7 +214,7 @@ export function ConsentSettings({ orgId, canManage, className = '' }: ConsentSet
               disabled={!canManage}
               className="w-32"
             />
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400">
               Hur länge data sparas i Korttidsläge innan automatisk rensning
             </Typography>
           </div>
@@ -244,8 +244,8 @@ export function ConsentSettings({ orgId, canManage, className = '' }: ConsentSet
         )}
 
         {!canManage && (
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+          <div className="bg-neutral-50 dark:bg-neutral-800 p-4 rounded-lg">
+            <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400">
               Du behöver administratörsbehörighet för att ändra dessa inställningar.
             </Typography>
           </div>

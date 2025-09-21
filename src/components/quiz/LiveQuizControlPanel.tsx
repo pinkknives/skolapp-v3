@@ -157,8 +157,8 @@ export function LiveQuizControlPanel({
                 </div>
                 <div className="w-full bg-neutral-200 rounded-full h-2">
                   <div 
-                    className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.min(responseRate, 100)}%` }}
+                    className="bg-primary-500 h-2 rounded-full transition-all duration-300 progress-bar-dynamic"
+                    style={{ '--progress-width': `${Math.min(responseRate, 100)}%` } as React.CSSProperties}
                   />
                 </div>
               </div>

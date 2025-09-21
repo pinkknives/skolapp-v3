@@ -302,7 +302,7 @@ export default function TeacherSessionPage() {
                 session.status === 'live' 
                   ? 'bg-green-100 text-green-800'
                   : session.status === 'ended'
-                  ? 'bg-gray-100 text-gray-800'
+                  ? 'bg-neutral-100 text-neutral-800'
                   : 'bg-yellow-100 text-yellow-800'
               }`}>
                 {session.status === 'live' ? liveSession.teacher.status.live :

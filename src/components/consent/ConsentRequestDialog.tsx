@@ -139,13 +139,13 @@ export function ConsentRequestDialog({
                 <Typography variant="h3">Elever som behöver samtycke</Typography>
                 
                 {students.map((student) => (
-                  <div key={student.id} className="flex items-center gap-x-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div key={student.id} className="flex items-center gap-x-4 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
                     <div className="flex-1">
                       <Typography variant="small" className="font-medium">
                         {student.name}
                       </Typography>
                       {student.email && (
-                        <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+                        <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400">
                           {student.email}
                         </Typography>
                       )}
@@ -187,12 +187,12 @@ export function ConsentRequestDialog({
                 {students.map((student) => {
                   const result = results[student.id]
                   return (
-                    <div key={student.id} className="flex items-center gap-x-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div key={student.id} className="flex items-center gap-x-4 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
                       <div className="flex-1">
                         <Typography variant="small" className="font-medium">
                           {student.name}
                         </Typography>
-                        <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+                        <Typography variant="caption" className="text-neutral-600 dark:text-neutral-400">
                           {guardianEmails[student.id]}
                         </Typography>
                       </div>

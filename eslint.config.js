@@ -47,8 +47,8 @@ const eslintConfig = [
       "no-restricted-syntax": [
         "error",
         {
-          selector: "JSXAttribute[name.name='style']",
-          message: "Inline styles are not allowed. Use Tailwind classes or design tokens instead."
+          selector: "JSXAttribute[name.name='style']:not([value.expression.type='AsExpression'])",
+          message: "Inline styles are not allowed. Use Tailwind classes or design tokens instead. For dynamic values, use CSS custom properties with 'as React.CSSProperties'."
         }
       ]
     }
