@@ -33,7 +33,10 @@
     "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse",
     "etl:skolverket": "node scripts/etl/skolverket.js",
     "etl:skolverket:fresh": "node scripts/etl/skolverket.js --fresh",
-    "ingest:syllabus": "tsx scripts/ingest-syllabus.ts"
+    "ingest:syllabus": "tsx scripts/ingest-syllabus.ts",
+    "health:openai": "tsx scripts/health/openai.ts",
+    "health:ably": "tsx scripts/health/ably.ts",
+    "health:all": "npm run health:openai && npm run health:ably"
   },
   "dependencies": {
     "@heroui/react": "^2.8.4",
