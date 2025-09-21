@@ -1,5 +1,6 @@
 // AI Quiz Provider - Provider abstraction layer for quiz question generation and hints
 import { Question, MultipleChoiceQuestion, FreeTextQuestion } from '@/types/quiz'
+import type { RAGContext } from './ragService'
 
 export type AiParams = {
   subject: string;
@@ -292,7 +293,7 @@ export class OpenAIQuizProvider implements QuizAIProvider {
     const { retrieveCurriculumContext, buildRAGEnhancedPrompt, extractCitations } = 
       await import('./ragService');
 
-    let contextData: unknown[] = [];
+    let contextData: RAGContext[] = [];
     let prompt = this.buildPrompt(params);
 
     // Use RAG if enabled and we have subject/grade info

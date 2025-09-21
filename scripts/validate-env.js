@@ -50,11 +50,14 @@ const optionalVars = {
   'OPENAI_PROJECT_ID': 'OpenAI project ID (optional)',
   'ABLY_API_KEY': 'Ably API key (för Live Quiz features)',
   'ABLY_SERVER_API_KEY': 'Ably server API key (för health checks)',
+  'ABLY_TOKEN_TTL_SECONDS': 'Ably token TTL in seconds',
   'STRIPE_SECRET_KEY': 'Stripe secret key (för billing)',
   'STRIPE_WEBHOOK_SECRET': 'Stripe webhook secret',
   'NEXT_PUBLIC_STRIPE_PRICE_MONTHLY': 'Stripe monthly price ID',
   'NEXT_PUBLIC_STRIPE_PRICE_ANNUAL': 'Stripe annual price ID',
   'ADMIN_API_KEY': 'Admin API key (för system operations)',
+  'SYLLABUS_BASE_URL': 'Skolverket syllabus API base URL',
+  'SYLLABUS_REFRESH_CRON': 'Curriculum refresh schedule',
 }
 
 const featureFlags = {

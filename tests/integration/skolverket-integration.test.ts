@@ -110,8 +110,7 @@ describe('Skolverket ETL Integration', () => {
         span: 'Naturliga tal och deras egenskaper...'
       }
 
-      // Test citation display format
-      const expectedFormat = 'Källa: Skolverket – Läroplan/Kursplan'
+      // Test citation display format - verify metadata structure
       
       expect(mockCitation.sourceTitle).toContain('Skolverket')
       expect(mockCitation.license).toContain('Skolverket')

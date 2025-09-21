@@ -36,9 +36,9 @@ export default function LiveSessionPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string>('')
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null)
+  const [_channel, setChannel] = useState<RealtimeChannel | null>(null)
 
   // Get current user
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function LiveSessionPage() {
     const channel = supabase.channel(`live:session:${sessionId}`)
 
     channel
-      .on('broadcast', { event: 'session:start' }, (payload) => {
+      .on('broadcast', { event: 'session:start' }, (_payload) => {
         setState(prev => prev ? {
           ...prev,
           session: { ...prev.session, status: 'ACTIVE' }
@@ -193,7 +193,7 @@ export default function LiveSessionPage() {
           setSelectedAnswer('')
         }
       })
-      .on('broadcast', { event: 'session:end' }, (payload) => {
+      .on('broadcast', { event: 'session:end' }, (_payload) => {
         setState(prev => prev ? {
           ...prev,
           session: { ...prev.session, status: 'ENDED' },
@@ -213,7 +213,7 @@ export default function LiveSessionPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, state?.session.id, sessionId, supabase])
+  }, [user, state?.session.id, sessionId, supabase, state])
 
   // Timer effect
   useEffect(() => {

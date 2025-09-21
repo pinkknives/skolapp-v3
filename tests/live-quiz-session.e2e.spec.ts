@@ -18,12 +18,12 @@ test.describe('Live Quiz Session Flow', () => {
     password: 'testpass123'
   }
   
-  const mockStudent = {
+  const _mockStudent = {
     email: 'student@test.com', 
     password: 'testpass123'
   }
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page: _page }) => {
     // Skip if not running in test environment
     if (!process.env.NEXT_PUBLIC_APP_URL?.includes('localhost')) {
       test.skip('Live quiz tests only run in development environment')
@@ -166,8 +166,8 @@ test.describe('Live Quiz Session Flow', () => {
     const teacherContext = await browser.newContext()
     const studentContext = await browser.newContext()
     
-    const teacherPage = await teacherContext.newPage()
-    const studentPage = await studentContext.newPage()
+    const _teacherPage = await teacherContext.newPage()
+    const _studentPage = await studentContext.newPage()
 
     try {
       // Setup session (abbreviated version)
@@ -197,13 +197,13 @@ test.describe('Live Quiz Session Flow', () => {
   })
 })
 
-// Helper functions for testing
-async function createMockQuiz(page: any, title: string = 'Test Quiz') {
+// Helper functions for testing (placeholder implementations)
+async function _createMockQuiz(_page: unknown, _title: string = 'Test Quiz') {
   // Helper to create a quiz for testing
   // This would be expanded based on your quiz creation flow
 }
 
-async function setupMockSession(teacherPage: any) {
+async function _setupMockSession(_teacherPage: unknown) {
   // Helper to create a session and return PIN
   // This would be expanded based on your session creation flow
 }

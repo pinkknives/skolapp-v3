@@ -45,7 +45,7 @@ export function ActionsMenu({ triggerLabel = "Åtgärder", items }: Props) {
           }
         }}
       >
-        {regularItems.length > 0 && (
+        {regularItems.length > 0 ? (
           <DropdownSection>
             {regularItems.map((item) => (
               <DropdownItem
@@ -57,8 +57,8 @@ export function ActionsMenu({ triggerLabel = "Åtgärder", items }: Props) {
               </DropdownItem>
             ))}
           </DropdownSection>
-        )}
-        {dangerItems.length > 0 && (
+        ) : null}
+        {dangerItems.length > 0 ? (
           <DropdownSection showDivider={regularItems.length > 0}>
             {dangerItems.map((item) => (
               <DropdownItem
@@ -72,7 +72,7 @@ export function ActionsMenu({ triggerLabel = "Åtgärder", items }: Props) {
               </DropdownItem>
             ))}
           </DropdownSection>
-        )}
+        ) : null}
       </DropdownMenu>
     </Dropdown>
   );

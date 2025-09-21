@@ -156,6 +156,7 @@ export function LiveQuizControlPanel({
                   </Typography>
                 </div>
                 <div className="w-full bg-neutral-200 rounded-full h-2">
+                  {/* Progress bar requires inline style for dynamic width */}
                   <div 
                     className="bg-primary-500 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(responseRate, 100)}%` }}

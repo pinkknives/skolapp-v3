@@ -1,0 +1,149 @@
+name: E2E Test Data Cleanup
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC to clean up old test data
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      maxAgeHours:
+        description: 'Maximum age in hours for test data to keep'
+        required: false
+        default: '24'
+      dryRun:
+        description: 'Dry run mode (show what would be cleaned without deleting)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup-e2e-data:
+    name: Clean up E2E test data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DRY_RUN: ${{ github.event.inputs.dryRun || 'false' }}
+      MAX_AGE_HOURS: ${{ github.event.inputs.maxAgeHours || '24' }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+
+      - name: Validate environment
+        run: |
+          echo "🔍 Validating cleanup environment..."
+          
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "❌ NEXT_PUBLIC_SUPABASE_URL not set"
+            exit 1
+          fi
+          
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "❌ SUPABASE_SERVICE_ROLE_KEY not set"
+            exit 1
+          fi
+          
+          echo "✅ Environment validated"
+          echo "Configuration:"
+          echo "  - Dry run: $DRY_RUN"
+          echo "  - Max age: $MAX_AGE_HOURS hours"
+          echo "  - Database: $(echo $NEXT_PUBLIC_SUPABASE_URL | cut -d'/' -f3)"
+
+      - name: Run E2E data cleanup
+        run: |
+          echo "🧹 Starting E2E test data cleanup..."
+          
+          # Run cleanup script
+          node scripts/cleanup-e2e-data.js
+          
+          CLEANUP_EXIT_CODE=$?
+          
+          if [ $CLEANUP_EXIT_CODE -eq 0 ]; then
+            echo "✅ E2E data cleanup completed successfully"
+          else
+            echo "❌ E2E data cleanup failed with exit code $CLEANUP_EXIT_CODE"
+            exit $CLEANUP_EXIT_CODE
+          fi
+
+      - name: Generate cleanup report
+        if: always()
+        run: |
+          echo "📊 E2E Data Cleanup Report"
+          echo "=========================="
+          echo ""
+          echo "**Configuration:**"
+          echo "- Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "- Dry run: $DRY_RUN"
+          echo "- Max age: $MAX_AGE_HOURS hours"
+          echo "- Trigger: ${{ github.event_name }}"
+          echo ""
+          echo "**Status:** $([ $? -eq 0 ] && echo "✅ SUCCESS" || echo "❌ FAILED")"
+          echo ""
+          echo "This cleanup removes:"
+          echo "- E2E test users older than $MAX_AGE_HOURS hours"
+          echo "- Associated quiz data, sessions, and submissions"
+          echo "- User profiles and entitlements"
+          echo ""
+          echo "Data is identified by user_metadata.e2e = true"
+
+      - name: Handle cleanup failure
+        if: failure()
+        run: |
+          echo "🚨 E2E Data Cleanup Failed!"
+          echo ""
+          echo "Possible causes:"
+          echo "- Database connectivity issues"
+          echo "- Insufficient permissions on service role key"
+          echo "- Database schema changes"
+          echo "- Rate limiting or connection timeouts"
+          echo ""
+          echo "Manual intervention may be required to:"
+          echo "1. Verify Supabase service role permissions"
+          echo "2. Check database connectivity"
+          echo "3. Review cleanup script logs for specific errors"
+          echo "4. Consider running cleanup manually with dry-run mode"
+
+  # Send notification to monitoring (optional)
+  notify-completion:
+    name: Notify cleanup completion
+    runs-on: ubuntu-latest
+    needs: cleanup-e2e-data
+    if: always()
+    
+    steps:
+      - name: Log cleanup completion
+        run: |
+          echo "📢 E2E Cleanup Notification"
+          echo "Status: ${{ needs.cleanup-e2e-data.result }}"
+          echo "Completed at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          
+          # In a real environment, this could send notifications to:
+          # - Slack/Discord webhooks
+          # - Email alerts
+          # - Monitoring dashboards
+          # - Log aggregation services
+          
+          if [ "${{ needs.cleanup-e2e-data.result }}" = "success" ]; then
+            echo "✅ E2E data cleanup completed successfully"
+          else
+            echo "❌ E2E data cleanup failed - manual review required"
+          fi
