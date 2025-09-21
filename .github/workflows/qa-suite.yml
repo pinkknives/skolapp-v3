@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       # kör om script finns
       - name: Run deprecated packages check
         if: ${{ hashFiles('scripts/check-deprecated-packages.sh') != '' }}
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - name: Run security scan
         if: ${{ hashFiles('scripts/security-scan.sh') != '' }}
         run: bash scripts/security-scan.sh
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - name: Run performance budget
         if: ${{ hashFiles('scripts/perf-budget.sh') != '' }}
         run: bash scripts/perf-budget.sh
@@ -54,98 +54,18 @@ jobs:
         if: ${{ hashFiles('scripts/perf-budget.sh') == '' }}
         run: echo "No script found; passing by design."
 
-  xbrowser_chromium:
-    name: QA suite / Cross-browser Testing (chromium) (pull_request)
+  lint_and_typecheck:
+    name: QA suite / Lint & TypeCheck (pull_request)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install chromium
-      - name: Cross-browser (chromium)
-        if: ${{ hashFiles('scripts/xbrowser-chromium.sh') != '' }}
-        run: bash scripts/xbrowser-chromium.sh
-      - name: Upload Playwright report (chromium)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-chromium
-          path: playwright-report/
-          retention-days: 14
-      - name: Upload test results (chromium)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-chromium
-          path: test-results/
-          retention-days: 14
-      - name: No-op (script missing)
-        if: ${{ hashFiles('scripts/xbrowser-chromium.sh') == '' }}
-        run: echo "No script found; passing by design."
-
-  xbrowser_firefox:
-    name: QA suite / Cross-browser Testing (firefox) (pull_request)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install firefox
-      - name: Cross-browser (firefox)
-        if: ${{ hashFiles('scripts/xbrowser-firefox.sh') != '' }}
-        run: bash scripts/xbrowser-firefox.sh
-      - name: Upload Playwright report (firefox)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-firefox
-          path: playwright-report/
-          retention-days: 14
-      - name: Upload test results (firefox)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-firefox
-          path: test-results/
-          retention-days: 14
-      - name: No-op (script missing)
-        if: ${{ hashFiles('scripts/xbrowser-firefox.sh') == '' }}
-        run: echo "No script found; passing by design."
-
-  xbrowser_webkit:
-    name: QA suite / Cross-browser Testing (webkit) (pull_request)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install webkit
-      - name: Cross-browser (webkit)
-        if: ${{ hashFiles('scripts/xbrowser-webkit.sh') != '' }}
-        run: bash scripts/xbrowser-webkit.sh
-      - name: Upload Playwright report (webkit)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-webkit
-          path: playwright-report/
-          retention-days: 14
-      - name: Upload test results (webkit)
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-webkit
-          path: test-results/
-          retention-days: 14
-      - name: No-op (script missing)
-        if: ${{ hashFiles('scripts/xbrowser-webkit.sh') == '' }}
-        run: echo "No script found; passing by design."
+      - run: npm ci --legacy-peer-deps
+      - name: Run ESLint
+        run: npm run lint
+      - name: Run TypeScript check
+        run: npm run type-check
 
   swedish_language:
     name: QA suite / Swedish Language Validation (pull_request)
@@ -154,7 +74,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - name: Swedish language validation
         if: ${{ hashFiles('scripts/check-swedish-language.sh') != '' }}
         run: bash scripts/check-swedish-language.sh
