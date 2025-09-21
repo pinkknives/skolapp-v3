@@ -1,5 +1,5 @@
-import tailwind from '@tailwindcss/postcss'
-
-export default {
-  plugins: [tailwind()],
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
 }
