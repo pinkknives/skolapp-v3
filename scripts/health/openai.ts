@@ -1,11 +1,14 @@
 // scripts/health/openai.ts
+import * as dotenv from 'dotenv'
 import OpenAI from "openai";
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
 
 async function main() {
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     baseURL: process.env.OPENAI_BASE_URL || undefined,
-    // @ts-expect-error – projekt-id är valfritt, sätts bara om det finns
     project: process.env.OPENAI_PROJECT_ID || undefined,
   });
 
