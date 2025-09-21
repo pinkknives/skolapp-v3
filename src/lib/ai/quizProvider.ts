@@ -285,11 +285,14 @@ export class OpenAIQuizProvider implements QuizAIProvider {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Import shared OpenAI client
+    const { openai } = await import('./openai');
+    
     // Import RAG service dynamically to avoid circular dependencies
     const { retrieveCurriculumContext, buildRAGEnhancedPrompt, extractCitations } = 
       await import('./ragService');
 
-    let contextData: any[] = [];
+    let contextData: unknown[] = [];
     let prompt = this.buildPrompt(params);
 
     // Use RAG if enabled and we have subject/grade info
@@ -319,37 +322,26 @@ export class OpenAIQuizProvider implements QuizAIProvider {
     }
     
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: params.useRAG 
-                ? `Du är en svensk ämneslärare som skapar quiz-frågor baserat på svenska läroplaner. Använd ENDAST tillhandahållen läroplan-kontext. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
-                : `Du är en svensk lärare som skapar quiz-frågor. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini', // Use more cost-effective model
+        messages: [
+          {
+            role: 'system',
+            content: params.useRAG 
+              ? `Du är en svensk ämneslärare som skapar quiz-frågor baserat på svenska läroplaner. Använd ENDAST tillhandahållen läroplan-kontext. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
+              : `Du är en svensk lärare som skapar quiz-frågor. Svara alltid på svenska och skapa innehåll som är pedagogiskt och åldersanpassat. VIKTIGT: Svara endast med giltigt JSON, inga förklaringar eller extra text.`
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        response_format: { type: 'json_object' }
       });
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content;
+      const content = response.choices[0]?.message?.content;
       
       if (!content) {
         throw new Error('No content returned from OpenAI');
