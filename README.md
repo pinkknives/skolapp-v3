@@ -114,6 +114,23 @@ Skolapp v3 uses Supabase for backend services. To configure the connection:
    - Service role key has admin privileges - keep it secure
    - Only use service role key in server-side code
 
+### Environment Validation
+
+After configuring your environment variables, validate your setup:
+
+```bash
+# Validate all environment variables
+npm run validate:env
+```
+
+This command will:
+- ✅ Check that all required variables are set
+- ⚠️  Warn about missing optional variables
+- 🔗 Test API connectivity for configured services
+- 📖 Provide helpful guidance for any issues
+
+For troubleshooting API key issues, see [docs/github-secrets-guide.md](docs/github-secrets-guide.md).
+
 ### Ably Setup (Live Quiz Real-time Features)
 
 Skolapp v3 supports live quiz functionality with real-time communication via Ably. This enables:

@@ -14,8 +14,12 @@ export async function GET(req: NextRequest) {
     const ttl = Number(process.env.ABLY_TOKEN_TTL_SECONDS ?? 3600)
     
     if (!apiKey) {
+      console.error('❌ ABLY_API_KEY saknas i miljövariablerna')
       return NextResponse.json(
-        { error: 'Ably API-nyckel saknas i miljövariablerna' },
+        { 
+          error: 'Ably API-nyckel saknas i miljövariablerna',
+          details: 'Kontrollera att ABLY_API_KEY är konfigurerad korrekt'
+        },
         { status: 500 }
       )
     }
