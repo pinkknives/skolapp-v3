@@ -1,5 +1,9 @@
 // scripts/health/ably.ts
+import * as dotenv from 'dotenv'
 import { Realtime } from "ably";
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
 
 async function main() {
   const key = process.env.ABLY_SERVER_API_KEY;

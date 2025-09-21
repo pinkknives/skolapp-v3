@@ -36,7 +36,10 @@
     "ingest:syllabus": "tsx scripts/ingest-syllabus.ts",
     "health:openai": "tsx scripts/health/openai.ts",
     "health:ably": "tsx scripts/health/ably.ts",
-    "health:all": "npm run health:openai && npm run health:ably",
+    "health:supabase": "tsx scripts/health/supabase.ts",
+    "health:stripe": "tsx scripts/health/stripe.ts",
+    "health:skolverket": "tsx scripts/health/skolverket.ts",
+    "health:all": "npm run health:openai && npm run health:ably && npm run health:supabase && npm run health:stripe && npm run health:skolverket",
     "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {

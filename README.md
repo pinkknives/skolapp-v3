@@ -1,5 +1,7 @@
 # Skolapp v3
 
+[![API Status](https://github.com/pinkknives/skolapp-v3/actions/workflows/api-smoke-test.yml/badge.svg)](https://github.com/pinkknives/skolapp-v3/actions/workflows/api-smoke-test.yml)
+
 Modern Progressive Web App for school management with accessibility, design system, and performance optimization.
 
 ## Features
