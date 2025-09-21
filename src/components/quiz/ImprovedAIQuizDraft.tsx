@@ -589,7 +589,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
             )}
 
             {step === 'generating' && (
-              <div className="text-center py-12">
+              <div className="text-center py-12" data-testid="ai-quiz-status">
                 <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -662,7 +662,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
             )}
 
             {step === 'preview' && (
-              <div className="space-y-4">
+              <div className="space-y-4" data-testid="ai-quiz-result">
                 <div className="flex items-center justify-between">
                   <Typography variant="h6">
                     {aiAssistant.states.previewTitle.replace('{count}', generatedQuestions.length.toString())}
@@ -701,6 +701,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                           ? 'border-primary-300 bg-primary-50'
                           : 'border-neutral-200 hover:border-neutral-300'
                       }`}
+                      data-testid="ai-quiz-question"
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex items-center h-5">
@@ -842,7 +843,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   disabled={!isFormValid}
                   className="bg-primary-600 hover:bg-primary-700"
                   aria-describedby="ai-disclaimer"
-                  data-testid="ai-generate-questions"
+                  data-testid="ai-quiz-start"
                 >
                   {aiAssistant.actions.generate}
                 </Button>
