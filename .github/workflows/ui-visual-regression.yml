@@ -1,0 +1,54 @@
+name: UI Visual Regression
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Bas-URL (t.ex. https://stage.skolapp.se)"
+        required: false
+        default: ""
+  # (valfritt) schemalagd nattlig kontroll
+  # schedule:
+  #   - cron: "0 3 * * *"  # 03:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-visual-regression
+  cancel-in-progress: true
+
+jobs:
+  vr:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: ${{ github.event.inputs.baseUrl || secrets.SKOLAPP_BASE_URL }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: |
+          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          npx playwright install --with-deps
+
+      - name: Run Playwright visual tests
+        run: npx playwright test tests/e2e/ui_layout.spec.ts --reporter=line
+
+      - name: Upload artifacts (screens/video/trace)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-ui-artifacts
+          path: |
+            playwright-report/**
+            test-results/**
+            **/screenshots/**
+            **/*.zip
+          if-no-files-found: warn

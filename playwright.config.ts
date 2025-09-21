@@ -88,6 +88,32 @@ export default defineConfig({
       },
       testMatch: /.*\.perf\.spec\.ts/,
     },
+
+    // Visual regression testing projects
+    {
+      name: 'mobile-visual',
+      use: { 
+        ...devices['Desktop Chrome'],
+        viewport: { width: 360, height: 780 },
+      },
+      testMatch: /.*ui_layout\.spec\.ts/,
+    },
+    {
+      name: 'tablet-visual',
+      use: { 
+        ...devices['Desktop Chrome'],
+        viewport: { width: 768, height: 1024 },
+      },
+      testMatch: /.*ui_layout\.spec\.ts/,
+    },
+    {
+      name: 'desktop-visual',
+      use: { 
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+      },
+      testMatch: /.*ui_layout\.spec\.ts/,
+    },
   ],
 
   webServer: {
@@ -97,4 +123,7 @@ export default defineConfig({
     timeout: 120 * 1000,
   },
   outputDir: 'test-results',
+  expect: {
+    toMatchSnapshot: { maxDiffPixelRatio: 0.02 }, // tillåt liten rendering-diff
+  },
 });

@@ -175,6 +175,7 @@ export default function RegisterPage() {
               type="submit"
               className="w-full"
               disabled={state === 'sending' || !email || !displayName}
+              data-testid="signup-submit"
             >
               {state === 'sending' ? 'Skapar konto...' : 'Skapa konto'}
             </Button>

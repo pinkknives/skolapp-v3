@@ -189,6 +189,7 @@ export function SessionJoinForm({ prefilledCode = '', onJoinSuccess, className }
                 disabled={!displayName.trim() || displayName.trim().length < 2}
                 fullWidth
                 size="lg"
+                data-testid="ai-quiz-start"
               >
                 Gå med i sessionen
               </Button>
