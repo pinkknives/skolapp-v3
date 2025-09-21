@@ -96,6 +96,7 @@ export function UserMenu({ onLogin }: UserMenuProps) {
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
           className="gap-x-2"
+          data-testid="user-profile"
         >
           <User size={16} strokeWidth={2} />
           {user.firstName}
