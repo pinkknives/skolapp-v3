@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
@@ -28,6 +28,9 @@ export function LiveQuizControlPanel({
 
   const { state, participants, isConnected, studentCount } = useQuizControl(quizId, 'teacher')
   const { getAnswerCountForQuestion } = useQuizAnswers(quizId)
+
+  // Ref for progress bar to avoid inline styles
+  const progressRef = useRef<HTMLDivElement>(null)
 
   const currentQuestion = questions[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex >= questions.length - 1
@@ -89,6 +92,13 @@ export function LiveQuizControlPanel({
   const responseRate = studentCount > 0 
     ? Math.round((currentAnswerCount / studentCount) * 100) 
     : 0
+
+  // Update progress bar
+  useEffect(() => {
+    if (progressRef.current) {
+      progressRef.current.style.setProperty('--progress-width', `${Math.min(responseRate, 100)}%`)
+    }
+  }, [responseRate])
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -157,8 +167,8 @@ export function LiveQuizControlPanel({
                 </div>
                 <div className="w-full bg-neutral-200 rounded-full h-2">
                   <div 
+                    ref={progressRef}
                     className="bg-primary-500 h-2 rounded-full transition-all duration-300 progress-bar-dynamic"
-                    style={{ '--progress-width': `${Math.min(responseRate, 100)}%` } as React.CSSProperties}
                   />
                 </div>
               </div>
