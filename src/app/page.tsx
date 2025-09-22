@@ -78,7 +78,7 @@ export default function HomePage() {
         {/* Decorative gradient background - separate layer to avoid opacity bleeding */}
         <div 
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary-50/50 to-background dark:from-primary-950/30 dark:to-background"
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background to-background/0"
         />
         <Container>
           <motion.div
