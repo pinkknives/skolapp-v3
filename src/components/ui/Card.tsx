@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
+import { Slot } from '@radix-ui/react-slot'
 
 const cardVariants = cva(
   'rounded-lg border bg-white text-neutral-900 shadow-sm transition-all duration-300',
@@ -33,13 +34,16 @@ export interface CardProps
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, padding, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(cardVariants({ variant, padding, className }))}
-      {...props}
-    />
-  )
+  ({ className, variant, padding, asChild, ...props }, ref) => {
+    const Comp: any = asChild ? Slot : 'div'
+    return (
+      <Comp
+        ref={ref}
+        className={cn(cardVariants({ variant, padding, className }))}
+        {...props}
+      />
+    )
+  }
 )
 
 Card.displayName = 'Card'

@@ -86,7 +86,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="sv">{/* Changed to Swedish */}
+    <html lang="sv" suppressHydrationWarning>{/* Changed to Swedish */}
       <head>
         {/* Pre-render theme application to avoid FOUC */}
         <script
@@ -122,7 +122,6 @@ export default function RootLayout({
         
         {/* Security */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         
         {/* Focus visible polyfill for older browsers */}
@@ -138,7 +137,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>
           <AuthProvider>
             {children}
@@ -149,7 +148,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
+              if ('serviceWorker' in navigator && '${process.env.NODE_ENV}' === 'production') {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {

@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
+import { Slot } from '@radix-ui/react-slot'
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-x-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
@@ -53,15 +54,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     rightIcon, 
     children, 
     disabled,
+    asChild,
     ...props 
   }, ref) => {
     const isDisabled = disabled || loading
+    const Comp: any = asChild ? Slot : 'button'
 
     return (
-      <button
+      <Comp
         className={cn(buttonVariants({ variant, size, fullWidth, className }))}
         ref={ref}
-        disabled={isDisabled}
+        {...(!asChild && { disabled: isDisabled })}
         aria-disabled={isDisabled}
         aria-busy={loading}
         {...props}
@@ -85,7 +88,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             {rightIcon}
           </span>
         )}
-      </button>
+      </Comp>
     )
   }
 )
