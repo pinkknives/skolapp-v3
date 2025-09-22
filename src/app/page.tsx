@@ -74,7 +74,12 @@ export default function HomePage() {
   return (
     <Layout>
       {/* Hero Section */}
-      <Section className="bg-gradient-to-b from-primary-50 to-white" spacing="xl">
+      <Section className="relative bg-background" spacing="xl">
+        {/* Decorative gradient background - separate layer to avoid opacity bleeding */}
+        <div 
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary-50/50 to-background dark:from-primary-950/30 dark:to-background"
+        />
         <Container>
           <motion.div
             initial="hidden"
@@ -83,9 +88,9 @@ export default function HomePage() {
             className="text-center"
           >
             <motion.div variants={itemVariants}>
-              <Heading level={1} className="mb-6">
+              <Heading level={1} className="mb-6 text-foreground">
                 Välkommen till{' '}
-                <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-600">
                   Skolapp
                 </span>
               </Heading>
@@ -94,7 +99,7 @@ export default function HomePage() {
             <motion.div variants={itemVariants}>
               <Typography 
                 variant="subtitle1" 
-                className="mx-auto max-w-2xl mb-8 text-neutral-600"
+                className="mx-auto max-w-2xl mb-8 text-muted-foreground"
               >
                 Skapa engagerande quiz, följ elevers utveckling och arbeta smartare – snabbt och enkelt.
               </Typography>
@@ -123,10 +128,10 @@ export default function HomePage() {
       <Section>
         <Container>
           <div className="text-center mb-16">
-            <Heading level={2} className="mb-4">
+            <Heading level={2} className="mb-4 text-foreground">
               För Lärare
             </Heading>
-            <Typography variant="subtitle1" className="text-neutral-600 max-w-2xl mx-auto">
+            <Typography variant="subtitle1" className="text-muted-foreground max-w-2xl mx-auto">
               Kraftfulla verktyg för att skapa engagerande lektioner och följa upp elevernas framsteg.
             </Typography>
           </div>
@@ -182,10 +187,10 @@ export default function HomePage() {
   <Section className="bg-neutral-50 dark:bg-neutral-950">
         <Container>
           <div className="text-center mb-16">
-            <Heading level={2} className="mb-4">
+            <Heading level={2} className="mb-4 text-foreground">
               För Elever
             </Heading>
-            <Typography variant="subtitle1" className="text-neutral-600 max-w-2xl mx-auto">
+            <Typography variant="subtitle1" className="text-muted-foreground max-w-2xl mx-auto">
               Lär dig på ett roligt och interaktivt sätt genom quiz och utmaningar anpassade för dig.
             </Typography>
           </div>

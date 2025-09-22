@@ -92,8 +92,9 @@ export default async function RootLayout({
   return (
     <html lang="sv" className={initialThemeClass} suppressHydrationWarning>{/* Changed to Swedish */}
       <head>
-        {/* Pre-render theme application to avoid FOUC */}
+        {/* Pre-render theme application via inline script to avoid FOUC */}
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -127,21 +128,32 @@ export default async function RootLayout({
         {/* Security */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
-        
-        {/* Focus visible polyfill for older browsers */}
+      </head>
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        {/* Focus visible helper for older browsers */}
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                if (!window.CSS || !window.CSS.supports || !window.CSS.supports('selector(:focus-visible)')) {
-                  document.body.classList.add('js-focus-visible');
-                }
+                try {
+                  var supports = window.CSS && window.CSS.supports && window.CSS.supports('selector(:focus-visible)');
+                  if (!supports) {
+                    var add = function(){
+                      try { document.body && document.body.classList.add('js-focus-visible'); } catch (e) {}
+                    };
+                    if (document.readyState === 'loading') {
+                      document.addEventListener('DOMContentLoaded', add, { once: true });
+                    } else {
+                      add();
+                    }
+                  }
+                } catch (e) {}
               })();
             `,
           }}
         />
-      </head>
-      <body className="font-sans antialiased" suppressHydrationWarning>
+        
         <Providers initialTheme={initialThemeClass === 'dark' ? 'dark' : 'light'}>
           <AuthProvider>
             {children}
