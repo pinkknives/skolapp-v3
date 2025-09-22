@@ -52,6 +52,7 @@ export const tokens = {
   colors: {
     primary: brand.primary,
     neutral: {
+      25:  '#fcfcfd',
       50:  '#fafafa',
       100: '#f5f5f5',
       200: '#e5e5e5',
@@ -65,6 +66,7 @@ export const tokens = {
     },
     // Moved old blue palette to info
     info: {
+      25:  '#f5fbff',
       50:  '#f0f9ff',
       100: '#e0f2fe',
       200: '#bae6fd',
@@ -78,6 +80,7 @@ export const tokens = {
     },
     // Semantic colors
     success: {
+      25:  '#f6fdf8',
       50:  '#f0fdf4',
       100: '#dcfce7',
       200: '#bbf7d0',
@@ -90,6 +93,7 @@ export const tokens = {
       900: '#14532d',
     },
     warning: {
+      25:  '#fffdf5',
       50:  '#fffbeb',
       100: '#fef3c7',
       200: '#fde68a',
@@ -102,6 +106,7 @@ export const tokens = {
       900: '#78350f',
     },
     error: {
+      25:  '#fff7f7',
       50:  '#fef2f2',
       100: '#fee2e2',
       200: '#fecaca',
