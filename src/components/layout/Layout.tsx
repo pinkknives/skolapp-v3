@@ -21,7 +21,7 @@ export function Layout({
   footerProps 
 }: LayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"

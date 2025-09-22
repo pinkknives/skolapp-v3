@@ -111,7 +111,7 @@ describe('Skolverket ETL Integration', () => {
       }
 
       // Test citation display format
-      const expectedFormat = 'Källa: Skolverket – Läroplan/Kursplan'
+  const _expectedFormat = 'Källa: Skolverket – Läroplan/Kursplan'
       
       expect(mockCitation.sourceTitle).toContain('Skolverket')
       expect(mockCitation.license).toContain('Skolverket')

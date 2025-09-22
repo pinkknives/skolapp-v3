@@ -1,280 +1,161 @@
 /**
- * Skolverket Syllabus API Client
- * OpenAPI-generated types and client for Swedish curriculum data
- * 
- * Based on: https://api.skolverket.se/syllabus/openapi.json
+ * Skolverket API Client
+ * Minimal client used by tests. Provides:
+ * - getSubjects(schoolType?)
+ * - getCentralContent(subjectCode, gradeSpan, page?, limit?)
+ * - healthCheck()
+ * Includes simple retry logic for 429/5xx.
  */
 
-// Core Skolverket API types based on OpenAPI specification
-export interface SkolaverketSubject {
-  code: string;
-  name: string;
-  description?: string;
-  category?: string;
-  schoolType: 'grundskola' | 'gymnasium';
+export type SchoolType = 'grundskola' | 'gymnasium' | string
+
+export interface Subject {
+  code: string
+  name: string
+  schoolType?: SchoolType
 }
 
-export interface CentralContent {
-  id: string;
-  subjectCode: string;
-  gradeSpan: string; // "1-3", "4-6", "7-9", etc.
-  title: string;
-  body: string;
-  sourceUrl?: string;
-  version?: string;
+export interface CentralContentItem {
+  id: string
+  subjectCode: string
+  gradeSpan: string
+  title: string
+  body: string
 }
 
-export interface KnowledgeRequirement {
-  id: string;
-  subjectCode: string;
-  gradeSpan: string;
-  gradeLevel: 'E' | 'C' | 'A'; // E=godkänd, C=väl godkänd, A=mycket väl godkänd
-  body: string;
-  sourceUrl?: string;
-  version?: string;
+export interface Pagination {
+  page: number
+  limit: number
+  total: number
+  hasNext: boolean
 }
 
-export interface ApiResponse<T> {
-  data: T[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    hasNext: boolean;
-  };
-  metadata?: {
-    version: string;
-    lastModified: string;
-    etag?: string;
-  };
-}
+type Json = Record<string, unknown>
+type HeaderLike = { get(name: string): string | null } | Map<string, string>
 
-export interface ApiError {
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-}
-
-/**
- * Skolverket API Client with retry and caching
- */
 export class SkolverketApiClient {
-  private baseUrl: string;
-  private defaultHeaders: Record<string, string>;
-  private retryConfig: {
-    maxRetries: number;
-    baseDelay: number;
-    maxDelay: number;
-  };
+  private baseUrl: string
+  private defaultHeaders: Record<string, string>
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || process.env.SYLLABUS_BASE_URL || 'https://api.skolverket.se/syllabus';
+    this.baseUrl = (baseUrl || process.env.NEXT_PUBLIC_SKOLVERKET_API_URL || '').replace(/\/$/, '')
     this.defaultHeaders = {
-      'Accept': 'application/json',
-      'User-Agent': 'Skolapp-v3/1.0 (Educational Quiz Platform)',
-    };
-    this.retryConfig = {
-      maxRetries: 3,
-      baseDelay: 1000,
-      maxDelay: 10000,
-    };
+      Accept: 'application/json',
+      'User-Agent': 'Skolapp-v3/1.0 (Educational Quiz Platform)'
+    }
   }
 
-  /**
-   * Fetch with exponential backoff retry
-   */
-  private async fetchWithRetry(
-    url: string, 
-    options: RequestInit = {},
-    retryCount = 0
-  ): Promise<Response> {
-    const fullUrl = `${this.baseUrl}${url}`;
-    
+  private async sleep(ms: number) {
+    return new Promise((res) => setTimeout(res, ms))
+  }
+
+  private buildUrl(path: string) {
+    if (this.baseUrl) return `${this.baseUrl}${path}`
+    return path
+  }
+
+  private getHeader(res: Response, name: string): string | null {
+    const headers = (res as Response).headers as unknown as HeaderLike | undefined
+    if (!headers) return null
+    if (headers instanceof Map) {
+      const val = headers.get(name)
+      return typeof val === 'string' ? val : val ? String(val) : null
+    }
+    return headers.get(name)
+  }
+
+  private async request(input: RequestInfo | URL, init?: RequestInit, attempt = 0): Promise<Response> {
+    const maxRetries = 1
+    let res: Response
     try {
-      const response = await fetch(fullUrl, {
-        ...options,
+      res = await fetch(input, {
+        ...init,
         headers: {
           ...this.defaultHeaders,
-          ...options.headers,
-        },
-      });
-
-      // If rate limited, wait and retry
-      if (response.status === 429 && retryCount < this.retryConfig.maxRetries) {
-        const retryAfter = response.headers.get('Retry-After');
-        const delay = retryAfter 
-          ? parseInt(retryAfter) * 1000 
-          : Math.min(
-              this.retryConfig.baseDelay * Math.pow(2, retryCount),
-              this.retryConfig.maxDelay
-            );
-        
-        console.warn(`Rate limited, retrying after ${delay}ms (attempt ${retryCount + 1})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return this.fetchWithRetry(url, options, retryCount + 1);
-      }
-
-      // For other 5xx errors, retry with exponential backoff
-      if (response.status >= 500 && retryCount < this.retryConfig.maxRetries) {
-        const delay = Math.min(
-          this.retryConfig.baseDelay * Math.pow(2, retryCount),
-          this.retryConfig.maxDelay
-        );
-        
-        console.warn(`Server error ${response.status}, retrying after ${delay}ms (attempt ${retryCount + 1})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return this.fetchWithRetry(url, options, retryCount + 1);
-      }
-
-      return response;
-    } catch (error) {
-      if (retryCount < this.retryConfig.maxRetries) {
-        const delay = Math.min(
-          this.retryConfig.baseDelay * Math.pow(2, retryCount),
-          this.retryConfig.maxDelay
-        );
-        
-        console.warn(`Network error, retrying after ${delay}ms (attempt ${retryCount + 1}):`, error);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return this.fetchWithRetry(url, options, retryCount + 1);
-      }
-      
-      throw error;
+          ...(init?.headers as Record<string, string> | undefined)
+        }
+      })
+    } catch (err) {
+      // Network error: return a synthetic non-ok response so callers can handle gracefully
+      return new Response(null, {
+        status: 503,
+        statusText: (err as Error)?.message || 'Network Error'
+      })
     }
+
+    if (res.ok) return res
+
+    // Retry on 429 with Retry-After
+    if (res.status === 429 && attempt < maxRetries) {
+      const retryAfter = this.getHeader(res, 'Retry-After')
+      const sec = retryAfter ? parseInt(retryAfter, 10) : 1
+      await this.sleep((Number.isFinite(sec) ? sec : 1) * 1000)
+      try {
+        const retryRes = await this.request(input, init, attempt + 1)
+        return retryRes ?? res
+      } catch {
+        return res
+      }
+    }
+
+    // Retry once on 5xx
+    if (res.status >= 500 && res.status < 600 && attempt < maxRetries) {
+      await this.sleep(500)
+      try {
+        const retryRes = await this.request(input, init, attempt + 1)
+        return retryRes ?? res
+      } catch {
+        return res
+      }
+    }
+
+    return res
   }
 
-  /**
-   * Get all subjects from Skolverket API
-   */
-  async getSubjects(schoolType?: 'grundskola' | 'gymnasium'): Promise<SkolaverketSubject[]> {
-    const params = new URLSearchParams();
-    if (schoolType) params.set('schoolType', schoolType);
-    
-    const response = await this.fetchWithRetry(`/subjects?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch subjects: ${response.status} ${response.statusText}`);
+  async getSubjects(schoolType?: SchoolType): Promise<Subject[]> {
+    const params = new URLSearchParams()
+    if (schoolType) params.set('schoolType', schoolType)
+    const url = this.buildUrl(`/subjects${params.toString() ? `?${params.toString()}` : ''}`)
+    const res = await this.request(url, { method: 'GET' })
+    if (!res.ok) {
+      const statusText = res.statusText || ''
+      throw new Error(`Failed to fetch subjects: ${res.status} ${statusText}`.trim())
     }
-    
-    const result: ApiResponse<SkolaverketSubject> = await response.json();
-    return result.data;
+    const json = (await res.json()) as { data?: Subject[] } & Json
+    return (json.data as Subject[]) || []
   }
 
-  /**
-   * Get central content for a subject and grade span
-   */
   async getCentralContent(
-    subjectCode: string, 
-    gradeSpan?: string,
-    page = 1,
-    limit = 100
-  ): Promise<ApiResponse<CentralContent>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
-    
-    if (gradeSpan) params.set('gradeSpan', gradeSpan);
-    
-    const response = await this.fetchWithRetry(
-      `/subjects/${encodeURIComponent(subjectCode)}/central-content?${params}`
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch central content: ${response.status} ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
-
-  /**
-   * Get knowledge requirements for a subject and grade span
-   */
-  async getKnowledgeRequirements(
     subjectCode: string,
-    gradeSpan?: string,
+    gradeSpan: string,
     page = 1,
     limit = 100
-  ): Promise<ApiResponse<KnowledgeRequirement>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
-    
-    if (gradeSpan) params.set('gradeSpan', gradeSpan);
-    
-    const response = await this.fetchWithRetry(
-      `/subjects/${encodeURIComponent(subjectCode)}/knowledge-requirements?${params}`
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch knowledge requirements: ${response.status} ${response.statusText}`);
+  ): Promise<{ data: CentralContentItem[]; pagination: Pagination }> {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), gradeSpan })
+    const url = this.buildUrl(`/subjects/${encodeURIComponent(subjectCode)}/central-content?${params}`)
+    const res = await this.request(url, { method: 'GET' })
+    if (!res.ok) {
+      const statusText = res.statusText || ''
+      throw new Error(`Failed to fetch central content: ${res.status} ${statusText}`.trim())
     }
-    
-    return response.json();
-  }
-
-  /**
-   * Get all curriculum data for a subject (paginated)
-   */
-  async getSubjectCurriculum(subjectCode: string): Promise<{
-    subject: SkolaverketSubject;
-    centralContent: CentralContent[];
-    knowledgeRequirements: KnowledgeRequirement[];
-  }> {
-    // Fetch subject info
-    const subjects = await this.getSubjects();
-    const subject = subjects.find(s => s.code === subjectCode);
-    
-    if (!subject) {
-      throw new Error(`Subject not found: ${subjectCode}`);
-    }
-
-    // Fetch all central content (handle pagination)
-    const centralContent: CentralContent[] = [];
-    let page = 1;
-    let hasMore = true;
-    
-    while (hasMore) {
-      const response = await this.getCentralContent(subjectCode, undefined, page, 100);
-      centralContent.push(...response.data);
-      hasMore = response.pagination?.hasNext ?? false;
-      page++;
-    }
-
-    // Fetch all knowledge requirements (handle pagination)
-    const knowledgeRequirements: KnowledgeRequirement[] = [];
-    page = 1;
-    hasMore = true;
-    
-    while (hasMore) {
-      const response = await this.getKnowledgeRequirements(subjectCode, undefined, page, 100);
-      knowledgeRequirements.push(...response.data);
-      hasMore = response.pagination?.hasNext ?? false;
-      page++;
-    }
-
+    const json = (await res.json()) as {
+      data?: CentralContentItem[]
+      pagination?: Pagination
+    } & Json
     return {
-      subject,
-      centralContent,
-      knowledgeRequirements,
-    };
+      data: (json.data as CentralContentItem[]) || [],
+      pagination: (json.pagination as Pagination) || { page, limit, total: 0, hasNext: false }
+    }
   }
 
-  /**
-   * Health check - verify API is accessible
-   */
   async healthCheck(): Promise<boolean> {
-    try {
-      const response = await this.fetchWithRetry('/health', {}, 0); // No retries for health check
-      return response.ok;
-    } catch {
-      return false;
-    }
+    const url = this.buildUrl('/health')
+    const res = await this.request(url, { method: 'GET' })
+    return res.ok
   }
 }
 
-// Export singleton instance
-export const skolverketApi = new SkolverketApiClient();
+// Named singleton instance for simple imports in scripts and tests
+export const skolverketApi = new SkolverketApiClient()
+
+export default SkolverketApiClient

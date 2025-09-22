@@ -79,7 +79,7 @@ export function Footer({
   return (
     <footer
       className={cn(
-        'bg-neutral-50 border-t border-neutral-200',
+        'bg-neutral-50 border-t border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800',
         className
       )}
       role="contentinfo"
@@ -108,7 +108,7 @@ export function Footer({
                   <a
                     key={item.name}
                     href={item.href}
-                    className="text-neutral-400 hover:text-neutral-500 transition-colors duration-200"
+                    className="text-neutral-400 hover:text-neutral-500 transition-colors duration-200 dark:text-neutral-500 dark:hover:text-neutral-400"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Follow us on ${item.name}`}
@@ -126,7 +126,7 @@ export function Footer({
             <div className="md:grid md:grid-cols-2 md:gap-8">
               {sections.slice(0, 2).map((section) => (
                 <div key={section.title}>
-                  <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase">
+                  <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase dark:text-neutral-100">
                     {section.title}
                   </Typography>
                   <ul role="list" className="mt-4 space-y-4">
@@ -137,14 +137,14 @@ export function Footer({
                             href={link.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
                           >
                             {link.label}
                           </a>
                         ) : (
                           <Link
                             href={link.href}
-                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
                           >
                             {link.label}
                           </Link>
@@ -158,7 +158,7 @@ export function Footer({
             <div className="md:grid md:grid-cols-2 md:gap-8">
               {sections.slice(2).map((section) => (
                 <div key={section.title}>
-                  <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase">
+                  <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase dark:text-neutral-100">
                     {section.title}
                   </Typography>
                   <ul role="list" className="mt-4 space-y-4">
@@ -169,14 +169,14 @@ export function Footer({
                             href={link.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
                           >
                             {link.label}
                           </a>
                         ) : (
                           <Link
                             href={link.href}
-                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                            className="text-base text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
                           >
                             {link.label}
                           </Link>
@@ -190,7 +190,7 @@ export function Footer({
               {/* Newsletter signup */}
               {showNewsletter && (
                 <div className="mt-8 md:mt-0">
-                  <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase">
+                  <Typography variant="small" className="font-semibold text-neutral-900 tracking-wider uppercase dark:text-neutral-100">
                     Prenumerera på vårt nyhetsbrev
                   </Typography>
                   <Typography variant="body2" className="mt-4">
@@ -206,13 +206,13 @@ export function Footer({
                       id="email-address"
                       autoComplete="email"
                       required
-                      className="min-w-0 flex-auto rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      className="min-w-0 flex-auto rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-neutral-50 dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700 dark:placeholder:text-neutral-500 dark:focus:ring-offset-neutral-900"
                       placeholder="Ange din e-postadress"
                     />
                     <div className="mt-4 sm:mt-0 sm:ml-4 sm:flex-shrink-0">
                       <button
                         type="submit"
-                        className="flex w-full items-center justify-center rounded-md bg-primary-700 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 transition-colors duration-200"
+                        className="flex w-full items-center justify-center rounded-md bg-primary-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors duration-200"
                       >
                         Prenumerera
                       </button>
@@ -225,7 +225,7 @@ export function Footer({
         </div>
 
         {/* Bottom section */}
-        <div className="mt-12 border-t border-neutral-200 pt-8">
+        <div className="mt-12 border-t border-neutral-200 pt-8 dark:border-neutral-800">
           <div className="md:flex md:items-center md:justify-between">
             <Typography variant="body2">
               &copy; {currentYear} Skolapp. Alla rättigheter förbehållna.
@@ -233,19 +233,19 @@ export function Footer({
             <div className="mt-4 flex space-x-6 md:mt-0">
               <Link 
                 href="/integritet" 
-                className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
               >
                 Integritet
               </Link>
               <Link 
                 href="/villkor" 
-                className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
               >
                 Villkor
               </Link>
               <Link 
                 href="/tillganglighet" 
-                className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200"
+                className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-200 dark:text-neutral-400 dark:hover:text-neutral-200"
               >
                 Tillgänglighet
               </Link>

@@ -6,6 +6,12 @@
  */
 
 import { Page } from '@playwright/test';
+
+declare global {
+  interface Window {
+    AI_MODE?: 'mock' | 'live';
+  }
+}
 import { AiQuestion } from '@/lib/ai/quizProvider';
 
 /**

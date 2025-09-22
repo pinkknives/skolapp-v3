@@ -10,7 +10,7 @@ import {
   ParticipantStatus
 } from '@/types/quiz'
 import { supabaseServer } from '@/lib/supabase-server'
-import { requireTeacher } from '@/lib/auth'
+import { getCurrentUser, requireTeacher } from '@/lib/auth'
 
 export interface CreateClassResult {
   success: boolean
@@ -110,7 +110,11 @@ export async function createClassAction(formData: FormData): Promise<CreateClass
  */
 export async function getTeacherClasses(): Promise<ClassWithMembers[]> {
   try {
-    const user = await requireTeacher()
+    // During prerender there is no auth context – avoid throwing and just return empty
+    const user = await getCurrentUser()
+    if (!user || !user.profile || user.profile.role !== 'teacher') {
+      return []
+    }
     const supabase = supabaseServer()
 
     // Get classes with member counts
@@ -165,6 +169,7 @@ export async function getTeacherClasses(): Promise<ClassWithMembers[]> {
       memberCount: classData.class_members.filter((m: { status: string; role: string }) => m.status === 'active' && m.role === 'student').length
     }))
   } catch (error) {
+    // Only log unexpected errors (DB/network). Missing auth is handled above.
     console.error('Error getting teacher classes:', error)
     return []
   }

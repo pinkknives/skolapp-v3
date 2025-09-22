@@ -7,21 +7,18 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { 
   Play, 
-  Pause, 
   SkipForward, 
   Users, 
-  QrCode, 
   Copy, 
   Trophy,
   Loader2,
-  AlertCircle,
-  CheckCircle,
-  Clock
+  AlertCircle
 } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import QRCodeLib from 'qrcode'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 import type { LiveQuizSession, LiveQuizParticipant, Question } from '@/types/quiz'
+import Image from 'next/image'
 
 interface ControlState {
   session: LiveQuizSession
@@ -51,8 +48,7 @@ export default function LiveControlPage() {
   const [isActionLoading, setIsActionLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [copySuccess, setCopySuccess] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   
   // Refs for progress bars to avoid inline styles
   const answerProgressRef = useRef<HTMLDivElement>(null)
@@ -214,13 +210,14 @@ export default function LiveControlPage() {
   }, [user, sessionId, supabase])
 
   // Setup real-time subscription
+  const sessionStateId = state?.session.id
   useEffect(() => {
-    if (!user || !state) return
+    if (!user || !sessionStateId) return
 
     const channel = supabase.channel(`live:session:${sessionId}`)
 
     channel
-      .on('broadcast', { event: 'participant_joined' }, (payload) => {
+      .on('broadcast', { event: 'participant_joined' }, (_payload) => {
         // Refresh participant list
         initializeSession()
       })
@@ -236,12 +233,10 @@ export default function LiveControlPage() {
       })
       .subscribe()
 
-    setChannel(channel)
-
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user, state?.session.id, sessionId, supabase, initializeSession])
+  }, [user, sessionStateId, sessionId, supabase, initializeSession])
 
   // Initialize when user is available
   useEffect(() => {
@@ -401,7 +396,7 @@ export default function LiveControlPage() {
   const studentParticipants = state.participants.filter(p => p.role === 'student')
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-4">
+  <div className="min-h-screen bg-neutral-50 p-4 dark:bg-neutral-950">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -478,7 +473,7 @@ export default function LiveControlPage() {
                 </Typography>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-neutral-100 rounded-lg p-3">
+                  <div className="bg-neutral-100 rounded-lg p-3 dark:bg-neutral-900">
                     <Typography variant="caption" className="text-neutral-600">
                       Har svarat
                     </Typography>
@@ -486,7 +481,7 @@ export default function LiveControlPage() {
                       {state.answerStats.answeredCount} / {state.answerStats.totalParticipants}
                     </Typography>
                   </div>
-                  <div className="bg-neutral-100 rounded-lg p-3">
+                  <div className="bg-neutral-100 rounded-lg p-3 dark:bg-neutral-900">
                     <Typography variant="caption" className="text-neutral-600">
                       Svarsgrad
                     </Typography>
@@ -558,10 +553,13 @@ export default function LiveControlPage() {
                     <Typography variant="caption" className="text-neutral-600 block mb-2">
                       QR-kod
                     </Typography>
-                    <img
+                    <Image
                       src={state.qrCodeUrl}
                       alt="QR kod för att gå med i sessionen"
                       className="mx-auto rounded-md border"
+                      width={200}
+                      height={200}
+                      priority
                     />
                   </div>
                 )}
@@ -602,7 +600,7 @@ export default function LiveControlPage() {
                   </Typography>
                 ) : (
                   studentParticipants.map((participant) => (
-                    <div key={participant.userId} className="flex items-center justify-between p-2 bg-neutral-50 rounded">
+                    <div key={participant.userId} className="flex items-center justify-between p-2 bg-neutral-50 rounded dark:bg-neutral-900">
                       <Typography variant="body2">
                         {participant.displayName}
                       </Typography>

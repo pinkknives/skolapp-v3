@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Providers from './providers'
+import { cookies } from 'next/headers'
 
 export const metadata: Metadata = {
   title: {
@@ -53,12 +54,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico' },
       { url: '/icons/icon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/brand/Skolapp-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     other: [
       { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#377b7b' },
@@ -80,14 +80,39 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // SSR theme from cookie to minimize hydration differences
+  const cookieStore = await cookies()
+  const themeCookie = cookieStore.get('theme')?.value
+  const initialThemeClass = themeCookie === 'dark' ? 'dark' : undefined
   return (
-    <html lang="sv">{/* Changed to Swedish */}
+    <html lang="sv" className={initialThemeClass} suppressHydrationWarning>{/* Changed to Swedish */}
       <head>
+        {/* Pre-render theme application via inline script to avoid FOUC */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var key = 'theme';
+                  var saved = localStorage.getItem(key);
+                  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var theme = saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light');
+                  if (theme === 'dark') document.documentElement.classList.add('dark');
+                  var meta = document.querySelector('meta#theme-color');
+                  if (!meta) { meta = document.createElement('meta'); meta.id = 'theme-color'; meta.name = 'theme-color'; document.head.appendChild(meta); }
+                  meta.setAttribute('content', theme === 'dark' ? '#2f6767' : '#377b7b');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+        <meta id="theme-color" name="theme-color" content="#377b7b" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
@@ -102,24 +127,34 @@ export default function RootLayout({
         
         {/* Security */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
-        
-        {/* Focus visible polyfill for older browsers */}
+      </head>
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        {/* Focus visible helper for older browsers */}
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                if (!window.CSS || !window.CSS.supports || !window.CSS.supports('selector(:focus-visible)')) {
-                  document.body.classList.add('js-focus-visible');
-                }
+                try {
+                  var supports = window.CSS && window.CSS.supports && window.CSS.supports('selector(:focus-visible)');
+                  if (!supports) {
+                    var add = function(){
+                      try { document.body && document.body.classList.add('js-focus-visible'); } catch (e) {}
+                    };
+                    if (document.readyState === 'loading') {
+                      document.addEventListener('DOMContentLoaded', add, { once: true });
+                    } else {
+                      add();
+                    }
+                  }
+                } catch (e) {}
               })();
             `,
           }}
         />
-      </head>
-      <body className="font-sans antialiased">
-        <Providers>
+        
+        <Providers initialTheme={initialThemeClass === 'dark' ? 'dark' : 'light'}>
           <AuthProvider>
             {children}
           </AuthProvider>
@@ -129,7 +164,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
+              if ('serviceWorker' in navigator && '${process.env.NODE_ENV}' === 'production') {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {

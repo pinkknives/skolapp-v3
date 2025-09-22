@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { Users, Loader2 } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase-browser'
+import type { User } from '@supabase/supabase-js'
 
 interface SessionData {
   id: string
@@ -17,7 +18,7 @@ interface SessionData {
   totalQuestions: number
 }
 
-export default function LiveJoinPage() {
+function JoinContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = supabaseBrowser()
@@ -27,7 +28,7 @@ export default function LiveJoinPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Get PIN from URL if available
   useEffect(() => {
@@ -304,5 +305,21 @@ export default function LiveJoinPage() {
         )}
       </Card>
     </div>
+  )
+}
+
+export default function LiveJoinPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-6 text-center">
+          <div className="text-center">
+            <Typography variant="body1">Laddar...</Typography>
+          </div>
+        </Card>
+      </div>
+    }>
+      <JoinContent />
+    </Suspense>
   )
 }

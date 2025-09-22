@@ -2,11 +2,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/admin/syllabus/refresh/route'
 
-// Mock child_process
-vi.mock('child_process', () => ({
-  execSync: vi.fn()
-}))
+// Mock child_process without capturing external variables to avoid hoisting issues
+vi.mock('child_process', () => {
+  const fn = vi.fn()
+  return {
+    execSync: fn,
+    default: { execSync: fn }
+  }
+})
 
+// Obtain the mocked function reference after mocking
 const mockExecSync = vi.mocked(await import('child_process')).execSync
 
 describe('/api/admin/syllabus/refresh', () => {
@@ -59,7 +64,7 @@ describe('/api/admin/syllabus/refresh', () => {
 📊 Processed 1 subjects using mock_data
     `
 
-    mockExecSync.mockReturnValueOnce(mockOutput)
+  mockExecSync.mockReturnValueOnce(mockOutput)
 
     const request = new NextRequest('http://localhost/api/admin/syllabus/refresh', {
       method: 'POST',
@@ -94,7 +99,7 @@ describe('/api/admin/syllabus/refresh', () => {
   })
 
   it('should handle fresh import flag', async () => {
-    mockExecSync.mockReturnValueOnce('ETL completed')
+  mockExecSync.mockReturnValueOnce('ETL completed')
 
     const request = new NextRequest('http://localhost/api/admin/syllabus/refresh', {
       method: 'POST',

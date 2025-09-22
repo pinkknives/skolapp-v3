@@ -1,136 +1,125 @@
-# Copilot Instructions – Skolapp v3
+# Copilot Instructions – Skolapp v3 (uppdaterad)
 
 ## Repo context
-- Product: **Skolapp** – modern PWA for Swedish schools.
-- Primary language: **Swedish first** (UI, copy, errors). i18n-ready for future languages.
-- Process: Uses **Spec Kit** for `/plan` and `/tasks`. Spec Kit is a **developer workflow only** (no user-facing “plan management” UI).
-- Tech stack: **Next.js 15 (App Router)**, **TypeScript (strict)**, **Tailwind** with **design tokens**, **Framer Motion**, **PWA** (service worker/manifest), ESLint/Prettier, Vitest/RTL, Playwright.
+- Produkt: **Skolapp** – modern PWA för svenska skolor.
+- Språk: **svenska först** (UI, texter, fel). i18n-förberett.
+- Process: **Spec Kit** för `/plan` och `/tasks` (endast dev-workflow).
+- Tech: **Next.js 15 (App Router)**, **TypeScript (strict)**, **Tailwind 4** (tokens), **HeroUI**, **Radix** (primitives), **Framer Motion**, **PWA**, ESLint/Prettier, Vitest/RTL, Playwright.
 
-## Non-functional requirements (global)
-- **Accessibility**: WCAG 2.1 AA, clear focus rings, ≥44px touch targets, ARIA.
-- **Performance**:
-  - LCP < 2.5s (mid-tier mobile)
-  - Initial JS bundle ≤200 kB gzip (mobile Lighthouse)
-  - Code-split and lazy-load where sensible
-- **PWA**: offline support for critical views, valid manifest, safe caching defaults.
-- **Security & privacy**: no secrets in repo, CSP headers, XSS/CSRF safe.
-- **GDPR**:
-  - Data minimization, deletion/export, logging
-  - **Parental consent flow** where legally required
-  - Clear distinction: Korttidsläge (temporary) vs. Långtidsläge (requires consent)
-- **Telemetry**: opt-in only, anonymized, no 3rd party cookies without consent.
+## Icke-funktionella krav
+- **A11y**: WCAG 2.1 AA, tydliga fokusramar, touch ≥44px, korrekta roller/aria.
+- **Prestanda**: LCP < 2.5s mobil, initial JS ≤ 200 kB gzip, code-split & lazy-load.
+- **PWA**: offline för kritiska vyer, giltig manifest, säkra cache-regler.
+- **Säkerhet**: inga hemligheter i repo, CSP, XSS/CSRF-säkert.
+- **GDPR**: dataminimering, export/radering, vårdnadshavares samtycke vid behov, **Korttidsläge vs Långtidsläge**.
+- **Telemetri**: opt-in, anonymiserad, inga 3:e-parts-cookies utan samtycke.
 
-## Design system (must follow)
-- Only use **tokens + core components**: Button, Card, Input, Typography, Navbar, Footer.
-- **No inline styles, no hardcoded hex, no ad-hoc fonts.**
-- Provide light/dark parity via tokens.
-- Motion defaults: **120–200ms, swift-in-out**, respect `prefers-reduced-motion`.
+## Designsystem
+**Tailwind 4**
+- Endast `@import "tailwindcss";` i globala CSS.
+- Tokens via CSS-variabler (`hsl(var(--foreground))`).
+- **Gråskala = `neutral-*`** (inte `gray-*`). Inga hårdkodade hex.
+- Basfärger måste appliceras:
+  ```css
+  :root { --background: ...; --foreground: ...; /* … */ }
+  html.dark { /* mörka tokens */ }
+  body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+HeroUI
 
-- ### Brand rules
-- Use the Tailwind `primary` palette (teal) for main actions. Do not introduce new hex colors.
-- Prefer `bg-primary-500 hover:bg-primary-600 text-white` for primary buttons.
-- For sections/hero, consider `bg-brand-gradient` + white text.
-- Use `info` palette only for informational accents (not primary actions).
+Använd HeroUI-komponenter (Button, Card, Input, Navbar, etc.) och deras tokens/variants.
 
-- ## Icons
-- Always import icons from `lucide-react` (preferred) or Heroicons.
-- Never use emoji or custom SVG inline unless explicitly asked.
-- All icons must be consistent in stroke (1.5–2px) and align with text baseline.
-- Place icons **before text** in buttons, with spacing token `gap-x-2`.
+Inga inline styles/hex.
 
-## Language rules
-- All user-facing text **in Swedish** (sv-SE).
-- Strings centralized for i18n (`/locales/sv`).
-- Clear, simple tone in Swedish.
+Radix
 
-## Scope guardrails
-- `/plan` = **project planning/spec only**.
-- **Never** implement curriculum/“plan management” unless explicitly requested.
-- If an issue is ambiguous or lacks Acceptance, **Copilot must ask for clarification** in comments before coding.
-- Prefer small, focused PRs. Split design vs. feature tasks if both appear in the same issue.
+Primitives där HeroUI saknas (Dialog, Popover, Tooltip).
 
-## Code & structure
-- UI → `src/components/ui/*`
-- Layouts → `src/components/layout/*`
-- Tokens → `src/lib/design-tokens.ts` and Tailwind config
-- Components must be accessible (labels, roles, keyboard)
-- Tests:
-  - RTL for interactive components
-  - Playwright e2e for **critical flows** (quiz create, join, submit)
-  - Lighthouse notes in PR description
+asChild aldrig på rena DOM-element. Ex:
 
-## CI/Tool responsibility (Copilot should NOT flag these)
-ESLint automatically handles:
-- Unused variables, imports, and parameters
-- TypeScript `any` usage and strict typing
-- React hooks dependency arrays and patterns
-- Code formatting and style consistency
-- Inline style restrictions
+// Rätt
+<Button asChild><a href="/signup">Skapa lärarkonto</a></Button>
+// Fel
+<button asChild>…</button>
+Ikoner & rörelse
 
-Lighthouse CI automatically validates:
-- Performance budgets (bundle size, Core Web Vitals)
-- Basic accessibility compliance (color contrast, ARIA basics)
-- PWA requirements and best practices
+lucide-react (primärt). Ikon före text, gap-x-2, stroke 1.5–2px.
 
-## PR expectations
-- Follow `/plan` scope precisely.
-- Link tasks to commits. Keep commit messages imperative.
-- PR checklist:
-  - [ ] Swedish copy
-  - [ ] Uses tokens/components (no inline styles/hex)
-  - [ ] A11y pass (focus, ARIA, contrast)
-  - [ ] Perf pass (bundle size note, Lighthouse)
-  - [ ] PWA unaffected
-  - [ ] GDPR respected (Korttid vs Långtid, consent)
-  - [ ] Tests included where relevant
+Motion 120–200ms, swift-in-out, respektera prefers-reduced-motion.
 
-## Copilot review focus areas (what TO flag)
-Focus reviews on high-value areas that require human judgment:
+Tema & Hydration
+I app/layout.tsx:
 
-### Security & Privacy (HIGH PRIORITY)
-- Secrets, tokens, or credentials in code
-- SQL injection vulnerabilities  
-- XSS/CSRF protection gaps
-- Data leakage between organizations
-- Environment variable misuse
+<html lang="sv" suppressHydrationWarning>
+  <body>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      {children}
+    </ThemeProvider>
+  </body>
+</html>
+I ThemeToggle: visa neutral UI tills mounted === true (läs inte theme på SSR).
 
-### GDPR & Swedish Compliance (HIGH PRIORITY)
-- Parental consent flow implementation
-- Data retention policy violations
-- Cross-organization data access
-- Swedish language consistency and accuracy
-- Legal compliance for Swedish schools
+Språk & scope
+All UI-text på svenska (sv-SE), centraliserad i /locales/sv.
 
-### Accessibility (CONTEXTUAL)
-- Complex WCAG 2.1 AA compliance beyond basic color/contrast
-- Screen reader experience and semantic HTML
-- Keyboard navigation patterns
-- Focus management in dynamic content
-- Touch target sizing in complex layouts
+/plan = dev-spec; implementera inte läroplans/plan-UI utan explicit begäran.
 
-### Architecture & Performance (STRATEGIC)
-- Smart code splitting and lazy loading decisions
-- Architectural performance anti-patterns
-- Complex state management issues
-- Database query optimization opportunities
-- Memory leak risks in React components
+Otydligt scope → fråga i PR-kommentar innan kod.
 
-## Helpful patterns
-- Server components by default; client only where needed.
-- Composable props over variant explosion.
-- Provide empty, skeleton, and error states with actionable CTA (e.g. “Försök igen”).
+Kod & tester
+UI → src/components/ui/*, Layouts → src/components/layout/*
 
-## When running tasks
-- If a task fails: retry that **task number**.
-- If repeated failures: reduce scope and leave a note in PR/issue.
-- Never introduce new features/routes outside issue scope.
+Tokens → src/lib/design-tokens.ts + Tailwind config
 
-## Issue template compliance
-- All new features/issues must use `/plan` and `/tasks` via `.github/ISSUE_TEMPLATE/`.
-- Every `/plan` must define testable Acceptance criteria.
-- Copilot must decline vague issues until `/plan` is clarified.
+Supabase-klient: singleton i browsern.
 
-## AI-specific guardrails
-- AI features must always be **teacher-in-the-loop**.
-- AI output must display Swedish disclaimer:  
-  *“Dubbelkolla alltid innehållet. AI kan ha fel.”*
+Tester: RTL för interaktiva komponenter. Playwright E2E för quiz (AI), join/submit, signup/login.
+
+Visuella regressioner: snapshots mobil/tablet/desktop.
+
+CI (Copilot behöver inte flagga)
+ESLint/Prettier: oanvända symboler, hooks, format, inline-style-förbud.
+
+Lighthouse CI: prestandabudget, a11y-grund, PWA-krav.
+
+PR-checklista
+ Svenska texter
+
+ Tokens/komponenter (inga inline styles/hex)
+
+ A11y (fokus, aria, kontrast)
+
+ Prestanda (bundle-notering, Lighthouse)
+
+ PWA intakt
+
+ GDPR (Korttid/Långtid, samtycke)
+
+ Tester (RTL/E2E)
+
+ Tailwind 4 följs (neutral, inga gray-*)
+
+ Tema & hydration korrekt
+
+ Radix asChild ej på DOM-element
+
+Copilot – vad du SKA flagga
+Säkerhet/GDPR (högt): hemligheter i kod, XSS/CSRF, dataläckage, svensk juridik/språk.
+A11y (kontekst): djup WCAG-granskning, fokusstyrning.
+Arkitektur/perf: kodsplit, state-komplexitet, tunga queries, minnesläckor.
+
+Mönster
+Serverkomponenter som default.
+
+Komponerbara props före variant-explosion.
+
+Tom/skeleton/error-states med CTA (“Försök igen”).
+
+Issue/Tasks
+Använd .github/ISSUE_TEMPLATE/ för /plan och /tasks; krav ska vara testbara.
+
+Copilot ska avböja vaga issues tills /plan är tydlig.
+
+AI-räcken
+AI = lärare-i-loopen.
+
+Visa alltid: “Dubbelkolla alltid innehållet. AI kan ha fel.”

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
-import { POST } from '@/app/api/ai/generate-questions/route'
+import { POST } from '../../src/app/api/ai/generate-questions/route'
 
 // Mock OpenAI
 vi.mock('@/lib/ai/openai', () => ({
@@ -27,12 +28,24 @@ const mockOpenAI = vi.mocked(await import('@/lib/ai/openai'))
 const mockSupabase = vi.mocked(await import('@/lib/supabase-browser'))
 
 // Mock fetch for quota checking
-global.fetch = vi.fn()
+let fetchMock: Mock
+
+// Helper to override mocked OpenAI availability without using any
+function setOpenAIAvailability(value: boolean) {
+  Object.defineProperty(mockOpenAI as unknown as Record<string, unknown>, 'isOpenAIAvailable', {
+    value,
+    configurable: true
+  })
+}
 
 describe('/api/ai/generate-questions', () => {
   beforeEach(() => {
-    mockOpenAI.openai.chat.completions.create.mockClear()
+  (mockOpenAI.openai.chat.completions.create as unknown as Mock).mockClear()
     mockSupabase.supabaseBrowser.mockClear()
+    // Stub global fetch for each test case
+    vi.unstubAllGlobals()
+    vi.stubGlobal('fetch', vi.fn())
+    fetchMock = global.fetch as unknown as Mock
     
     // Mock successful user auth
     const mockSupabaseClient = {
@@ -43,23 +56,27 @@ describe('/api/ai/generate-questions', () => {
         })
       }
     }
-    mockSupabase.supabaseBrowser.mockReturnValue(mockSupabaseClient as any)
+    mockSupabase.supabaseBrowser.mockReturnValue(
+      mockSupabaseClient as unknown as SupabaseClient
+    )
     
     // Mock successful quota check
-    vi.mocked(global.fetch).mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
       json: vi.fn().mockResolvedValue({ success: true })
-    } as any)
+    } as unknown as Response)
   })
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('should reject requests when OpenAI is not available', async () => {
     // Override the availability
-    vi.mocked(mockOpenAI).isOpenAIAvailable = false
+  // Override the availability flag on the mocked module
+  setOpenAIAvailability(false)
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',
@@ -78,7 +95,7 @@ describe('/api/ai/generate-questions', () => {
 
   it('should reject requests when user is not authenticated', async () => {
     // Reset availability
-    vi.mocked(mockOpenAI).isOpenAIAvailable = true
+  setOpenAIAvailability(true)
     
     // Mock auth failure
     const mockSupabaseClient = {
@@ -89,7 +106,9 @@ describe('/api/ai/generate-questions', () => {
         })
       }
     }
-    mockSupabase.supabaseBrowser.mockReturnValue(mockSupabaseClient as any)
+    mockSupabase.supabaseBrowser.mockReturnValue(
+      mockSupabaseClient as unknown as SupabaseClient
+    )
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',
@@ -108,17 +127,17 @@ describe('/api/ai/generate-questions', () => {
 
   it('should reject requests when quota is exceeded', async () => {
     // Reset availability
-    vi.mocked(mockOpenAI).isOpenAIAvailable = true
+    setOpenAIAvailability(true)
     
     // Mock quota exceeded
-    vi.mocked(global.fetch).mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: false,
       status: 429,
       json: vi.fn().mockResolvedValue({ 
         error: 'Du har nått din månadsgräns för AI-frågor',
         code: 'QUOTA_EXCEEDED' 
       })
-    } as any)
+    } as unknown as Response)
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',
@@ -137,9 +156,9 @@ describe('/api/ai/generate-questions', () => {
 
   it('should generate questions successfully with valid request', async () => {
     // Reset availability
-    vi.mocked(mockOpenAI).isOpenAIAvailable = true
+    setOpenAIAvailability(true)
 
-    const mockResponse = {
+    const mockResponse: unknown = {
       choices: [
         {
           message: {
@@ -159,7 +178,7 @@ describe('/api/ai/generate-questions', () => {
       ]
     }
 
-    mockOpenAI.openai.chat.completions.create.mockResolvedValueOnce(mockResponse)
+  ;(mockOpenAI.openai.chat.completions.create as unknown as Mock).mockResolvedValueOnce(mockResponse)
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',
@@ -207,9 +226,9 @@ describe('/api/ai/generate-questions', () => {
 
   it('should handle OpenAI API errors gracefully', async () => {
     // Reset availability
-    vi.mocked(mockOpenAI).isOpenAIAvailable = true
+  setOpenAIAvailability(true)
 
-    mockOpenAI.openai.chat.completions.create.mockRejectedValueOnce(
+    ;(mockOpenAI.openai.chat.completions.create as unknown as Mock).mockRejectedValueOnce(
       new Error('OpenAI API error')
     )
 
@@ -230,9 +249,9 @@ describe('/api/ai/generate-questions', () => {
 
   it('should handle malformed JSON responses', async () => {
     // Reset availability
-    vi.mocked(mockOpenAI).isOpenAIAvailable = true
+    setOpenAIAvailability(true)
 
-    const mockResponse = {
+    const mockResponse: unknown = {
       choices: [
         {
           message: {
@@ -242,7 +261,7 @@ describe('/api/ai/generate-questions', () => {
       ]
     }
 
-    mockOpenAI.openai.chat.completions.create.mockResolvedValueOnce(mockResponse)
+  ;(mockOpenAI.openai.chat.completions.create as unknown as Mock).mockResolvedValueOnce(mockResponse)
 
     const request = new NextRequest('http://localhost/api/ai/generate-questions', {
       method: 'POST',

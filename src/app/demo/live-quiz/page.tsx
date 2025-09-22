@@ -19,7 +19,7 @@ export default function LiveQuizDemo() {
               <Typography variant="body1" className="text-neutral-600 mb-6">
                 Aktivera NEXT_PUBLIC_FEATURE_LIVE_QUIZ i miljövariablerna för att testa live quiz.
               </Typography>
-              <div className="bg-neutral-50 p-4 rounded-lg max-w-md mx-auto">
+              <div className="bg-neutral-50 p-4 rounded-lg max-w-md mx-auto dark:bg-neutral-900">
                 <Typography variant="body2" className="font-mono text-sm">
                   NEXT_PUBLIC_FEATURE_LIVE_QUIZ=true
                 </Typography>
@@ -116,7 +116,7 @@ export default function LiveQuizDemo() {
               </Card>
             </div>
 
-            <div className="bg-neutral-50 p-6 rounded-lg">
+            <div className="bg-neutral-50 p-6 rounded-lg dark:bg-neutral-900">
               <Heading level={3} className="mb-4">Testinstruktioner</Heading>
               <div className="space-y-3 text-sm">
                 <div className="flex gap-3">

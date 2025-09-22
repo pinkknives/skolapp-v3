@@ -8,7 +8,8 @@ const OPENAI_PROJECT_ID = process.env.OPENAI_PROJECT_ID;
 // This prevents errors during build time when the key might not be set
 if (!OPENAI_API_KEY) {
   if (process.env.NODE_ENV === 'production') {
-    console.error("❌ OPENAI_API_KEY är obligatoriskt i production-miljö");
+    // Downgrade to warning to avoid alarming build-time errors when AI is optional
+    console.warn("⚠️  OPENAI_API_KEY saknas i produktionsbygge – AI-funktioner inaktiveras");
   } else {
     console.warn("⚠️  OPENAI_API_KEY saknas - OpenAI funktioner kommer att inaktiveras");
   }

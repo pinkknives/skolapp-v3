@@ -6,8 +6,7 @@ const mockFetch = vi.fn()
 
 // Disable MSW for this test suite
 beforeAll(() => {
-  // @ts-expect-error - Overriding global fetch for testing
-  global.fetch = mockFetch
+  global.fetch = mockFetch as unknown as typeof fetch
 })
 
 afterAll(() => {
