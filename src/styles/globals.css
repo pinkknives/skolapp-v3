@@ -1,5 +1,6 @@
-/* Tailwind v4 core layers */
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* CSS Custom Properties for Design Tokens */
 :root {
