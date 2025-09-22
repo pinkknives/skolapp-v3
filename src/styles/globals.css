@@ -165,9 +165,14 @@
   html {
     font-family: var(--font-family-sans);
     line-height: var(--line-height-normal);
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
     -moz-tab-size: 4;
     tab-size: 4;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
