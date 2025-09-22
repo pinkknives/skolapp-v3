@@ -112,6 +112,7 @@ export function Navbar({
   return (
     <>
       <nav
+        data-testid="nav-primary"
         className={cn(
           'sticky top-0 z-fixed bg-white/95 backdrop-blur-md border-b border-neutral-200 transition-all duration-200 dark:bg-neutral-950/80 dark:border-neutral-800',
           isScrolled && 'shadow-md',

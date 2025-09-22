@@ -106,7 +106,7 @@ export default function HomePage() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
+              <Button asChild size="lg" data-testid="cta-primary">
                 <Link href="/quiz/join">Prova som gäst</Link>
               </Button>
               {!isAuthenticated && (

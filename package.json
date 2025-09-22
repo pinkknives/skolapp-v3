@@ -30,6 +30,8 @@
     "e2e:firefox": "playwright test --project=firefox",
     "e2e:webkit": "playwright test --project=webkit",
     "e2e:ci": "playwright test --project=chromium --project=firefox --project=webkit --max-failures=5",
+    "test:visual": "playwright test tests/e2e/ui_layout.spec.ts --project=mobile-visual --project=tablet-visual --project=desktop-visual",
+    "test:visual:update": "playwright test tests/e2e/ui_layout.spec.ts --project=mobile-visual --project=tablet-visual --project=desktop-visual --update-snapshots",
     "lighthouse": "lhci autorun",
     "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse",
     "etl:skolverket": "node scripts/etl/skolverket.js",

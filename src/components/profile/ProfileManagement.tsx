@@ -169,6 +169,7 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
                 onClick={handleSave}
                 disabled={isLoading}
                 className="flex-1"
+                data-testid="save-settings"
               >
                 {isLoading ? 'Sparar...' : 'Spara ändringar'}
               </Button>
