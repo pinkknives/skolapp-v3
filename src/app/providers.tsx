@@ -3,9 +3,15 @@ import * as React from "react";
 import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({ 
+  children,
+  initialTheme,
+}: { 
+  children: React.ReactNode,
+  initialTheme?: "light" | "dark"
+}) {
   return (
-    <ThemeProvider>
+    <ThemeProvider initialTheme={initialTheme}>
       <HeroUIProvider>{children}</HeroUIProvider>
     </ThemeProvider>
   );

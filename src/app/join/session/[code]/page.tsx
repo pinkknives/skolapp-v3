@@ -170,7 +170,7 @@ export default function JoinSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+  <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <Typography variant="body1">Laddar session...</Typography>
@@ -181,7 +181,7 @@ export default function JoinSessionPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-4">
+  <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-4 dark:bg-neutral-950">
         <Card className="w-full max-w-md">
           <div className="p-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
@@ -208,7 +208,7 @@ export default function JoinSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-4">
+  <div className="min-h-screen bg-neutral-50 p-4 dark:bg-neutral-950">
       <div className="max-w-md mx-auto pt-20">
         <Card>
           <div className="p-6">
@@ -227,7 +227,7 @@ export default function JoinSessionPage() {
             </div>
 
             <div className="space-y-4 mb-6">
-              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg dark:bg-neutral-900">
                 <Users className="w-5 h-5 text-primary-600" />
                 <div>
                   <Typography variant="body2" className="font-medium">
@@ -239,7 +239,7 @@ export default function JoinSessionPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg dark:bg-neutral-900">
                 <Clock className="w-5 h-5 text-primary-600" />
                 <div>
                   <Typography variant="body2" className="font-medium">

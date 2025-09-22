@@ -396,7 +396,7 @@ export default function LiveControlPage() {
   const studentParticipants = state.participants.filter(p => p.role === 'student')
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-4">
+  <div className="min-h-screen bg-neutral-50 p-4 dark:bg-neutral-950">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -473,7 +473,7 @@ export default function LiveControlPage() {
                 </Typography>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-neutral-100 rounded-lg p-3">
+                  <div className="bg-neutral-100 rounded-lg p-3 dark:bg-neutral-900">
                     <Typography variant="caption" className="text-neutral-600">
                       Har svarat
                     </Typography>
@@ -481,7 +481,7 @@ export default function LiveControlPage() {
                       {state.answerStats.answeredCount} / {state.answerStats.totalParticipants}
                     </Typography>
                   </div>
-                  <div className="bg-neutral-100 rounded-lg p-3">
+                  <div className="bg-neutral-100 rounded-lg p-3 dark:bg-neutral-900">
                     <Typography variant="caption" className="text-neutral-600">
                       Svarsgrad
                     </Typography>
@@ -600,7 +600,7 @@ export default function LiveControlPage() {
                   </Typography>
                 ) : (
                   studentParticipants.map((participant) => (
-                    <div key={participant.userId} className="flex items-center justify-between p-2 bg-neutral-50 rounded">
+                    <div key={participant.userId} className="flex items-center justify-between p-2 bg-neutral-50 rounded dark:bg-neutral-900">
                       <Typography variant="body2">
                         {participant.displayName}
                       </Typography>

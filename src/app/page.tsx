@@ -179,7 +179,7 @@ export default function HomePage() {
       </Section>
 
       {/* För Elever Section */}
-      <Section className="bg-neutral-50">
+  <Section className="bg-neutral-50 dark:bg-neutral-950">
         <Container>
           <div className="text-center mb-16">
             <Heading level={2} className="mb-4">
@@ -280,7 +280,7 @@ export default function HomePage() {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="bg-transparent border-white text-white hover:bg-white hover:text-primary-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-primary-700 dark:hover:text-neutral-900"
                 asChild
               >
                 <Link href="/quiz/join">Gå med i Quiz</Link>

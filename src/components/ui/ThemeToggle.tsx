@@ -17,7 +17,8 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       onClick={toggleTheme}
       className={
         "inline-flex items-center gap-x-2 px-3 py-2 rounded-md border border-neutral-200 text-sm transition-colors " +
-        "bg-white text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 " +
+        "bg-white text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-neutral-50 " +
+        "dark:bg-neutral-900 dark:text-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 dark:focus:ring-offset-neutral-900 " +
         (className || "")
       }
       aria-pressed={isDark}

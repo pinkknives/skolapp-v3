@@ -321,7 +321,7 @@ export default function LiveSessionPage() {
   // Lobby state
   if (state.session.status === 'LOBBY') {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+  <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4 dark:bg-neutral-950">
         <Card className="w-full max-w-md p-6 text-center">
           <div className="flex items-center justify-center w-12 h-12 bg-primary-100 rounded-lg mx-auto mb-4">
             <Users className="w-6 h-6 text-primary-600" />
@@ -332,7 +332,7 @@ export default function LiveSessionPage() {
           <Typography variant="body2" className="text-neutral-600 mb-4">
             Väntar på att läraren startar quizet...
           </Typography>
-          <div className="bg-neutral-100 rounded-lg p-4 mb-4">
+          <div className="bg-neutral-100 rounded-lg p-4 mb-4 dark:bg-neutral-900">
             <Typography variant="body2" className="font-medium mb-1">
               PIN: {state.session.pin}
             </Typography>
@@ -351,7 +351,7 @@ export default function LiveSessionPage() {
   // Active question state
   if (state.session.status === 'ACTIVE' && state.currentQuestion) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-4">
+  <div className="min-h-screen bg-neutral-50 p-4 dark:bg-neutral-950">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -365,7 +365,7 @@ export default function LiveSessionPage() {
             </div>
             {state.timeRemaining !== undefined && (
               <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-                state.timeRemaining <= 10 ? 'bg-error-100 text-error-700' : 'bg-neutral-100 text-neutral-700'
+                state.timeRemaining <= 10 ? 'bg-error-100 text-error-700' : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300'
               }`}>
                 <Clock className="w-4 h-4" />
                 {state.timeRemaining}s
@@ -468,7 +468,7 @@ export default function LiveSessionPage() {
   // Results state
   if (state.showResults) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+  <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4 dark:bg-neutral-950">
         <Card className="w-full max-w-md p-6 text-center">
           <div className="flex items-center justify-center w-12 h-12 bg-success-100 rounded-lg mx-auto mb-4">
             <Trophy className="w-6 h-6 text-success-600" />
@@ -489,7 +489,7 @@ export default function LiveSessionPage() {
 
   // Paused state
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+  <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4 dark:bg-neutral-950">
       <Card className="w-full max-w-md p-6 text-center">
         <Typography variant="h6" className="mb-2">Quiz pausat</Typography>
         <Typography variant="body2" className="text-neutral-600">

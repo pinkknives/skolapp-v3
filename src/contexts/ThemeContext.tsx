@@ -15,9 +15,10 @@ const STORAGE_KEY = "theme";
 const LIGHT_COLOR = "#377b7b"; // matches primary light
 const DARK_COLOR = "#2f6767";  // matches primary dark
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children, initialTheme }: { children: React.ReactNode; initialTheme?: Theme }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light";
+    if (initialTheme === 'light' || initialTheme === 'dark') return initialTheme;
     const saved = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (saved === "light" || saved === "dark") return saved;
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -47,6 +48,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.head.appendChild(meta);
     }
     meta.content = theme === "dark" ? DARK_COLOR : LIGHT_COLOR;
+    // sync cookie for SSR
+    try {
+      document.cookie = `theme=${theme}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    } catch {}
   }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme, toggleTheme]);

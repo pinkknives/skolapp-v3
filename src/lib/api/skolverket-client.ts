@@ -66,13 +66,22 @@ export class SkolverketApiClient {
 
   private async request(input: RequestInfo | URL, init?: RequestInit, attempt = 0): Promise<Response> {
     const maxRetries = 1
-    const res = await fetch(input, {
-      ...init,
-      headers: {
-        ...this.defaultHeaders,
-        ...(init?.headers as Record<string, string> | undefined)
-      }
-    })
+    let res: Response
+    try {
+      res = await fetch(input, {
+        ...init,
+        headers: {
+          ...this.defaultHeaders,
+          ...(init?.headers as Record<string, string> | undefined)
+        }
+      })
+    } catch (err) {
+      // Network error: return a synthetic non-ok response so callers can handle gracefully
+      return new Response(null, {
+        status: 503,
+        statusText: (err as Error)?.message || 'Network Error'
+      })
+    }
 
     if (res.ok) return res
 
@@ -81,13 +90,23 @@ export class SkolverketApiClient {
       const retryAfter = this.getHeader(res, 'Retry-After')
       const sec = retryAfter ? parseInt(retryAfter, 10) : 1
       await this.sleep((Number.isFinite(sec) ? sec : 1) * 1000)
-      return this.request(input, init, attempt + 1)
+      try {
+        const retryRes = await this.request(input, init, attempt + 1)
+        return retryRes ?? res
+      } catch {
+        return res
+      }
     }
 
     // Retry once on 5xx
     if (res.status >= 500 && res.status < 600 && attempt < maxRetries) {
       await this.sleep(500)
-      return this.request(input, init, attempt + 1)
+      try {
+        const retryRes = await this.request(input, init, attempt + 1)
+        return retryRes ?? res
+      } catch {
+        return res
+      }
     }
 
     return res

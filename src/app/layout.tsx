@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Providers from './providers'
+import { cookies } from 'next/headers'
 
 export const metadata: Metadata = {
   title: {
@@ -53,12 +54,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico' },
       { url: '/icons/icon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/brand/Skolapp-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     other: [
       { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#377b7b' },
@@ -80,13 +80,17 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // SSR theme from cookie to minimize hydration differences
+  const cookieStore = await cookies()
+  const themeCookie = cookieStore.get('theme')?.value
+  const initialThemeClass = themeCookie === 'dark' ? 'dark' : undefined
   return (
-    <html lang="sv" suppressHydrationWarning>{/* Changed to Swedish */}
+    <html lang="sv" className={initialThemeClass} suppressHydrationWarning>{/* Changed to Swedish */}
       <head>
         {/* Pre-render theme application to avoid FOUC */}
         <script
@@ -138,7 +142,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
-        <Providers>
+        <Providers initialTheme={initialThemeClass === 'dark' ? 'dark' : 'light'}>
           <AuthProvider>
             {children}
           </AuthProvider>

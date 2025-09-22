@@ -26,7 +26,7 @@ export default function LiveQuizDisplayDemo() {
 
   if (!isFeatureEnabled) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
+  <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Live Quiz-funktionen är inaktiverad</h1>
           <p className="text-neutral-600">
