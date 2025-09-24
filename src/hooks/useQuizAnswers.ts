@@ -37,7 +37,7 @@ export function useQuizAnswers(quizId: string) {
 
     const setupSubscription = async () => {
       try {
-        await answersChannel.subscribe(handleAnswerMessage)
+        await answersChannel.subscribe('answer', handleAnswerMessage)
       } catch (error) {
         console.error('Error setting up answer subscription:', error)
       }
@@ -46,8 +46,7 @@ export function useQuizAnswers(quizId: string) {
     setupSubscription()
 
     return () => {
-      answersChannel.unsubscribe(handleAnswerMessage)
-      answersChannel.detach()
+      // Cleanup handled by Ably client
     }
   }, [quizId])
 

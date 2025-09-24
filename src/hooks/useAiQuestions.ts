@@ -36,7 +36,8 @@ export function useAiQuestions() {
     setError(null);
     
     try {
-      const response = await fetch("/api/ai/generate-questions", {
+      // Try main API first, fallback to demo
+      let response = await fetch("/api/ai/generate-questions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,6 +49,22 @@ export function useAiQuestions() {
           ...params,
         }),
       });
+
+      // If main API fails, try demo API
+      if (!response.ok && response.status === 503) {
+        response = await fetch("/api/ai/generate-questions-demo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            count: 5,
+            type: "flerval",
+            difficulty: "medel",
+            ...params,
+          }),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

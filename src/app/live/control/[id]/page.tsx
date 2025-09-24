@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Layout, Container, Section } from '@/components/layout/Layout'
+// import { ImprovedLiveConnection } from '@/components/quiz/ImprovedLiveConnection'
+// import { ImprovedLiveDashboard } from '@/components/quiz/ImprovedLiveDashboard'
 import { 
   Play, 
   SkipForward, 
@@ -396,8 +399,9 @@ export default function LiveControlPage() {
   const studentParticipants = state.participants.filter(p => p.role === 'student')
 
   return (
-  <div className="min-h-screen bg-neutral-50 p-4 dark:bg-neutral-950">
-      <div className="max-w-6xl mx-auto">
+    <Layout>
+      <Section className="py-8">
+        <Container size="xl">
         {/* Header */}
         <div className="mb-6">
           <Typography variant="h4" className="mb-2">
@@ -652,7 +656,8 @@ export default function LiveControlPage() {
             </Card>
           </div>
         </div>
-      </div>
-    </div>
+        </Container>
+      </Section>
+    </Layout>
   )
 }

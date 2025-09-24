@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import '../styles/globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { SessionProvider } from '@/components/providers/SessionProvider'
 import Providers from './providers'
 import { cookies } from 'next/headers'
+import { WelcomeToast } from '@/components/auth/WelcomeToast'
+import { ToastDebug } from '@/components/dev/ToastDebug'
 
 export const metadata: Metadata = {
   title: {
@@ -56,12 +59,14 @@ export const metadata: Metadata = {
     icon: [
       { url: '/icons/icon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-48x48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-64x64.png', sizes: '64x64', type: 'image/png' },
     ],
     apple: [
       { url: '/brand/Skolapp-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     other: [
-      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#377b7b' },
+      { rel: 'mask-icon', url: '/favicon.svg', color: '#377b7b' },
     ],
   },
   manifest: '/manifest.json',
@@ -129,7 +134,7 @@ export default async function RootLayout({
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
       </head>
-      <body className="font-sans antialiased" suppressHydrationWarning>
+      <body className="font-sans antialiased w-full" suppressHydrationWarning>
         {/* Focus visible helper for older browsers */}
         <script
           suppressHydrationWarning
@@ -154,11 +159,17 @@ export default async function RootLayout({
           }}
         />
         
-        <Providers initialTheme={initialThemeClass === 'dark' ? 'dark' : 'light'}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </Providers>
+        <SessionProvider>
+          <Providers initialTheme={initialThemeClass === 'dark' ? 'dark' : 'light'}>
+            <AuthProvider>
+              <WelcomeToast />
+              <main className="w-full min-h-svh">
+                {children}
+              </main>
+              {process.env.NODE_ENV !== 'production' ? <ToastDebug /> : null}
+            </AuthProvider>
+          </Providers>
+        </SessionProvider>
         
         {/* Service Worker Registration */}
         <script

@@ -6,6 +6,8 @@ import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+// import { Layout, Container, Section } from '@/components/layout/Layout'
+// import { ImprovedStudentJoin } from '@/components/quiz/ImprovedStudentJoin'
 import { Users, Loader2 } from 'lucide-react'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import type { User } from '@supabase/supabase-js'
@@ -173,8 +175,9 @@ function JoinContent() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6">
+    <section className="min-h-svh w-full centered-grid bg-neutral-50 p-4">
+      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl">
+      <Card className="w-full p-6">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center w-12 h-12 bg-primary-100 rounded-lg mx-auto mb-4">
             <Users className="w-6 h-6 text-primary-600" />
@@ -304,7 +307,8 @@ function JoinContent() {
           </div>
         )}
       </Card>
-    </div>
+      </div>
+    </section>
   )
 }
 

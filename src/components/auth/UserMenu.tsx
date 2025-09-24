@@ -12,7 +12,7 @@ import {
   canAccessTeacherPortal 
 } from '@/lib/auth-utils'
 import Link from 'next/link'
-import { User, ChevronDown, GraduationCap, CreditCard, LogOut } from 'lucide-react'
+import { User, ChevronDown, GraduationCap, CreditCard, LogOut, Users } from 'lucide-react'
 
 interface UserMenuProps {
   onLogin?: () => void
@@ -52,7 +52,7 @@ export function UserMenu({ onLogin }: UserMenuProps) {
         </Button>
 
         {isOpen && (
-          <Card className="absolute right-0 top-full mt-2 w-64 z-50 shadow-lg" padding="sm">
+          <Card className="absolute right-0 top-full mt-2 w-64 z-dropdown shadow-lg" padding="sm">
             <CardContent>
               <div className="text-center mb-4">
                 <Typography variant="body2" className="font-medium">
@@ -103,7 +103,7 @@ export function UserMenu({ onLogin }: UserMenuProps) {
         </Button>
 
         {isOpen && (
-          <Card className="absolute right-0 top-full mt-2 w-72 z-50 shadow-lg" padding="sm">
+          <Card className="absolute right-0 top-full mt-2 w-72 z-dropdown shadow-lg" padding="sm">
             <CardContent>
               <div className="text-center mb-4">
                 <Typography variant="body1" className="font-medium">
@@ -127,6 +127,22 @@ export function UserMenu({ onLogin }: UserMenuProps) {
                     <Link href="/teacher">
                       <GraduationCap size={16} strokeWidth={2} />
                       Lärarportal
+                    </Link>
+                  </Button>
+                )}
+
+                {canAccessTeacherPortal(user) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    fullWidth
+                    asChild
+                    onClick={() => setIsOpen(false)}
+                    className="gap-x-2"
+                  >
+                    <Link href="/teacher/merge-requests">
+                      <Users size={16} strokeWidth={2} />
+                      Sammanslagningsbegäran
                     </Link>
                   </Button>
                 )}

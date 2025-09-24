@@ -1,0 +1,74 @@
+/* Team color utilities for dynamic team colors */
+.team-color-1 { background-color: #FF6B6B; }
+.team-color-2 { background-color: #4ECDC4; }
+.team-color-3 { background-color: #45B7D1; }
+.team-color-4 { background-color: #96CEB4; }
+.team-color-5 { background-color: #FFEAA7; }
+.team-color-6 { background-color: #DDA0DD; }
+.team-color-7 { background-color: #98D8C8; }
+.team-color-8 { background-color: #F7DC6F; }
+.team-color-9 { background-color: #BB8FCE; }
+.team-color-10 { background-color: #85C1E9; }
+
+/* Progress bar utilities */
+.progress-0 { width: 0%; }
+.progress-10 { width: 10%; }
+.progress-20 { width: 20%; }
+.progress-30 { width: 30%; }
+.progress-40 { width: 40%; }
+.progress-50 { width: 50%; }
+.progress-60 { width: 60%; }
+.progress-70 { width: 70%; }
+.progress-80 { width: 80%; }
+.progress-90 { width: 90%; }
+.progress-100 { width: 100%; }
+
+/* Dynamic team color class */
+.team-color-dynamic {
+  background-color: var(--team-color, #4ECDC4);
+  width: var(--progress-width, 0%);
+}
+
+/* Team color variants for different elements */
+.team-color-circle {
+  background-color: var(--team-color, #4ECDC4);
+}
+
+.team-color-progress {
+  background-color: var(--team-color, #4ECDC4);
+  width: var(--progress-width, 0%);
+}
+
+/* Data attribute based team colors */
+[data-team-color] {
+  background-color: var(--team-color);
+}
+
+[data-progress-width] {
+  width: var(--progress-width);
+}
+
+/* Color picker styles */
+.color-picker-option {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.color-picker-option:hover {
+  border-color: #6b7280;
+}
+
+.color-picker-option.selected {
+  border-color: #1f2937;
+}
+
+/* Color picker specific colors */
+.color-red { background-color: #FF6B6B; }
+.color-teal { background-color: #4ECDC4; }
+.color-blue { background-color: #45B7D1; }
+.color-green { background-color: #96CEB4; }
+.color-yellow { background-color: #FFEAA7; }

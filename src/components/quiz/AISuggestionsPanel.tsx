@@ -4,12 +4,14 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { RubricDisplay } from './RubricDisplay'
 import { EditRubricModal } from './EditRubricModal'
 import { AIAssessment, TeacherDecision, Question, QuizResult, Rubric } from '@/types/quiz'
 import { createAIGradingClient } from '@/lib/ai-grading'
 import { aiGradingAuditService } from '@/lib/ai-grading-audit'
 import { type User } from '@/types/auth'
+import { toast } from '@/components/ui/Toast'
 
 interface AISuggestionsPanel {
   quiz: { id: string; questions: Question[] }
@@ -190,6 +192,14 @@ export function AISuggestionsPanel({
     )
     setStudentAnswers(updatedAnswers)
 
+    // Toast feedback
+    const decisionText = {
+      'approve': 'Godkänd',
+      'edit': 'Redigerad',
+      'reject': 'Avvisad'
+    }[decision]
+    toast.success(`Bedömning ${decisionText.toLowerCase()} för ${studentAnswer.studentName}`)
+
     // Log the teacher decision
     aiGradingAuditService.logTeacherDecision(
       teacherDecision,
@@ -208,6 +218,9 @@ export function AISuggestionsPanel({
     eligibleAnswers.forEach(sa => {
       handleTeacherDecision(sa, 'approve')
     })
+
+    // Toast feedback for batch action
+    toast.success(`${eligibleAnswers.length} bedömningar godkända automatiskt`)
 
     // Log batch action
     aiGradingAuditService.logBatchAction(
@@ -256,17 +269,16 @@ export function AISuggestionsPanel({
   }
 
   return (
-    <div className={`bg-white border-l border-neutral-200 ${className}`}>
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <Typography variant="h6">AI-förslag</Typography>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </Button>
-        </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>AI-förslag för bedömning</DialogTitle>
+          <DialogDescription>
+            Granska AI-förslagen och godkänn, redigera eller avvisa varje bedömning
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6">
 
         {/* Warning message */}
         {showWarning && (
@@ -591,15 +603,16 @@ export function AISuggestionsPanel({
           )}
         </div>
 
-        {/* AI adapter info */}
-        <div className="mt-6 p-3 bg-neutral-50 rounded text-sm">
-          <Typography variant="caption" className="text-neutral-600">
-            AI-motor: {aiClient.getAdapterInfo().name} • 
-            Ingen elevdata lämnar systemet • 
-            All AI-användning loggas för granskning
-          </Typography>
+          {/* AI adapter info */}
+          <div className="mt-6 p-3 bg-neutral-50 rounded text-sm">
+            <Typography variant="caption" className="text-neutral-600">
+              AI-motor: {aiClient.getAdapterInfo().name} • 
+              Ingen elevdata lämnar systemet • 
+              All AI-användning loggas för granskning
+            </Typography>
+          </div>
         </div>
-      </div>
+      </DialogContent>
 
       {/* Edit Rubric Modal */}
       {showEditRubric && (
@@ -609,6 +622,6 @@ export function AISuggestionsPanel({
           onClose={() => setShowEditRubric(false)}
         />
       )}
-    </div>
+    </Dialog>
   )
 }

@@ -9,6 +9,13 @@ module.exports = {
     './node_modules/@heroui/theme/dist/**/*.{js,ts}',
   ],
   theme: {
+    screens: {
+      sm: '40rem',  // 640px
+      md: '48rem',  // 768px
+      lg: '64rem',  // 1024px
+      xl: '80rem',  // 1280px
+      '2xl': '96rem', // 1536px
+    },
     extend: {
       colors: {
         // Token-baserade alias som mappar Tailwind-klasser till CSS-variabler
@@ -83,15 +90,6 @@ module.exports = {
         'brand-gradient': 'linear-gradient(135deg, #2a6d70, #477f84)',
       },
 
-      spacing: {
-        'xs': '0.25rem',
-        'sm': '0.5rem',
-        'md': '1rem',
-        'lg': '1.5rem',
-        'xl': '2rem',
-        '2xl': '3rem',
-        '3xl': '4rem',
-      },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'sans-serif'],
         mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'monospace'],
@@ -136,6 +134,21 @@ module.exports = {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
+      },
+
+      // Ensure max-w-* utilities use sensible defaults regardless of plugin/theme overrides
+      maxWidth: {
+        xs: '20rem',   // 320px
+        sm: '24rem',   // 384px
+        md: '28rem',   // 448px
+        lg: '32rem',   // 512px
+        xl: '36rem',   // 576px
+        '2xl': '42rem', // 672px
+        '3xl': '48rem', // 768px
+        '4xl': '56rem', // 896px
+        '5xl': '64rem', // 1024px
+        '6xl': '72rem', // 1152px
+        '7xl': '80rem', // 1280px
       },
     },
   },

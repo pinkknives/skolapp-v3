@@ -1,9 +1,12 @@
 // scripts/health/skolverket.ts
 import * as dotenv from 'dotenv'
-import { skolverketApi } from '../../src/lib/api/skolverket-client'
+import { SkolverketApiClient } from '../../src/lib/api/skolverket-client'
 
 // Load environment variables from .env.local
 dotenv.config({ path: '.env.local' })
+
+// Create API client with explicit URL
+const skolverketApi = new SkolverketApiClient(process.env.NEXT_PUBLIC_SKOLVERKET_API_URL)
 
 async function main() {
   // Skolverket API doesn't require authentication, but we should verify it's accessible

@@ -1,103 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStripe } from '@/lib/billing'
-import { supabaseBrowser } from '@/lib/supabase-browser'
+
+// Initialize Stripe only when needed
+const getStripe = async () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set')
+  }
+  
+  const { default: Stripe } = await import('stripe')
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse request body
-    const { priceId, mode = 'subscription' } = await request.json()
-    
+    const { priceId, billingPeriod, planId } = await request.json()
+
     if (!priceId) {
-      return NextResponse.json(
-        { error: 'Price ID är obligatorisk' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Price ID is required' }, { status: 400 })
     }
-    
-    // Get current user
-    const supabase = supabaseBrowser()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Du måste vara inloggad' },
-        { status: 401 }
-      )
-    }
-    
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('stripe_customer_id, display_name')
-      .eq('user_id', user.id)
-      .single()
-    
-    if (profileError) {
-      return NextResponse.json(
-        { error: 'Kunde inte hämta användardata' },
-        { status: 500 }
-      )
-    }
-    
-    // Initialize Stripe
-    const stripe = getStripe()
-    
-    // Create or get Stripe customer
-    let customerId = profile.stripe_customer_id
-    
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: profile.display_name || user.email,
-        metadata: {
-          user_id: user.id
-        }
-      })
-      
-      customerId = customer.id
-      
-      // Update profile with customer ID
-      await supabase
-        .from('profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('user_id', user.id)
-    }
-    
-    // Create checkout session
+
+    // Get Stripe instance
+    const stripe = await getStripe()
+
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      payment_method_types: ['card'],
       line_items: [
         {
           price: priceId,
           quantity: 1,
         },
       ],
-      mode: mode as 'subscription' | 'payment',
-      success_url: `${request.nextUrl.origin}/teacher?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.nextUrl.origin}/teacher?canceled=true`,
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing/cancel`,
       metadata: {
-        user_id: user.id
+        planId,
+        billingPeriod,
       },
-      subscription_data: mode === 'subscription' ? {
-        metadata: {
-          user_id: user.id
-        }
-      } : undefined,
-      allow_promotion_codes: true,
+      // Enable automatic tax calculation for Sweden
+      automatic_tax: {
+        enabled: true,
+      },
+      // Configure customer creation
+      customer_creation: 'always',
+      // Add trial period for new customers
+      subscription_data: {
+        trial_period_days: 14,
+      },
+      // Configure billing address collection
       billing_address_collection: 'required',
-      locale: 'sv' // Swedish locale
     })
-    
-    return NextResponse.json({
-      sessionId: session.id,
-      url: session.url
-    })
-    
+
+    return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.error('Checkout error:', error)
+    console.error('Error creating checkout session:', error)
     return NextResponse.json(
-      { error: 'Ett fel inträffade vid skapandet av checkout-sessionen' },
+      { error: 'Failed to create checkout session' },
       { status: 500 }
     )
   }

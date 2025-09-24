@@ -18,7 +18,10 @@ export function PricingContent() {
         <Typography variant="h1" className="mb-6">
           Priser som passar alla
         </Typography>
-        <Typography variant="subtitle1" className="text-neutral-600 max-w-3xl mx-auto">
+        <Typography
+          variant="subtitle1"
+          className="text-left mx-auto max-w-5xl text-neutral-600 text-lg sm:text-xl lg:text-2xl leading-relaxed"
+        >
           Transparenta priser utan dolda kostnader. Börja gratis och uppgradera när du behöver fler funktioner.
           Alla planer inkluderar GDPR-kompatibel datahantering.
         </Typography>

@@ -233,9 +233,9 @@ function JoinClassForm() {
 export default function JoinClassPage() {
   return (
     <Layout>
-      <Section spacing="xl" className="min-h-screen flex items-center">
+      <Section spacing="xl" className="min-h-svh centered-grid">
         <Container>
-          <div className="max-w-md mx-auto">
+          <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
             <Suspense fallback={
               <Card>
                 <CardContent className="text-center py-8">

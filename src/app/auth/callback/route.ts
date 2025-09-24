@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const isSignup = requestUrl.searchParams.get('signup') === 'true'
   const displayName = requestUrl.searchParams.get('display_name')
+  const callbackUrl = requestUrl.searchParams.get('callbackUrl')
 
   if (code) {
     const supabase = createClient(
@@ -33,10 +34,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Redirect to the main app or teacher portal for new signups
-  if (isSignup) {
-    redirect('/teacher')
-  } else {
-    redirect('/')
+  // Choose redirect
+  if (callbackUrl) {
+    redirect(callbackUrl)
   }
+
+  if (isSignup) {
+    // Onboarding for new signups
+    redirect('/teacher/quiz/create?onboarding=true')
+  }
+
+  // Default after login
+  redirect('/teacher')
 }

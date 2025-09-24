@@ -73,14 +73,14 @@ export function QuestionTypeButton({
         </span>
         <h3 className={cn(
           'font-semibold text-left',
-          isSelected ? 'text-white' : 'text-neutral-900'
+          isSelected ? 'text-white' : 'text-neutral-900 dark:text-neutral-100'
         )}>
           {label}
         </h3>
       </div>
       <p className={cn(
         'text-sm text-left',
-        isSelected ? 'text-white/90' : 'text-neutral-600'
+        isSelected ? 'text-white/90' : 'text-neutral-600 dark:text-neutral-300'
       )}>
         {description}
       </p>

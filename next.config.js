@@ -195,15 +195,18 @@ const nextConfig = {
   compress: true,
   generateEtags: false,
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production'
+    const headers = [
+      // Allow embedding in dev so VS Code Simple Browser works; keep DENY in production
+      ...(!isDev ? [{ key: 'X-Frame-Options', value: 'DENY' }] : []),
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' }
+    ]
     return [
       {
         source: '/:path*',
-        headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' }
-        ]
+        headers
       }
     ]
   },

@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { QuizBasicInfoStep } from './QuizBasicInfoStep'
 import { QuizQuestionsStep } from './QuizQuestionsStep'
 import { QuizPublishStep } from './QuizPublishStep'
+import { toast } from '@/components/ui/Toast'
 
 interface QuizCreationWizardProps {
   initialQuiz: Partial<Quiz>
@@ -64,6 +65,9 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
       setCurrentStep(nextStep)
       // Re-validate for the new step
       setTimeout(() => validateCurrentStep(quiz), 0)
+      
+      // Toast feedback
+      toast.success(`Går till steg ${currentIndex + 2}: ${steps[currentIndex + 1].label}`)
     }
   }
 
@@ -79,7 +83,10 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
 
   const handleComplete = () => {
     if (isValid && quiz.title && quiz.questions) {
+      toast.success('Quiz skapades framgångsrikt! 🎉')
       onComplete(quiz as Quiz)
+    } else {
+      toast.error('Vänligen fyll i alla obligatoriska fält')
     }
   }
 

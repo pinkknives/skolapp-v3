@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Typography } from '@/components/ui/Typography'
-import { LogoIcon } from '@/components/brand/Logo'
+import { ResponsiveLogo } from '@/components/brand/Logo'
 import { Twitter, Github, Linkedin } from 'lucide-react'
 
 interface FooterLink {
@@ -27,25 +27,25 @@ const defaultSections: FooterSection[] = [
   {
     title: 'Produkt',
     links: [
-      { href: '/designsystem', label: 'Designsystem' },
-      { href: '/komponenter', label: 'Komponenter' },
-      { href: '/funktioner', label: 'Funktioner' },
+      { href: '/#unique-selling-points', label: 'Varför Skolapp' },
+      { href: '/#how-it-works', label: 'Så funkar det' },
+      { href: '/#cta', label: 'Kom igång gratis' },
     ],
   },
   {
-    title: 'Support',
+    title: 'Kom igång',
     links: [
-      { href: '/hjalp', label: 'Hjälpcenter' },
-      { href: '/kontakt', label: 'Kontakta oss' },
-      { href: '/feedback', label: 'Feedback' },
+      { href: '/register', label: 'Skapa konto' },
+      { href: '/login', label: 'Logga in' },
+      { href: '/live/join', label: 'Gå med som elev' },
     ],
   },
   {
-    title: 'Juridiskt',
+    title: 'Kontakta oss',
     links: [
-      { href: '/integritet', label: 'Integritetspolicy' },
-      { href: '/villkor', label: 'Användarvillkor' },
-      { href: '/cookies', label: 'Cookie-policy' },
+      { href: 'mailto:hej@skolapp.se', label: 'hej@skolapp.se', external: true },
+      { href: 'https://cal.com/skolapp/demo', label: 'Boka demo', external: true },
+      { href: '/privacy', label: 'Integritet & villkor' },
     ],
   },
 ]
@@ -53,17 +53,17 @@ const defaultSections: FooterSection[] = [
 const socialLinks = [
   {
     name: 'Twitter',
-    href: '#',
+    href: 'https://twitter.com/skolapp',
     icon: <Twitter size={20} strokeWidth={2} aria-hidden="true" />,
   },
   {
     name: 'GitHub',
-    href: '#',
+    href: 'https://github.com/skolapp',
     icon: <Github size={20} strokeWidth={2} aria-hidden="true" />,
   },
   {
     name: 'LinkedIn',
-    href: '#',
+    href: 'https://linkedin.com/company/skolapp',
     icon: <Linkedin size={20} strokeWidth={2} aria-hidden="true" />,
   },
 ]
@@ -93,10 +93,13 @@ export function Footer({
               className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-md"
               aria-label="Go to homepage"
             >
-              <LogoIcon size="lg" priority className="text-primary-600" />
-              <Typography variant="h6" className="font-bold text-primary-600">
-                Skolapp
-              </Typography>
+              <ResponsiveLogo 
+                mobileVariant="icon"
+                desktopVariant="wordmark"
+                size="lg" 
+                priority 
+                className="text-primary-600"
+              />
             </Link>
             <Typography variant="body2" className="max-w-md">
               Modern applikation för skolhantering designad för tillgänglighet, 

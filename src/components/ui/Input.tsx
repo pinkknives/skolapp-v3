@@ -1,10 +1,10 @@
-import React, { forwardRef, useState } from 'react'
+import React, { forwardRef, useId, useState } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn, generateId } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Eye, EyeOff } from 'lucide-react'
 
 const inputVariants = cva(
-  'flex w-full rounded-md border bg-white px-3 py-2 text-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-900 dark:text-neutral-100',
+  'flex w-full rounded-md border bg-white px-3 py-3 text-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-900 dark:text-neutral-100',
   {
     variants: {
       variant: {
@@ -13,9 +13,9 @@ const inputVariants = cva(
         success: 'border-success-500 focus:border-success-600 focus-visible:ring-success-500 dark:border-success-600',
       },
       size: {
-        sm: 'h-11 px-2 text-xs',
-        md: 'h-12 px-3 text-sm',
-        lg: 'h-14 px-4 text-base',
+        sm: 'h-10 px-3 text-xs',
+        md: 'h-12 px-4 text-sm',
+        lg: 'h-14 px-5 text-base',
       },
     },
     defaultVariants: {
@@ -50,22 +50,23 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     showPasswordToggle = false,
     id,
     'aria-describedby': ariaDescribedBy,
+    'aria-invalid': ariaInvalid,
     ...props 
   }, ref) => {
     const [showPassword, setShowPassword] = useState(false)
-    const [inputId] = useState(() => id || generateId('input'))
-    const [helperTextId] = useState(() => generateId('helper'))
-    const [errorId] = useState(() => generateId('error'))
-
+    const generatedId = useId()
+    const inputId = id || generatedId
     const isPassword = type === 'password'
     const actualType = isPassword && showPassword ? 'text' : type
-    const hasError = Boolean(errorMessage)
+    const hasError = Boolean(errorMessage ?? ariaInvalid)
     const actualVariant = hasError ? 'error' : variant
+    const helperTextId = helperText ? `${inputId}-helper` : undefined
+    const errorId = hasError ? `${inputId}-error` : undefined
 
     const describedBy = [
       ariaDescribedBy,
-      helperText && helperTextId,
-      hasError && errorId,
+      helperTextId,
+      errorId,
     ].filter(Boolean).join(' ')
 
     const togglePasswordVisibility = () => {
@@ -108,7 +109,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             aria-describedby={describedBy || undefined}
-            aria-invalid={hasError}
+            aria-invalid={hasError ? true : ariaInvalid}
             {...props}
           />
           {(rightIcon || (isPassword && showPasswordToggle)) && (
@@ -131,12 +132,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {helperText && !hasError && (
           <p
             id={helperTextId}
-            className="mt-1 text-xs text-neutral-600"
+            className="mt-1 text-xs text-neutral-600 dark:text-neutral-400"
           >
             {helperText}
           </p>
         )}
-        {hasError && (
+        {errorMessage && (
           <p
             id={errorId}
             className="mt-1 text-xs text-error-600"
