@@ -1,0 +1,51 @@
+name: 🧹 Refaktorering (UI/UX + Arkitektur)
+description: Städa, standardisera och förbättra kodbasen utan ny funktionalitet
+title: "[Refactor]: "
+labels: ["refactor", "maintenance"]
+assignees: []
+body:
+  - type: textarea
+    id: plan
+    attributes:
+      label: /plan
+      description: Mål, scope, constraints och acceptance (inga nya features).
+      placeholder: |
+        Goal:
+        Scope:
+        Constraints:
+          - Endast tokens + kärnkomponenter (inga inline-stilar/hex)
+          - TS strict, ESLint/Prettier
+          - WCAG 2.1 AA
+          - Initial JS ≤ 200 kB (ingen regress)
+        Acceptance:
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: /tasks
+      description: Bryt ner arbetet i konkreta steg (små PR:ar).
+      placeholder: |
+        1) Konsolidera mappstruktur
+        2) Byt ut inline-stilar mot tokens
+        3) Lägg till/justera a11y-attribut
+        4) Lint/Typecheck/Testrens
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: guards
+    attributes:
+      label: Kvalitetsvakter
+      options:
+        - label: Inga nya routes/features
+          required: true
+        - label: Följer designsystem (tokens/komponenter)
+          required: true
+        - label: TS strict + ESLint/Prettier grönt
+          required: true
+        - label: WCAG 2.1 AA (fokus, ARIA, kontrast)
+          required: true
+        - label: Ingen prestandaregress (bundle/Lighthouse)
+          required: true

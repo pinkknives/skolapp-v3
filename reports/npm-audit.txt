@@ -1,0 +1,23 @@
+# npm audit report
+
+tmp  <=0.2.3
+tmp allows arbitrary temporary file / directory write via symbolic link `dir` parameter - https://github.com/advisories/GHSA-52f5-9888-hmc6
+fix available via `npm audit fix --force`
+Will install @lhci/cli@0.1.0, which is a breaking change
+node_modules/external-editor/node_modules/tmp
+node_modules/tmp
+  @lhci/cli  *
+  Depends on vulnerable versions of inquirer
+  Depends on vulnerable versions of tmp
+  node_modules/@lhci/cli
+  external-editor  >=1.1.1
+  Depends on vulnerable versions of tmp
+  node_modules/external-editor
+    inquirer  3.0.0 - 8.2.6 || 9.0.0 - 9.3.7
+    Depends on vulnerable versions of external-editor
+    node_modules/inquirer
+
+4 low severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force

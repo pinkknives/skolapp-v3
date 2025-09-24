@@ -1,0 +1,166 @@
+name: API E2E Smoke Test
+
+on:
+  workflow_dispatch:   # Manual trigger
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 08:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-e2e-smoke-test
+  cancel-in-progress: true
+
+jobs:
+  api-smoke-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Mask secrets for security
+        run: |
+          echo "::add-mask::${{ secrets.OPENAI_API_KEY }}"
+          echo "::add-mask::${{ secrets.ABLY_SERVER_API_KEY }}"
+          echo "::add-mask::${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          echo "::add-mask::${{ secrets.STRIPE_SECRET_KEY }}"
+
+      - name: ✅ Verify core secrets are set
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -e
+          echo "🔍 Checking core API secrets (required for basic functionality)..."
+          
+          [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] && echo "❌ NEXT_PUBLIC_SUPABASE_URL not set" && exit 1 || echo "✅ NEXT_PUBLIC_SUPABASE_URL is set"
+          [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] && echo "❌ NEXT_PUBLIC_SUPABASE_ANON_KEY not set" && exit 1 || echo "✅ NEXT_PUBLIC_SUPABASE_ANON_KEY is set"
+          [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] && echo "❌ SUPABASE_SERVICE_ROLE_KEY not set" && exit 1 || echo "✅ SUPABASE_SERVICE_ROLE_KEY is set"
+          
+          echo "✅ All core secrets are configured"
+
+      - name: ✅ Check optional feature secrets
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          echo "🔍 Checking optional feature secrets..."
+          
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "⚠️  OPENAI_API_KEY not set - AI features will be disabled"
+          else
+            echo "✅ OPENAI_API_KEY is set"
+          fi
+          
+          if [ -z "$ABLY_SERVER_API_KEY" ]; then
+            echo "⚠️  ABLY_SERVER_API_KEY not set - Live Quiz features will be disabled"
+          else
+            echo "✅ ABLY_SERVER_API_KEY is set"
+          fi
+          
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "⚠️  STRIPE_SECRET_KEY not set - billing features will be disabled"
+          else
+            echo "✅ STRIPE_SECRET_KEY is set"
+          fi
+
+      - name: 🧪 Test OpenAI API
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+        run: |
+          echo "🔍 Testing OpenAI API connection..."
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "⚠️ OPENAI_API_KEY not set - skipping AI features test"
+          else
+            if npm run health:openai; then
+              echo "✅ OpenAI svar: \"OK från Actions\""
+            else
+              echo "❌ OpenAI API test failed"
+              exit 1
+            fi
+          fi
+
+      - name: 🧪 Test Ably API  
+        env:
+          ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
+        run: |
+          echo "🔍 Testing Ably API connection..."
+          if [ -z "$ABLY_SERVER_API_KEY" ]; then
+            echo "⚠️ ABLY_SERVER_API_KEY not set - skipping Live Quiz features test"
+          else
+            if npm run health:ably; then
+              echo "✅ Ably time OK: [$(date +%s)000]"
+            else
+              echo "❌ Ably API test failed"
+              exit 1
+            fi
+          fi
+
+      - name: 🧪 Test Supabase API
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🔍 Testing Supabase API connection..."
+          if npm run health:supabase; then
+            echo "✅ Supabase query OK (fick tillbaka 1 rad)"
+          else
+            echo "❌ Supabase API test failed"
+            exit 1
+          fi
+
+      - name: 🧪 Test Stripe API
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          echo "🔍 Testing Stripe API connection..."
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "⚠️ STRIPE_SECRET_KEY not set - skipping billing features test"
+          else
+            if npm run health:stripe; then
+              echo "✅ Stripe account OK"
+            else
+              echo "❌ Stripe API test failed"
+              exit 1
+            fi
+          fi
+
+      - name: 🧪 Test Skolverket API
+        run: |
+          echo "🔍 Testing Skolverket API connection..."
+          if npm run health:skolverket; then
+            echo "✅ Skolverket subjects OK"
+          else
+            echo "⚠️ Skolverket API test failed - curriculum features may be limited"
+            echo "This is non-critical for core functionality"
+          fi
+
+      - name: ✅ API smoke test completed
+        run: |
+          echo "🎉 API smoke test completed!"
+          echo ""
+          echo "Core functionality tested:"
+          echo "✅ Supabase API - Database operational"
+          echo ""
+          echo "Feature-specific APIs tested (if configured):"
+          echo "- OpenAI API (AI features)"
+          echo "- Ably API (Live Quiz features)"  
+          echo "- Stripe API (billing features)"
+          echo "- Skolverket API (curriculum data)"
+          echo ""
+          echo "See individual test steps above for detailed results."

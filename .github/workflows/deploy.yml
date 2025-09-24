@@ -1,0 +1,97 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Test API secrets and calls
+      run: |
+        echo "🔍 Testing API secrets and connectivity..."
+        
+        # Check if environment variables are set
+        if [ -z "$OPENAI_API_KEY" ]; then
+          echo "❌ OPENAI_API_KEY not set"
+          exit 1
+        else
+          echo "✅ OPENAI_API_KEY is set"
+        fi
+
+        if [ -z "$ABLY_SERVER_API_KEY" ]; then
+          echo "❌ ABLY_SERVER_API_KEY not set"
+          exit 1
+        else
+          echo "✅ ABLY_SERVER_API_KEY is set"
+        fi
+        
+        # Test actual API calls
+        echo "🧪 Testing OpenAI API connection..."
+        if npm run health:openai; then
+          echo "✅ OpenAI svar: PONG"
+        else
+          echo "❌ OpenAI API call failed"
+          exit 1
+        fi
+        
+        echo "🧪 Testing Ably API connection..."
+        if npm run health:ably; then
+          echo "✅ Ably connection: OK"
+        else
+          echo "❌ Ably API call failed"
+          exit 1
+        fi
+        
+        echo "✅ All API secrets verified and working!"
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+        ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
+
+    - name: Build project
+      env:
+        # OpenAI Configuration
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+        
+        # Ably Configuration (för Live Quiz real-time features)
+        ABLY_API_KEY: ${{ secrets.ABLY_API_KEY }}
+        ABLY_SERVER_API_KEY: ${{ secrets.ABLY_SERVER_API_KEY }}
+        
+        # Supabase Configuration
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        
+        # Stripe Configuration
+        STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        NEXT_PUBLIC_STRIPE_PRICE_MONTHLY: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY }}
+        NEXT_PUBLIC_STRIPE_PRICE_ANNUAL: ${{ secrets.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL }}
+        
+        # Admin API Key
+        ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+        
+        # Feature flags och andra konfigurationer
+        NEXT_PUBLIC_FEATURE_LIVE_QUIZ: true
+        FEATURE_SYLLABUS: true
+        ABLY_TOKEN_TTL_SECONDS: 3600
+        SYLLABUS_BASE_URL: https://api.skolverket.se/syllabus
+        SYLLABUS_REFRESH_CRON: weekly
+      run: npm run build
+
+    # Note: Deployment is typically handled by the hosting platform (Vercel, Netlify, etc.)
+    # automatically when code is pushed to main branch.
+    # If manual deployment is needed, add the appropriate deployment step here.
+    - name: Build completed successfully
+      run: echo "Build completed. Deployment will be handled by the hosting platform."

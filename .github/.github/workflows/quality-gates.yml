@@ -1,0 +1,40 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspaces=false
+
+      - name: Typecheck
+        run: npm run typecheck --workspaces=false
+
+      - name: Unit tests
+        run: npm test -- --ci
+
+      # 🔒 Stilvakter: inga inline-stilar/hex utanför tokens
+      - name: Guard – inline style ban
+        run: |
+          ! egrep -R --include='*.tsx' --exclude='*.stories.*' --exclude-dir='node_modules' 'style\\s*=' src || (echo "Inline styles found. Use tokens/components." && exit 1)
+
+      - name: Guard – hex color ban (allowlist tokens)
+        run: |
+          if egrep -R --include='*.{ts,tsx,css}' --exclude='design-tokens.ts' --exclude-dir='node_modules' '#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\b' src; then
+            echo "Raw hex colors found outside tokens. Use design-tokens."; exit 1;
+          fi

@@ -1,0 +1,30 @@
+name: ✅ Implementerings-task
+description: En teknisk uppgift kopplad till en feature eller ett område
+title: "[Task]: "
+labels: ["task"]
+assignees: []
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Kontext
+      description: Vad ska lösas och varför? Länka ev. relaterad feature/issue.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Vad måste vara sant för att vi ska kalla detta klart?
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: guards
+    attributes:
+      label: Kvalitetsvakter
+      options:
+        - label: Följer designsystem (tokens/komponenter)
+        - label: Tillgänglighet (WCAG 2.1 AA)
+        - label: Prestandabudget
+        - label: Ingen otillåten elevdata (GDPR)

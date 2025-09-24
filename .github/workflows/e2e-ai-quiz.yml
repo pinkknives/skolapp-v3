@@ -1,0 +1,69 @@
+name: E2E AI Quiz
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Bas-URL (t.ex. https://stage.skolapp.se)"
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 8 * * *" # 08:00 UTC (anpassa vid behov)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-ai-quiz
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      SKOLAPP_BASE_URL: ${{ github.event.inputs.baseUrl || secrets.SKOLAPP_BASE_URL }}
+      OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
+      SUPABASE_URL:     ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TEST_USER_EMAIL:  ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      # Lägg fler vid behov (ABLY_API_KEY etc.)
+
+    steps:
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::${OPENAI_API_KEY}"
+          echo "::add-mask::${SUPABASE_SERVICE_ROLE_KEY}"
+          echo "::add-mask::${TEST_USER_EMAIL}"
+          echo "::add-mask::${TEST_USER_PASSWORD}"
+
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm i
+          npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test tests/e2e/ai_quiz.spec.ts --reporter=line
+        env:
+          # Playwright använder process.env.* i testen
+          BASE_URL: ${{ env.SKOLAPP_BASE_URL }}
+
+      - name: Upload Playwright report (screens, video, trace)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report/**
+            test-results/**
+            screenshots/**
+            **/*.zip
+          if-no-files-found: warn

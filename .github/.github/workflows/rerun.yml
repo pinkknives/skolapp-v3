@@ -1,0 +1,17 @@
+name: Manual Re-run Trigger
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  rerun:
+    if: contains(github.event.comment.body, '/rerun')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-run all jobs
+        run: |
+          echo "Rerun triggered by comment: ${{ github.event.comment.body }}"
+          gh run rerun ${{ github.run_id }} --failed || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

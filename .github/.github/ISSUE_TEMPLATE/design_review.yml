@@ -1,0 +1,27 @@
+name: 🎨 Design Review / UI-UX
+description: Begär en designgranskning eller UI-förbättring
+title: "[Design]: "
+labels: ["design", "ui-ux"]
+assignees: []
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Mål
+      description: Vad vill vi förbättra? (layout, typografi, micro-animationer m.m.)
+      placeholder: Kort och tydligt.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Kontext & referenser
+      description: Länka till skärmar, inspo (2025-trender), tokens/komponenter som ska användas.
+  - type: checkboxes
+    id: ds
+    attributes:
+      label: Designsystem & tillgänglighet
+      options:
+        - label: Använder tokens + kärnkomponenter
+        - label: WCAG 2.1 AA
+        - label: Respekt för prefers-reduced-motion
