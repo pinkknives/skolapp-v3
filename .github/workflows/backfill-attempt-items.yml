@@ -1,0 +1,106 @@
+name: Backfill attempt_items
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode: verify or backfill"
+        required: true
+        default: "verify"
+      supabase_db_url:
+        description: "Postgres connection URL (service role). If empty, uses secrets.SUPABASE_DB_URL"
+        required: false
+      statement_timeout:
+        description: "Statement timeout, e.g. 10min"
+        required: false
+        default: "10min"
+
+jobs:
+  run-backfill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Resolve DB URL
+        id: cfg
+        env:
+          INPUT_URL: ${{ github.event.inputs.supabase_db_url }}
+          SECRET_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -n "$INPUT_URL" ]; then
+            echo "db_url=$INPUT_URL" >> $GITHUB_OUTPUT
+          elif [ -n "$SECRET_URL" ]; then
+            echo "db_url=$SECRET_URL" >> $GITHUB_OUTPUT
+          else
+            echo "::error::Missing DB URL. Provide workflow input supabase_db_url or set secrets.SUPABASE_DB_URL" && exit 1
+          fi
+
+      - name: Run backfill script
+        env:
+          PGCONNECT_TIMEOUT: 10
+          STATEMENT_TIMEOUT: ${{ github.event.inputs.statement_timeout }}
+        run: |
+          DB_URL='${{ steps.cfg.outputs.db_url }}'
+          echo "Connecting to Postgres... (mode=${{ github.event.inputs.mode }})"
+          # Inline SQL blocks
+          read -r -d '' SQL_VERIFY <<'SQL'
+          -- Verification (no writes)
+          select count(*) as total_items,
+                 min(answered_at) as first_answer,
+                 max(answered_at) as last_answer
+          from public.attempt_items;
+
+          select count(distinct session_id) as sessions,
+                 count(distinct user_id) as users
+          from public.attempt_items;
+
+          select session_id, user_id, question_id, attempt_no, count(*) as c
+          from public.attempt_items
+          group by 1,2,3,4
+          having count(*) > 1;
+
+          select session_id, user_id, question_id, question_index, is_correct, score, answered_at
+          from public.attempt_items
+          order by answered_at desc
+          limit 5;
+          SQL
+
+          read -r -d '' SQL_BACKFILL <<'SQL'
+          begin;
+          set local statement_timeout = '10min';
+          set local lock_timeout = '30s';
+
+          select migrate_session_attempts_to_items();
+
+          refresh materialized view concurrently public.session_question_stats;
+          refresh materialized view concurrently public.session_user_best;
+
+          analyze public.attempt_items;
+          commit;
+
+          -- Verify
+          select count(*) as total_items,
+                 min(answered_at) as first_answer,
+                 max(answered_at) as last_answer
+          from public.attempt_items;
+          SQL
+
+          case "${{ github.event.inputs.mode }}" in
+            verify)
+              echo "$SQL_VERIFY" | psql "$DB_URL" -v ON_ERROR_STOP=1
+              ;;
+            backfill)
+              echo "$SQL_BACKFILL" | psql "$DB_URL" -v ON_ERROR_STOP=1
+              ;;
+            *)
+              echo "::error::Unknown mode. Use 'verify' or 'backfill'" && exit 1
+              ;;
+          esac
+
+
