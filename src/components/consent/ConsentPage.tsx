@@ -72,7 +72,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
   if (result) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
             {result.success ? (
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -100,7 +100,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
   if (isExpired) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
             <Clock className="w-16 h-16 text-orange-500 mx-auto mb-4" />
             <CardTitle>Länken har gått ut</CardTitle>
@@ -122,7 +122,7 @@ export function ConsentPage({ invite, orgName, isExpired, isCompleted }: Consent
   if (isCompleted) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <CardTitle>Redan hanterat</CardTitle>

@@ -176,6 +176,30 @@ export async function POST(
       )
     }
 
+    // Also store detailed attempt item for analytics (long-term)
+    try {
+      const admin = supabaseServer()
+      // Optional: timeSpentSeconds can be provided by client; default null
+      const timeSpentSeconds = typeof body.timeSpentSeconds === 'number' ? body.timeSpentSeconds : null
+
+      await admin
+        .from('attempt_items')
+        .insert({
+          session_id: sessionId,
+          user_id: userId || sessionAnswer.student_profile_id || null,
+          question_id: questionId,
+          question_index: session.current_index ?? 0,
+          answer: typeof answer === 'string' ? { text: answer } : { selectedOptions: answer },
+          is_correct: isCorrect,
+          score: isCorrect ? 1 : 0,
+          time_spent_seconds: timeSpentSeconds,
+          answered_at: sessionAnswer.submitted_at,
+          attempt_no: 1
+        })
+    } catch (e) {
+      console.warn('attempt_items insert failed (non-fatal):', e)
+    }
+
     // Publish realtime event for live response updates
     const channel = supabase.channel(`session:${sessionId}`)
     await channel.send({

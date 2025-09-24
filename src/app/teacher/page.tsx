@@ -4,8 +4,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Typography, Heading } from '@/components/ui/Typography'
 import Link from 'next/link'
 import { Plus, ClipboardList, Users, BarChart3, Building2 } from 'lucide-react'
+import { GettingStartedChecklist } from '@/components/teacher/GettingStartedChecklist'
 
-const features = [
+interface FeatureItem {
+  title: string
+  description: string
+  icon: React.ReactNode
+  href?: string
+  buttonText?: string
+  disabled?: boolean
+}
+
+const features: FeatureItem[] = [
   {
     title: 'Skapa Quiz',
     description: 'Skapa engagerande quiz med AI-hjälp eller manuellt. Välj mellan olika frågetyper och genomförandelägen.',
@@ -35,10 +45,16 @@ const features = [
     buttonText: 'Hantera klasser'
   },
   {
+    title: 'Sammanslagningsbegäran',
+    description: 'Se och följ upp begäran om att slå ihop elevdata.',
+    icon: <Users size={24} strokeWidth={2} />,
+    href: '/teacher/merge-requests',
+    buttonText: 'Öppna listan'
+  },
+  {
     title: 'Statistik & Rapporter',
     description: 'Analysera elevernas prestationer och få insikter för att förbättra undervisningen.',
     icon: <BarChart3 size={24} strokeWidth={2} />,
-    href: '/teacher/analytics',
     buttonText: 'Kommer snart',
     disabled: true
   }
@@ -56,6 +72,11 @@ export default function TeacherPage() {
             <Typography variant="subtitle1" className="text-neutral-600 max-w-2xl mx-auto">
               Välkommen till din lärarportal. Här kan du skapa quiz, hantera klasser och följa elevernas utveckling.
             </Typography>
+          </div>
+
+          {/* Getting started checklist */}
+          <div className="mb-12">
+            <GettingStartedChecklist />
           </div>
 
           {/* Quick Actions */}
@@ -85,31 +106,20 @@ export default function TeacherPage() {
 
           {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map((feature) => (
-              <Card key={feature.title} className="h-full">
+            {features.map((feature, index) => (
+              <Card key={index} className="h-full">
                 <CardHeader>
-                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 mb-4">
+                  <CardTitle className="flex items-center gap-2">
                     {feature.icon}
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-neutral-600">
-                    {feature.description}
-                  </CardDescription>
+                    {feature.title}
+                  </CardTitle>
+                  <CardDescription>{feature.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    variant={feature.disabled ? "outline" : "primary"}
-                    fullWidth
-                    disabled={feature.disabled}
-                    asChild={!feature.disabled}
-                  >
-                    {feature.disabled ? (
-                      feature.buttonText
-                    ) : (
-                      <Link href={feature.href}>
-                        {feature.buttonText}
-                      </Link>
-                    )}
+                  <Button asChild disabled={feature.disabled}>
+                    <Link href={feature.href || '#'}>
+                      {feature.buttonText}
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>

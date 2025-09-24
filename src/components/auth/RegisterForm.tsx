@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
+import { FormField } from '@/components/ui/FormField'
 import { useAuth } from '@/contexts/AuthContext'
 import { type RegisterData } from '@/types/auth'
 import { 
@@ -120,7 +121,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   const passwordRequirements = getPasswordRequirements()
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-xl mx-auto">
       <CardHeader>
         <CardTitle className="text-center">
           Skapa konto som {formData.role === 'lärare' ? 'Lärare' : 'Elev'}
@@ -160,56 +161,59 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           </div>
 
           {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Förnamn"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              errorMessage={validationErrors.firstName}
-              required
-            />
-            <Input
-              label="Efternamn"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              errorMessage={validationErrors.lastName}
-              required
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Förnamn" errorMessage={validationErrors.firstName}>
+              <Input
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                required
+              />
+            </FormField>
+            <FormField label="Efternamn" errorMessage={validationErrors.lastName}>
+              <Input
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                required
+              />
+            </FormField>
           </div>
 
           {/* Email */}
-          <Input
-            label="E-postadress"
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            errorMessage={validationErrors.email}
-            required
-          />
+          <FormField label="E-postadress" errorMessage={validationErrors.email}>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              required
+            />
+          </FormField>
 
           {/* Date of Birth for Students */}
           {formData.role === 'elev' && (
-            <Input
+            <FormField
               label="Födelsedatum"
-              type="date"
-              value={formData.dateOfBirth}
-              onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-              errorMessage={validationErrors.dateOfBirth}
               helperText="Behövs för åldersverifiering och GDPR-efterlevnad"
-              required
-            />
+              errorMessage={validationErrors.dateOfBirth}
+            >
+              <Input
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                required
+              />
+            </FormField>
           )}
 
           {/* Password */}
-          <Input
-            label="Lösenord"
-            type="password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            errorMessage={validationErrors.password}
-            showPasswordToggle
-            required
-          />
+          <FormField label="Lösenord" errorMessage={validationErrors.password}>
+            <Input
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              showPasswordToggle
+              required
+            />
+          </FormField>
 
           {/* Password Requirements */}
           {formData.password && (
@@ -227,14 +231,14 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           )}
 
           {/* Confirm Password */}
-          <Input
-            label="Bekräfta lösenord"
-            type="password"
-            value={formData.confirmPassword}
-            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            errorMessage={validationErrors.confirmPassword}
-            required
-          />
+          <FormField label="Bekräfta lösenord" errorMessage={validationErrors.confirmPassword}>
+            <Input
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              required
+            />
+          </FormField>
 
           {/* Parental Consent for minors */}
           {formData.dateOfBirth && needsParentalConsent(formData.dateOfBirth) && (

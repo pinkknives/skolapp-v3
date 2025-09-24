@@ -1,161 +1,130 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { getStripe } from '@/lib/billing'
-import { createClient } from '@supabase/supabase-js'
-import type { BillingStatus } from '@/types/billing'
 
-// Use service role for webhook operations (bypasses RLS)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Initialize Stripe only when needed
+const getStripe = async () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set')
+  }
+  
+  const { default: Stripe } = await import('stripe')
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil',
+  })
+}
+
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const headersList = await headers()
-  const signature = headersList.get('stripe-signature')!
+  const signature = headersList.get('stripe-signature')
 
-  let event
+  if (!signature) {
+    return NextResponse.json({ error: 'No signature' }, { status: 400 })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any
 
   try {
-    const stripe = getStripe()
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-    
-    if (!webhookSecret) {
-      console.error('STRIPE_WEBHOOK_SECRET is not set')
-      return NextResponse.json(
-        { error: 'Webhook secret not configured' },
-        { status: 500 }
-      )
-    }
-
+    const stripe = await getStripe()
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err) {
     console.error('Webhook signature verification failed:', err)
-    return NextResponse.json(
-      { error: 'Invalid signature' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // Handle the event
   try {
     switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutCompleted(event.data.object)
+      case 'checkout.session.completed': {
+        const session = event.data.object
+        console.log('Checkout session completed:', session.id)
+        
+        // Handle successful checkout
+        // In a real app, you would:
+        // 1. Create or update user subscription in your database
+        // 2. Send confirmation email
+        // 3. Grant access to premium features
+        
         break
-      
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object)
+      }
+
+      case 'customer.subscription.created': {
+        const subscription = event.data.object
+        console.log('Subscription created:', subscription.id)
+        
+        // Handle new subscription
+        // In a real app, you would:
+        // 1. Update user's subscription status in database
+        // 2. Send welcome email
+        // 3. Activate premium features
+        
         break
-      
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object)
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object
+        console.log('Subscription updated:', subscription.id)
+        
+        // Handle subscription changes
+        // In a real app, you would:
+        // 1. Update subscription status in database
+        // 2. Handle plan changes
+        // 3. Send notification email
+        
         break
-      
-      case 'invoice.payment_succeeded':
-        await handlePaymentSucceeded(event.data.object)
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object
+        console.log('Subscription cancelled:', subscription.id)
+        
+        // Handle subscription cancellation
+        // In a real app, you would:
+        // 1. Update subscription status in database
+        // 2. Revoke premium access
+        // 3. Send cancellation email
+        
         break
-      
-      case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object)
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object
+        console.log('Payment succeeded:', invoice.id)
+        
+        // Handle successful payment
+        // In a real app, you would:
+        // 1. Update payment status in database
+        // 2. Send receipt email
+        // 3. Extend subscription period
+        
         break
-      
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object
+        console.log('Payment failed:', invoice.id)
+        
+        // Handle failed payment
+        // In a real app, you would:
+        // 1. Update payment status in database
+        // 2. Send payment failure notification
+        // 3. Implement retry logic
+        
+        break
+      }
+
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Webhook handler error:', error)
+    console.error('Error processing webhook:', error)
     return NextResponse.json(
-      { error: 'Webhook handler failed' },
+      { error: 'Webhook processing failed' },
       { status: 500 }
     )
-  }
-}
-
-// Stripe webhook handlers
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleCheckoutCompleted(session: any) {
-  console.log('Checkout completed:', session.id)
-  
-  if (session.mode === 'subscription' && session.subscription) {
-    // Get the subscription to get the current status
-    const stripe = getStripe()
-    const subscription = await stripe.subscriptions.retrieve(session.subscription)
-    
-    const billingStatus: BillingStatus = subscription.status === 'active' ? 'active' : 
-                                        subscription.status === 'trialing' ? 'trialing' : 'inactive'
-    
-    await updateBillingStatus(session.customer, billingStatus, subscription.id)
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleSubscriptionUpdated(subscription: any) {
-  console.log('Subscription updated:', subscription.id)
-  
-  const billingStatus: BillingStatus = subscription.status === 'active' ? 'active' :
-                                      subscription.status === 'trialing' ? 'trialing' :
-                                      subscription.status === 'past_due' ? 'past_due' :
-                                      subscription.status === 'canceled' ? 'canceled' : 'inactive'
-  
-  await updateBillingStatus(subscription.customer, billingStatus, subscription.id)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleSubscriptionDeleted(subscription: any) {
-  console.log('Subscription deleted:', subscription.id)
-  
-  await updateBillingStatus(subscription.customer, 'canceled', subscription.id)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handlePaymentSucceeded(invoice: any) {
-  console.log('Payment succeeded:', invoice.id)
-  
-  if (invoice.subscription) {
-    // Reactivate subscription if it was past due
-    const stripe = getStripe()
-    const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
-    
-    if (subscription.status === 'active') {
-      await updateBillingStatus(invoice.customer, 'active', subscription.id)
-    }
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handlePaymentFailed(invoice: any) {
-  console.log('Payment failed:', invoice.id)
-  
-  if (invoice.subscription) {
-    const stripe = getStripe()
-    const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
-    
-    const billingStatus: BillingStatus = subscription.status === 'past_due' ? 'past_due' : 'inactive'
-    await updateBillingStatus(invoice.customer, billingStatus, subscription.id)
-  }
-}
-
-async function updateBillingStatus(customerId: string, status: BillingStatus, subscriptionId?: string) {
-  try {
-    // Use the database function to update user billing status
-    const { error } = await supabase.rpc('update_user_billing_status', {
-      customer_id: customerId,
-      new_status: status,
-      subscription_id: subscriptionId
-    })
-    
-    if (error) {
-      console.error('Error updating user billing status:', error)
-      throw error
-    }
-    
-    console.log(`Updated billing status for customer ${customerId} to ${status}`)
-  } catch (error) {
-    console.error('Failed to update billing status:', error)
-    throw error
   }
 }

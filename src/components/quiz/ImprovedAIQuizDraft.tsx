@@ -740,7 +740,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                                 <div className="space-y-1 mb-3">
                                   {question.options.map((option) => (
                                     <div key={option.id} className="flex items-center gap-2">
-                                      <span className={`text-sm ${option.isCorrect ? 'text-success-600 font-medium' : 'text-neutral-600'}`}>
+                                      <span className={`text-sm ${option.isCorrect ? 'text-success-600 dark:text-success-400 font-medium' : 'text-neutral-600 dark:text-neutral-300'}`}>
                                         {option.isCorrect && '✓'} {option.text}
                                       </span>
                                     </div>
@@ -750,7 +750,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
                               {question.type === 'free-text' && (
                                 <div className="mb-3">
-                                  <Typography variant="caption" className="text-neutral-600 bg-neutral-50 px-2 py-1 rounded">
+                                  <Typography variant="caption" className="text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800 px-2 py-1 rounded">
                                     Fritextsvar: {question.expectedAnswer || 'Öppet svar'}
                                   </Typography>
                                 </div>

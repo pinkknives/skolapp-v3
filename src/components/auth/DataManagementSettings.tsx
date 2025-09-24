@@ -13,6 +13,7 @@ import {
   validateUserDataSettings
 } from '@/lib/auth-utils'
 import { type DataRetentionMode } from '@/types/auth'
+import { Stack } from '@/components/layout/Stack'
 
 interface DataManagementSettingsProps {
   className?: string
@@ -134,7 +135,7 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
   }
 
   return (
-    <div className={className}>
+    <Stack gap="lg" className={className}>
       <Card>
         <CardHeader>
           <CardTitle>
@@ -142,38 +143,38 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
+          <Stack gap="lg">
             {/* Current mode status */}
-            <div className="bg-neutral-50 rounded-lg p-4">
-              <Typography variant="subtitle2" className="mb-2">
+            <Stack gap="sm" className="bg-neutral-50 rounded-lg p-4">
+              <Typography variant="subtitle2">
                 Nuvarande dataläge
               </Typography>
               <div className="flex items-center justify-between">
-                <div>
+                <Stack gap="xs">
                   <Typography variant="body1" className="font-medium">
                     {getDataRetentionDisplayName(currentMode)}
                   </Typography>
                   <Typography variant="caption" className="text-neutral-600">
                     {getDataRetentionDescription(currentMode)}
                   </Typography>
-                </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                </Stack>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   currentMode === 'korttid' 
                     ? 'bg-blue-100 text-blue-800' 
                     : 'bg-green-100 text-green-800'
                 }`}>
                   Aktivt
-                </div>
+                </span>
               </div>
-            </div>
+            </Stack>
 
             {/* Long-term data statistics */}
             {currentMode === 'långtid' && (
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                <Typography variant="subtitle2" className="text-primary-800 mb-3">
+              <Stack gap="md" className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                <Typography variant="subtitle2" className="text-primary-800">
                   Sparad långtidsdata
                 </Typography>
-                <div className="grid grid-cols-2 gap-4 mb-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <Typography variant="h5" className="text-primary-600">
                       {longTermStats.quizResults}
@@ -191,7 +192,7 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
                     </Typography>
                   </div>
                 </div>
-                <div className={`px-3 py-2 rounded-md text-sm ${
+                <span className={`px-3 py-2 rounded-md text-sm ${
                   longTermStats.hasValidConsent 
                     ? 'bg-success-100 text-success-800' 
                     : 'bg-warning-100 text-warning-800'
@@ -200,16 +201,16 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
                     ? '✓ Giltigt föräldrasamtycke' 
                     : '⚠️ Väntande föräldrasamtycke'
                   }
-                </div>
-              </div>
+                </span>
+              </Stack>
             )}
 
             {/* Data retention mode selector */}
-            <div>
-              <Typography variant="subtitle2" className="mb-3">
+            <Stack gap="md">
+              <Typography variant="subtitle2">
                 Ändra dataläge
               </Typography>
-              <div className="space-y-3">
+              <Stack gap="sm">
                 {availableModes.map((mode) => {
                   const isSelected = selectedMode === mode
                   const isCurrent = currentMode === mode
@@ -220,11 +221,11 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
                       variant={isSelected ? 'elevated' : 'outlined'}
                       className={`cursor-pointer transition-all ${
                         isSelected ? 'ring-2 ring-primary-500 border-primary-300' : ''
-                      } ${isCurrent ? 'opacity-50' : ''}`}
+                        } ${isCurrent ? 'opacity-50' : ''}`}
                       onClick={() => !isCurrent && setSelectedMode(mode)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center gap-3">
                           <input
                             type="radio"
                             checked={isSelected}
@@ -232,7 +233,7 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
                             disabled={isCurrent}
                             className="text-primary-600 focus:ring-primary-500"
                           />
-                          <div className="flex-1">
+                          <Stack gap="xs" className="flex-1">
                             <Typography variant="subtitle2" className="font-medium">
                               {getDataRetentionDisplayName(mode)}
                               {isCurrent && (
@@ -242,23 +243,23 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
                             <Typography variant="caption" className="text-neutral-600">
                               {getDataRetentionDescription(mode)}
                             </Typography>
-                          </div>
+                          </Stack>
                         </div>
                       </CardContent>
                     </Card>
                   )
                 })}
-              </div>
-            </div>
+              </Stack>
+            </Stack>
 
             {/* Validation messages */}
             {!validation.isValid && (
               <Card variant="outlined" className="border-warning-300 bg-warning-50">
                 <CardContent className="p-4">
-                  <Typography variant="subtitle2" className="text-warning-800 mb-2">
+                  <Typography variant="subtitle2" className="text-warning-800">
                     Observera följande:
                   </Typography>
-                  <ul className="space-y-1">
+                  <ul className="mt-2 space-y-1">
                     {validation.errors.map((error, index) => (
                       <li key={index} className="text-sm text-warning-700 flex items-start">
                         <span className="mr-2">⚠️</span>
@@ -303,8 +304,8 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
             </div>
 
             {/* GDPR information */}
-            <div className="bg-info-50 border border-info-200 rounded-lg p-4">
-              <Typography variant="subtitle2" className="text-info-800 mb-2">
+            <Stack gap="xs" className="bg-info-50 border border-info-200 rounded-lg p-4">
+              <Typography variant="subtitle2" className="text-info-800">
                 GDPR-rättigheter
               </Typography>
               <Typography variant="caption" className="text-info-700">
@@ -312,8 +313,8 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
                 felaktig information, och rätt att begära radering av dina data. För långtidslagring 
                 av minderårigas data krävs förälders samtycke som kan återkallas när som helst.
               </Typography>
-            </div>
-          </div>
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
 
@@ -347,6 +348,6 @@ export function DataManagementSettings({ className }: DataManagementSettingsProp
           </Card>
         </div>
       )}
-    </div>
+    </Stack>
   )
 }

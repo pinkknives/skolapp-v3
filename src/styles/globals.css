@@ -1,5 +1,9 @@
 /* Tailwind v4 core layers */
 @import "tailwindcss";
+@config "../../tailwind.config.js";
+
+/* Team colors import */
+@import './team-colors.css';
 
 /* CSS Custom Properties for Design Tokens */
 :root {
@@ -122,6 +126,10 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  /* Popover colors for tooltips and dropdowns */
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
 }
 
 /* Dark mode support */
@@ -133,8 +141,8 @@
   --card: 222.2 84% 4.9%;
   --card-foreground: 210 40% 98%;
 
-  --primary: 182 37% 30%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 182 37% 35%;
+  --primary-foreground: 210 40% 98%;
 
   --muted: 217.2 32.6% 17.5%;
   --muted-foreground: 215 20.2% 65.1%;
@@ -142,6 +150,22 @@
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
   --ring: 182 37% 40%;
+
+  /* Update neutral colors for better dark mode contrast */
+  --color-neutral-50: 23 23 23;
+  --color-neutral-100: 38 38 38;
+  --color-neutral-200: 64 64 64;
+  --color-neutral-300: 82 82 82;
+  --color-neutral-400: 115 115 115;
+  --color-neutral-500: 163 163 163;
+  --color-neutral-600: 212 212 212;
+  --color-neutral-700: 229 229 229;
+  --color-neutral-800: 245 245 245;
+  --color-neutral-900: 250 250 250;
+
+  /* Dark mode popover colors */
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -311,6 +335,14 @@
 
 /* Utility layer styles */
 @layer utilities {
+  /* Brand gradient text utility */
+  .text-brand-gradient {
+    background-image: linear-gradient(90deg, #0f172a 0%, #2a6d70 60%, #2f6767 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   /* High contrast mode support */
   @media (prefers-contrast: high) {
     .text-neutral-500 {
@@ -337,6 +369,55 @@
 
   .animate-scale-in {
     animation: scaleIn var(--duration-fast) var(--easing-ease-out);
+  }
+
+  /* Improved typography and spacing */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  
+  /* Better line height for readability */
+  .leading-relaxed {
+    line-height: 1.7;
+  }
+  
+  .leading-loose {
+    line-height: 1.8;
+  }
+
+  /* Improved spacing utilities */
+  .space-y-responsive > * + * {
+    margin-top: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .space-y-responsive > * + * {
+      margin-top: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .space-y-responsive > * + * {
+      margin-top: 2rem;
+    }
+  }
+
+  /* Consistent centered grid layout for auth/landing sections */
+  .centered-grid {
+    display: grid;
+    place-items: center;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Helper for centered flex layouts when grid is unnecessary */
+  .centered-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Print styles */
@@ -374,5 +455,38 @@
   .animate-bounce-delay-2 {
     animation: bounce 1s infinite;
     animation-delay: 0.2s;
+  }
+
+  /* Z-Index utility classes */
+  .z-dropdown {
+    z-index: var(--z-dropdown);
+  }
+
+  .z-sticky {
+    z-index: var(--z-sticky);
+  }
+
+  .z-fixed {
+    z-index: var(--z-fixed);
+  }
+
+  .z-modal-backdrop {
+    z-index: var(--z-modal-backdrop);
+  }
+
+  .z-modal {
+    z-index: var(--z-modal);
+  }
+
+  .z-popover {
+    z-index: var(--z-popover);
+  }
+
+  .z-tooltip {
+    z-index: var(--z-tooltip);
+  }
+
+  .z-toast {
+    z-index: var(--z-toast);
   }
 }

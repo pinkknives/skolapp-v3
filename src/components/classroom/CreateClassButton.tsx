@@ -41,6 +41,7 @@ export function CreateClassButton({
         setIsOpen(false)
         // Reset form
         e.currentTarget.reset()
+        try { localStorage.setItem('sk_last_class_created_at', String(Date.now())) } catch {}
         // Refresh the page to show new class
         window.location.reload()
       } else {

@@ -21,6 +21,8 @@ import {
 } from '@/lib/quiz-utils'
 import { useEntitlements } from '@/hooks/useEntitlements'
 import { AIFeatureBlock } from '@/components/billing/AIFeatureBlock'
+import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
+import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -40,6 +42,7 @@ function CreateQuizPage() {
   const searchParams = useSearchParams()
   const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1')) // Mock teacher ID
   const [showAIDraft, setShowAIDraft] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { canUseAI } = useEntitlements()
@@ -110,25 +113,21 @@ function CreateQuizPage() {
   const saveDraft = async () => {
     setIsSaving(true)
     try {
-      // Mock save operation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const updatedQuiz = {
+      const draftQuiz = {
         ...quiz,
         id: quiz.id || generateQuizId(),
+        createdAt: quiz.createdAt || new Date(),
         updatedAt: new Date(),
-        status: 'draft' as const
+        status: 'draft' as const,
       }
-      
-      setQuiz(updatedQuiz)
-      
-      // In a real app, you would save to a database
-      // Draft saved successfully
-      
-      // Show success message (in a real app, use a toast notification)
-      alert('Utkast sparat!')
+
+      // Mock save operation
+      await new Promise(resolve => setTimeout(resolve, 1200))
+
+      setQuiz(draftQuiz)
+      try { localStorage.setItem('sk_last_quiz_created_at', String(Date.now())) } catch {}
+
     } catch (error) {
-      // Log error for debugging in development
       if (process.env.NODE_ENV === 'development') {
         console.error('Error saving draft:', error)
       }
@@ -162,6 +161,7 @@ function CreateQuizPage() {
       await new Promise(resolve => setTimeout(resolve, 1500))
       
       setQuiz(publishedQuiz)
+      try { localStorage.setItem('sk_last_quiz_created_at', String(Date.now())) } catch {}
       
       // In a real app, you would save to a database
       // Quiz published successfully
@@ -186,8 +186,8 @@ function CreateQuizPage() {
     <Layout>
       <Section spacing="lg">
         <Container>
-          <div className="mb-8">
-            <Heading level={1} className="mb-2">
+          <div className="mb-12 space-y-4">
+            <Heading level={1}>
               Skapa nytt quiz
             </Heading>
             <Typography variant="subtitle1" className="text-neutral-600">
@@ -341,6 +341,26 @@ function CreateQuizPage() {
 
             {/* Sidebar */}
             <div className="space-y-4">
+              {/* AI Assistant */}
+              {canUseAI ? (
+                <AIAssistantPanel
+                  onGenerateQuestions={() => setShowAIDraft(true)}
+                  onGenerateTitle={() => {/* TODO: Implement title generation */}}
+                  onGenerateAnswers={() => {/* TODO: Implement answer generation */}}
+                  onSimplifyText={() => {/* TODO: Implement text simplification */}}
+                  isGenerating={false}
+                  hasQuestions={!!(quiz.questions && quiz.questions.length > 0)}
+                  subject={''}
+                  gradeLevel={''}
+                />
+              ) : (
+                <AIFeatureBlock
+                  featureName="AI-assistent"
+                  description="Låt AI hjälpa dig att skapa frågor, förbättra texter och generera svar automatiskt."
+                  onUpgrade={() => {}}
+                />
+              )}
+
               {/* Action Buttons */}
               <Card>
                 <CardContent className="space-y-3">
@@ -417,6 +437,14 @@ function CreateQuizPage() {
           )}
         </Container>
       </Section>
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <QuizOnboarding
+          onComplete={() => setShowOnboarding(false)}
+          onSkip={() => setShowOnboarding(false)}
+        />
+      )}
     </Layout>
   )
 }

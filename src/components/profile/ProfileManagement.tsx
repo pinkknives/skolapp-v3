@@ -8,7 +8,10 @@ import { Typography } from '@/components/ui/Typography'
 import { UserWithProfile } from '@/lib/auth'
 import { updateProfileAction } from '@/app/actions/profile'
 import { TeacherVerification } from './TeacherVerification'
-import { User, Mail, GraduationCap, Settings } from 'lucide-react'
+import { User, Mail, GraduationCap, Settings, KeyRound } from 'lucide-react'
+import Link from 'next/link'
+import { Stack } from '@/components/layout/Stack'
+import { FormField } from '@/components/ui/FormField'
 
 interface ProfileManagementProps {
   user: UserWithProfile
@@ -48,16 +51,49 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg">
+      {/* Password suggestion banner */}
+      <Card>
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <KeyRound className="w-5 h-5 text-primary-600 mt-0.5" />
+            <div className="space-y-1">
+              <Typography variant="body1" className="font-medium">
+                Lägg till ett lösenord
+              </Typography>
+              <Typography variant="body2" className="text-neutral-600">
+                Om du skapade kontot via e‑postlänk eller Google rekommenderar vi att du sätter ett lösenord för enklare inloggning.
+              </Typography>
+              <div className="pt-1 flex items-center gap-4">
+                <Link href="/auth/reset-password" className="text-primary-600 hover:underline font-medium">
+                  Skicka länk för att skapa/ändra lösenord
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('sk_onboarding_banner_dismissed')
+                      localStorage.removeItem('sk_onboarding_banner_last_shown')
+                    } catch {}
+                    alert('Onboarding‑bannern aktiveras igen nästa gång villkoren uppfylls.')
+                  }}
+                  className="text-neutral-600 hover:text-neutral-800 text-sm"
+                >
+                  Visa onboarding‑banner igen
+                </button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Header */}
-      <div className="text-center">
-        <Typography variant="h1" className="mb-2">
-          Min profil
-        </Typography>
+      <Stack align="center" gap="xs" className="text-center">
+        <Typography variant="h1">Min profil</Typography>
         <Typography variant="body1" className="text-neutral-600">
           Hantera dina kontoinställningar och profilinformation
         </Typography>
-      </div>
+      </Stack>
 
       {/* Profile Information */}
       <Card>
@@ -78,10 +114,11 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
             </Button>
           )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Email (read-only) */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+        <CardContent>
+          <Stack gap="lg">
+            {/* Email (read-only) */}
+          <Stack gap="xs">
+            <div className="flex items-center gap-2">
               <Mail size={16} className="text-neutral-500" />
               <Typography variant="body2" className="font-medium text-neutral-700">
                 E-postadress
@@ -95,39 +132,41 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
             <Typography variant="caption" className="text-neutral-500 mt-1">
               E-postadressen kan inte ändras
             </Typography>
-          </div>
+          </Stack>
 
           {/* Display Name */}
-          <div>
-            <Typography variant="body2" className="font-medium text-neutral-700 mb-2">
-              Visningsnamn
-            </Typography>
+          <Stack gap="xs">
             {isEditing ? (
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Ange ditt namn"
-                disabled={isLoading}
-              />
+              <FormField label="Visningsnamn">
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Ange ditt namn"
+                  disabled={isLoading}
+                />
+              </FormField>
             ) : (
+              <>
+                <Typography variant="body2" className="font-medium text-neutral-700">
+                  Visningsnamn
+                </Typography>
               <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
                 <Typography variant="body2">
                   {user.profile?.display_name || 'Inget namn angivet'}
                 </Typography>
               </div>
+              </>
             )}
-          </div>
+          </Stack>
 
           {/* Role */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <GraduationCap size={16} className="text-neutral-500" />
-              <Typography variant="body2" className="font-medium text-neutral-700">
-                Roll
-              </Typography>
-            </div>
+          <Stack gap="xs">
             {isEditing ? (
-              <div className="space-y-2">
+              <Stack gap="xs" className="border-0 p-0">
+                <legend className="flex items-center gap-2 text-sm font-medium text-neutral-700">
+                  <GraduationCap size={16} className="text-neutral-500" />
+                  Roll
+                </legend>
                 <label className="flex items-center space-x-2">
                   <input
                     type="radio"
@@ -152,15 +191,23 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
                   />
                   <span>Elev</span>
                 </label>
-              </div>
+              </Stack>
             ) : (
-              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
-                <Typography variant="body2">
-                  {user.profile?.role === 'teacher' ? 'Lärare' : 'Elev'}
-                </Typography>
-              </div>
+              <>
+                <div className="flex items-center gap-2">
+                  <GraduationCap size={16} className="text-neutral-500" />
+                  <Typography variant="body2" className="font-medium text-neutral-700">
+                    Roll
+                  </Typography>
+                </div>
+                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
+                  <Typography variant="body2">
+                    {user.profile?.role === 'teacher' ? 'Lärare' : 'Elev'}
+                  </Typography>
+                </div>
+              </>
             )}
-          </div>
+          </Stack>
 
           {/* Edit Actions */}
           {isEditing && (
@@ -182,6 +229,7 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
               </Button>
             </div>
           )}
+          </Stack>
         </CardContent>
       </Card>
 
@@ -198,8 +246,9 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         <CardHeader>
           <CardTitle>Kontoinformation</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between">
+        <CardContent>
+          <Stack gap="sm">
+            <div className="flex justify-between">
             <Typography variant="body2" className="text-neutral-600">
               Medlem sedan
             </Typography>
@@ -218,8 +267,9 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
               {user.id}
             </Typography>
           </div>
+          </Stack>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   )
 }

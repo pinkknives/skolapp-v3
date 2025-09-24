@@ -1,6 +1,6 @@
-import React, { forwardRef, useState } from 'react'
+import React, { forwardRef } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn, generateId } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 const textareaVariants = cva(
   'flex min-h-[80px] w-full rounded-md border bg-white px-3 py-2 text-sm transition-all duration-200 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 resize-y dark:bg-neutral-900 dark:text-neutral-100',
@@ -44,9 +44,9 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     'aria-describedby': ariaDescribedBy,
     ...props 
   }, ref) => {
-    const [textareaId] = useState(() => id || generateId('textarea'))
-    const [helperTextId] = useState(() => generateId('helper'))
-    const [errorId] = useState(() => generateId('error'))
+    const textareaId = id || 'textarea-default'
+    const helperTextId = 'helper-textarea'
+    const errorId = 'error-textarea'
 
     const hasError = Boolean(errorMessage)
     const actualVariant = hasError ? 'error' : variant

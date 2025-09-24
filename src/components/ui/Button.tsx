@@ -17,10 +17,10 @@ const buttonVariants = cva(
         link: 'text-primary-600 underline-offset-4 hover:underline hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300',
       },
       size: {
-        sm: 'h-11 px-3 text-xs rounded-md',
-        md: 'h-12 px-4 py-2',
-        lg: 'h-14 px-6 text-base',
-        xl: 'h-16 px-8 text-lg',
+        sm: 'h-10 px-4 text-xs rounded-md',
+        md: 'h-12 px-6 py-3',
+        lg: 'h-14 px-8 text-base',
+        xl: 'h-16 px-10 text-lg',
         icon: 'h-12 w-12',
       },
       fullWidth: {
@@ -58,7 +58,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ...props 
   }, ref) => {
     const isDisabled = disabled || loading
-    const Comp: any = asChild ? Slot : 'button'
+    const Comp = asChild ? Slot : 'button'
 
     const handleClick: React.MouseEventHandler<HTMLElement> = (e) => {
       if (isDisabled) {
@@ -66,15 +66,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         e.stopPropagation()
         return
       }
-      props.onClick?.(e as any)
+      props.onClick?.(e as React.MouseEvent<HTMLButtonElement>)
     }
 
     if (process.env.NODE_ENV !== 'production' && asChild) {
       if (!React.isValidElement(children)) {
-        // eslint-disable-next-line no-console
         console.warn('Button(asChild): children must be a single React element. Received:', children)
       } else if (React.Children.count(children) !== 1) {
-        // eslint-disable-next-line no-console
         console.warn('Button(asChild): expected exactly 1 child element, but received multiple.')
       }
     }
@@ -83,7 +81,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       // Radix Slot requires exactly one React element child
       return (
         <Comp
-          className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+          className={cn(buttonVariants({ variant, size, fullWidth }), className)}
           ref={ref}
           aria-disabled={isDisabled}
           aria-busy={loading}
@@ -99,13 +97,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        className={cn(buttonVariants({ variant, size, fullWidth }), className)}
         ref={ref}
         disabled={isDisabled}
         aria-disabled={isDisabled}
         aria-busy={loading}
         data-loading={loading ? '' : undefined}
-        onClick={handleClick as any}
+        onClick={handleClick}
         {...props}
       >
         <span className="relative inline-flex items-center gap-x-2">
@@ -122,7 +120,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               {leftIcon}
             </span>
           )}
-          <span className={cn('truncate', loading && 'opacity-0')}>{children}</span>
+          <span className={cn('inline-flex items-center gap-x-2', loading && 'opacity-0')}>{children}</span>
           {rightIcon && (
             <span className={cn('flex-shrink-0', loading && 'opacity-0')} aria-hidden="true">
               {rightIcon}

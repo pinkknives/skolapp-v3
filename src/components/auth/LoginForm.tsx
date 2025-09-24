@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
+import { FormField } from '@/components/ui/FormField'
 import { useAuth } from '@/contexts/AuthContext'
 import { type LoginCredentials } from '@/types/auth'
 import { isValidEmail } from '@/lib/auth-utils'
@@ -65,33 +66,33 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onGuestAccess }: Logi
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-xl mx-auto">
       <CardHeader>
         <CardTitle className="text-center">Logga in</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="E-postadress"
-            type="email"
-            value={credentials.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            errorMessage={validationErrors.email}
-            placeholder="din@email.se"
-            required
-            data-testid="login-email"
-          />
+          <FormField label="E-postadress" errorMessage={validationErrors.email}>
+            <Input
+              type="email"
+              value={credentials.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="din@email.se"
+              required
+              data-testid="login-email"
+            />
+          </FormField>
 
-          <Input
-            label="Lösenord"
-            type="password"
-            value={credentials.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            errorMessage={validationErrors.password}
-            showPasswordToggle
-            required
-            data-testid="login-password"
-          />
+          <FormField label="Lösenord" errorMessage={validationErrors.password}>
+            <Input
+              type="password"
+              value={credentials.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              showPasswordToggle
+              required
+              data-testid="login-password"
+            />
+          </FormField>
 
           {/* Demo Credentials Helper */}
           <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">

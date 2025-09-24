@@ -86,7 +86,7 @@ export default function QuizResultPage() {
   if (!result) {
     return (
       <div className="min-h-screen flex items-center justify-center" role="alert" aria-live="polite">
-        <div className="text-center max-w-md mx-auto p-6">
+        <div className="text-center max-w-lg mx-auto p-6">
           <div className="w-16 h-16 bg-warning-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="h-8 w-8 text-warning-600" aria-hidden="true" />
           </div>

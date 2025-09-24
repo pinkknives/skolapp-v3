@@ -14,10 +14,10 @@ const bodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if OpenAI is available
+    // Check if any AI provider is available
     if (!isOpenAIAvailable) {
       return NextResponse.json(
-        { error: "AI-funktioner är inte konfigurerade på denna server." },
+        { error: 'AI-funktioner är inte konfigurerade på denna server.' },
         { status: 503 }
       );
     }

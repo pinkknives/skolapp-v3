@@ -3,21 +3,28 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { FormField } from '@/components/ui/FormField'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Typography } from '@/components/ui/Typography'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import { isValidEmail } from '@/lib/auth-utils'
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import { Mail, AlertCircle, Lock, Chrome } from 'lucide-react'
 import Link from 'next/link'
+import { Layout } from '@/components/layout/Layout'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-type AuthState = 'idle' | 'sending' | 'sent' | 'error'
+ type AuthState = 'idle' | 'sending' | 'error'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/teacher'
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [state, setState] = useState<AuthState>('idle')
   const [error, setError] = useState<string | null>(null)
 
-  const handleSendMagicLink = async (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!email) {
@@ -30,92 +37,125 @@ export default function LoginPage() {
       return
     }
 
+    if (!password) {
+      setError('Lösenord är obligatoriskt')
+      return
+    }
+
     setState('sending')
     setError(null)
 
     try {
       const supabase = supabaseBrowser()
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
+        password,
       })
 
       if (error) {
+        // Surface Supabase error message if present
         throw error
       }
 
-      setState('sent')
+      setState('idle')
+      router.replace(callbackUrl)
     } catch (err) {
-      console.error('Magic link error:', err)
-      setError('Det gick inte att skicka e-postlänken. Försök igen.')
+      console.error('Password login error:', err)
+      const message = err instanceof Error && err.message
+        ? err.message
+        : 'Fel e-post eller lösenord. Försök igen.'
+      setError(message)
       setState('error')
     }
   }
 
-  const handleReset = () => {
-    setState('idle')
+  const handleGoogleLogin = async () => {
+    setState('sending')
     setError(null)
-    setEmail('')
+    try {
+      const supabase = supabaseBrowser()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+          queryParams: { prompt: 'select_account' },
+        },
+      })
+      if (error) throw error
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : 'Kunde inte starta Google-inloggning.'
+      setError(message)
+      setState('error')
+    }
   }
 
-  if (state === 'sent') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-success-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-6 h-6 text-success-600" />
-            </div>
-            <CardTitle>E-post skickad!</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <Typography variant="body2" className="text-neutral-600">
-              Vi har skickat en inloggningslänk till:
-            </Typography>
-            <Typography variant="body1" className="font-medium">
-              {email}
-            </Typography>
-            <Typography variant="body2" className="text-neutral-600">
-              Klicka på länken i e-posten för att logga in. Kontrollera även skräpposten om du inte ser meddelandet.
-            </Typography>
-            <Button 
-              variant="outline" 
-              onClick={handleReset}
-              className="w-full"
-            >
-              Skicka till annan e-postadress
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  const isInvalidCreds = (error || '').toLowerCase().includes('invalid login credentials')
+  const isEmailNotConfirmed = (error || '').toLowerCase().includes('confirm') || (error || '').toLowerCase().includes('not confirmed')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <Layout>
+    <section className="min-h-svh w-full centered-flex bg-neutral-50 px-4">
+      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl">
+      <Card className="w-full">
+        <CardHeader className="text-center max-w-none">
           <div className="mx-auto w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
             <Mail className="w-6 h-6 text-primary-600" />
           </div>
-          <CardTitle>Logga in med e-post</CardTitle>
-          <Typography variant="body2" className="text-neutral-600">
-            Ange din e-postadress så skickar vi en säker inloggningslänk
+          <CardTitle>Logga in med e-post och lösenord</CardTitle>
+          <Typography 
+            variant="body2" 
+            className="dark:text-neutral-300 text-left text-neutral-600 max-w-none"
+          >
+            Ange din e-postadress och ditt lösenord för att logga in
           </Typography>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSendMagicLink} className="space-y-4">
-            <Input
-              label="E-postadress"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="namn@exempel.se"
-              required
+        <CardContent className="max-w-none">
+          <div className="space-y-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center gap-3 h-12 text-base font-medium border-2 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              onClick={handleGoogleLogin}
               disabled={state === 'sending'}
-            />
+            >
+              <Chrome className="w-5 h-5" />
+              Logga in med Google
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-neutral-200 dark:border-neutral-700" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400">eller</span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handlePasswordLogin} className="space-y-4 mt-4">
+            <FormField label="E-postadress">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="namn@exempel.se"
+                required
+                disabled={state === 'sending'}
+              />
+            </FormField>
+
+            <FormField label="Lösenord">
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Ditt lösenord"
+                required
+                disabled={state === 'sending'}
+                showPasswordToggle
+                leftIcon={<Lock size={16} />}
+              />
+            </FormField>
 
             {error && (
               <div className="flex items-center gap-2 p-3 bg-error-50 border border-error-200 rounded-md">
@@ -126,13 +166,37 @@ export default function LoginPage() {
               </div>
             )}
 
+            {(isInvalidCreds || isEmailNotConfirmed) && (
+              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-md">
+                <Typography variant="body2" className="text-neutral-700">
+                  {isInvalidCreds
+                    ? 'Om du tidigare loggat in via e‑postlänk har du inget lösenord ännu. Återställ/lägg till ett lösenord nedan.'
+                    : 'Din e‑postadress kan behöva bekräftas. Kolla din inkorg och skräppost, eller sätt ett nytt lösenord.'}
+                </Typography>
+                <div className="mt-2">
+                  <Link
+                    href={`/auth/reset-password${email ? `?email=${encodeURIComponent(email)}` : ''}`}
+                    className="text-primary-600 hover:underline font-medium"
+                  >
+                    Återställ lösenord
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={state === 'sending' || !email}
+              disabled={state === 'sending' || !email || !password}
             >
-              {state === 'sending' ? 'Skickar...' : 'Skicka inloggningslänk'}
+              {state === 'sending' ? 'Loggar in...' : 'Logga in'}
             </Button>
+
+            <div className="text-center">
+              <Link href="/auth/reset-password" className="text-sm text-primary-600 hover:underline">
+                Glömt lösenord?
+              </Link>
+            </div>
 
             <div className="text-center pt-2">
               <Typography variant="caption" className="text-neutral-500">
@@ -158,6 +222,8 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </section>
+    </Layout>
   )
 }

@@ -38,9 +38,9 @@ function InviteContent() {
 
   return (
     <Layout>
-      <Section spacing="lg">
+      <Section spacing="lg" className="min-h-svh centered-grid">
         <Container>
-          <div className="max-w-md mx-auto">
+          <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
             <Card>
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4">
@@ -99,7 +99,7 @@ export default function InviteAcceptPage() {
       <Layout>
         <Section spacing="lg">
           <Container>
-            <div className="max-w-md mx-auto text-center">
+            <div className="max-w-lg mx-auto text-center">
               <Loader2 size={48} className="text-primary-500 animate-spin mx-auto mb-4" />
               <Typography variant="body1">Laddar...</Typography>
             </div>

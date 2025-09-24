@@ -48,7 +48,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
       />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}

@@ -47,7 +47,7 @@ export default function StudentDashboard() {
       <Layout>
         <Section spacing="xl" className="min-h-screen flex items-center">
           <Container>
-            <Card className="max-w-md mx-auto text-center">
+            <Card className="max-w-lg mx-auto text-center">
               <CardHeader>
                 <CardTitle>Logga in krävs</CardTitle>
               </CardHeader>

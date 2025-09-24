@@ -10,6 +10,7 @@ import { Quiz, Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { type User } from '@/types/auth'
 import { isAIGradingSupported } from '@/lib/ai-grading'
+import { toast } from '@/components/ui/Toast'
 
 // Dynamically import AI components for better performance
 const AISuggestionsPanel = dynamic(() => import('./AISuggestionsPanel').then(mod => ({ default: mod.AISuggestionsPanel })), {
@@ -63,6 +64,9 @@ export function TeacherReviewMode({
     }
     setLocalQuiz(updatedQuiz)
     
+    // Toast feedback
+    toast.success('Bedömningskriterier uppdaterade!')
+    
     // Notify parent component
     if (onQuizUpdate) {
       onQuizUpdate(updatedQuiz)
@@ -101,6 +105,7 @@ export function TeacherReviewMode({
     if (currentQuestionIndex < localQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
       setShowAnswer(false)
+      toast.success(`Fråga ${currentQuestionIndex + 2} av ${localQuiz.questions.length}`)
     }
   }, [currentQuestionIndex, localQuiz.questions.length])
 
@@ -108,13 +113,15 @@ export function TeacherReviewMode({
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1)
       setShowAnswer(false)
+      toast.success(`Fråga ${currentQuestionIndex} av ${localQuiz.questions.length}`)
     }
-  }, [currentQuestionIndex])
+  }, [currentQuestionIndex, localQuiz.questions.length])
 
   const goToQuestion = useCallback((index: number) => {
     setCurrentQuestionIndex(index)
     setShowAnswer(false)
-  }, [])
+    toast.success(`Fråga ${index + 1} av ${localQuiz.questions.length}`)
+  }, [localQuiz.questions.length])
 
   const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
@@ -293,8 +300,8 @@ export function TeacherReviewMode({
       case 'free-text':
         return (
           <div className="space-y-6">
-            <div className="bg-neutral-50 p-6 rounded-lg">
-              <Typography variant="body1" className="text-neutral-600 mb-2">
+            <div className="bg-neutral-50 dark:bg-neutral-800 p-6 rounded-lg">
+              <Typography variant="body1" className="text-neutral-600 dark:text-neutral-300 mb-2">
                 Denna fråga kräver fritextsvar från eleverna.
               </Typography>
               {showAnswer && (question as FreeTextQuestion).expectedAnswer && (

@@ -6,7 +6,9 @@ import Link from 'next/link'
 
 // Minimal mock for next/link to behave like an anchor in tests
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...rest }: any) => <a href={href as string} {...rest}>{children}</a>
+  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode } & Record<string, unknown>) => (
+    <a href={href} {...rest}>{children}</a>
+  )
 }))
 
 describe('Button asChild', () => {

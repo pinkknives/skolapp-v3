@@ -1,9 +1,8 @@
 'use client'
 
-import React, { forwardRef, useState } from 'react'
+import React, { forwardRef } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
-import { generateId } from '@/lib/utils'
 
 const selectVariants = cva(
   'flex w-full rounded-md border bg-white px-3 py-2 text-sm transition-all duration-200 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-900 dark:text-neutral-100',
@@ -51,9 +50,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     'aria-describedby': ariaDescribedBy,
     ...props 
   }, ref) => {
-    const [selectId] = useState(() => id || generateId('select'))
-    const [helperTextId] = useState(() => generateId('helper'))
-    const [errorId] = useState(() => generateId('error'))
+    const selectId = id || 'select-default'
+    const helperTextId = 'helper-select'
+    const errorId = 'error-select'
 
     const hasError = Boolean(errorMessage)
     const actualVariant = hasError ? 'error' : variant

@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils'
 const typographyVariants = cva('', {
   variants: {
     variant: {
-  h1: 'text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl dark:text-neutral-50',
-  h2: 'text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-neutral-50',
-  h3: 'text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl dark:text-neutral-50',
-  h4: 'text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl dark:text-neutral-50',
-  h5: 'text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl dark:text-neutral-50',
-  h6: 'text-base font-semibold tracking-tight text-neutral-900 sm:text-lg dark:text-neutral-50',
+  h1: 'text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl dark:text-neutral-50 leading-tight',
+  h2: 'text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-neutral-50 leading-tight',
+  h3: 'text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl dark:text-neutral-50 leading-tight',
+  h4: 'text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl dark:text-neutral-50 leading-tight',
+  h5: 'text-lg font-semibold tracking-tight text-neutral-900 sm:text-xl dark:text-neutral-50 leading-tight',
+  h6: 'text-base font-semibold tracking-tight text-neutral-900 sm:text-lg dark:text-neutral-50 leading-tight',
   body1: 'text-base text-neutral-700 leading-relaxed dark:text-neutral-200',
   body2: 'text-sm text-neutral-600 leading-relaxed dark:text-neutral-300',
   caption: 'text-xs text-neutral-500 leading-normal dark:text-neutral-400',
@@ -130,7 +130,7 @@ const Typography = forwardRef<HTMLElement, TypographyProps>(
     return React.createElement(
       Element,
       {
-        className: cn(typographyVariants({ variant, align, color, truncate, gradient, className })),
+        className: cn(typographyVariants({ variant, align, color, truncate, gradient }), className),
         ref,
         ...linkProps,
         ...secureProps,

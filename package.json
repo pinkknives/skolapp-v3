@@ -44,26 +44,39 @@
     "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {
+    "@auth/supabase-adapter": "^1.10.0",
     "@heroui/react": "^2.8.4",
     "@heroui/theme": "^2.4.22",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@stripe/stripe-js": "^7.9.0",
     "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-table": "^8.21.3",
     "@types/qrcode": "^1.5.5",
     "ably": "^2.13.0",
+    "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.2",
     "framer-motion": "^12.23.16",
     "lucide-react": "^0.544.0",
     "next": "^15.5.3",
+    "next-auth": "^4.24.11",
     "next-pwa": "^5.6.0",
     "openai": "^5.22.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "recharts": "^3.2.1",
+    "sonner": "^2.0.7",
     "stripe": "^18.5.0",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.1.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "tremor": "^0.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -77,6 +90,7 @@
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.9.6",
     "@types/react": "^18.3.13",
     "@types/react-dom": "^18.3.1",
@@ -93,7 +107,8 @@
     "tailwindcss": "^4.1.13",
     "tsx": "^4.20.5",
     "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "zod": "^4.1.11"
   },
   "engines": {
     "node": ">=18.0.0"

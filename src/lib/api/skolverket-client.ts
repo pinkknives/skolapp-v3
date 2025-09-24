@@ -121,8 +121,15 @@ export class SkolverketApiClient {
       const statusText = res.statusText || ''
       throw new Error(`Failed to fetch subjects: ${res.status} ${statusText}`.trim())
     }
-    const json = (await res.json()) as { data?: Subject[] } & Json
-    return (json.data as Subject[]) || []
+    const json = (await res.json()) as Subject[] | { subjects?: Subject[]; data?: Subject[] } & Json
+    // Handle direct array response or wrapped responses under `data` or `subjects`
+    if (Array.isArray(json)) {
+      return json
+    }
+    if (Array.isArray(json.data)) {
+      return json.data
+    }
+    return (json.subjects as Subject[]) || []
   }
 
   async getCentralContent(
@@ -150,8 +157,12 @@ export class SkolverketApiClient {
 
   async healthCheck(): Promise<boolean> {
     const url = this.buildUrl('/health')
-    const res = await this.request(url, { method: 'GET' })
-    return res.ok
+    try {
+      const res = await this.request(url, { method: 'GET' })
+      return res.ok
+    } catch (_error) {
+      return false
+    }
   }
 }
 
