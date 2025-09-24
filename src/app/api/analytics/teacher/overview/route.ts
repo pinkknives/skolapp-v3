@@ -5,10 +5,6 @@ import { createClient } from '@supabase/supabase-js'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 function getISOWeek(d: Date) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -23,6 +19,11 @@ function getISOWeek(d: Date) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Lazily create client to avoid build-time errors when env is absent
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || 'local_service_key'
+    )
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Du måste vara inloggad' }, { status: 401 })
