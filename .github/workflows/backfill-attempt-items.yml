@@ -3,6 +3,10 @@ name: Backfill attempt_items
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: "Run mode: verify or backfill"
+        required: true
+        default: "verify"
       supabase_db_url:
         description: "Postgres connection URL (service role). If empty, uses secrets.SUPABASE_DB_URL"
         required: false
@@ -43,9 +47,17 @@ jobs:
           STATEMENT_TIMEOUT: ${{ github.event.inputs.statement_timeout }}
         run: |
           DB_URL='${{ steps.cfg.outputs.db_url }}'
-          echo "Connecting to Postgres..."
-          # Replace statement timeout in-flight if provided
-          # Run ops SQL; psql does not inherit local timeouts from env, they are in the SQL file
-          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/ops/backfill_attempt_items.sql
+          echo "Connecting to Postgres... (mode=${{ github.event.inputs.mode }})"
+          case "${{ github.event.inputs.mode }}" in
+            verify)
+              psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/ops/verify_attempt_items.sql
+              ;;
+            backfill)
+              psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/ops/backfill_attempt_items.sql
+              ;;
+            *)
+              echo "::error::Unknown mode. Use 'verify' or 'backfill'" && exit 1
+              ;;
+          esac
 
 
