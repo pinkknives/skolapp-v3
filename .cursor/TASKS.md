@@ -103,15 +103,15 @@
 ## Milestone H — Skalning & Robusthet
 
 ### H1. Köer & async-insamling
-- [ ] Flytta insamling till queue/async (Edge Function + Supabase Queue).  
+ - [x] Flytta insamling till queue/async (Edge Function + Supabase Queue).  
 **Acceptans**
-- [ ] Quiz-save blockar ej, testad med ≥25 samtidiga.
+ - [x] Quiz-save blockar ej, testad med ≥25 samtidiga.
 
 ### H2. Metrics/Observability
-- [ ] Logga consent-rate, träningsrader/dag, feedback-ratio.  
-- [ ] Dashboard + alerts.  
+ - [x] Logga consent-rate, träningsrader/dag, feedback-ratio.  
+ - [x] Dashboard + alerts.  
 **Acceptans**
-- [ ] Metrics synliga, larm triggas vid avvikelser.
+ - [x] Metrics synliga, larm triggas vid avvikelser.
 
 ---
 
