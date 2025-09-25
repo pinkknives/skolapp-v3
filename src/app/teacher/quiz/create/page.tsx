@@ -107,6 +107,7 @@ function CreateQuizPage() {
       ...prev,
       questions: [...(prev.questions || []), ...questions]
     }))
+    toast.success(`${questions.length} frågor tillagda`)
   }
 
   // Wire per-question AI actions to open panel/sheet with context (handled inside ImprovedAIQuizDraft via global store in later tasks)

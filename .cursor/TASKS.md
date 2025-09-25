@@ -121,7 +121,7 @@
 
 ---
 
-### C2. Lägg till fler frågor
+### C2. Lägg till fler frågor [x]
 **Mål**
 - Knapp i panelen för att addera fler frågor utan att ersätta.
 
