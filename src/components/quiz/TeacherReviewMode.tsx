@@ -196,6 +196,7 @@ export function TeacherReviewMode({
                   alt={(question as ImageQuestion).imageAlt || 'Question image'}
                   width={800}
                   height={400}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 800px"
                   className="max-w-full max-h-96 rounded-lg shadow-md object-contain"
                   priority={false}
                 />

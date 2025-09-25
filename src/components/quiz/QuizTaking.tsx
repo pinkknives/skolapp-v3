@@ -487,6 +487,7 @@ function MultipleChoiceQuestionView({
             alt={(question as ImageQuestion).imageAlt || 'Frågans bild'}
             width={800}
             height={400}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 800px"
             className="max-w-full max-h-96 rounded-lg shadow-md object-contain"
             priority={false}
           />
