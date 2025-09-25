@@ -950,6 +950,41 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                                   </svg>
                                   {aiAssistant.actions.edit}
                                 </Button>
+                                {/* Feedback controls */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      await fetch('/api/ai/feedback', {
+                                        method: 'POST',
+                                        headers: { 'content-type': 'application/json' },
+                                        body: JSON.stringify({ rating: 1, question_title: question.title })
+                                      })
+                                    } catch {}
+                                  }}
+                                  aria-label="Gilla förslag"
+                                >
+                                  👍
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      await fetch('/api/ai/feedback', {
+                                        method: 'POST',
+                                        headers: { 'content-type': 'application/json' },
+                                        body: JSON.stringify({ rating: -1, question_title: question.title })
+                                      })
+                                    } catch {}
+                                  }}
+                                  aria-label="Ogilla förslag"
+                                >
+                                  👎
+                                </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"

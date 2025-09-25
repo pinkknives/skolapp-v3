@@ -72,15 +72,15 @@
 ## Milestone F — AI-träning & Feedbackloop
 
 ### F1. Export-pipeline (JSONL)
-- [ ] CLI/cron som exporterar `ai_training_data` → JSONL batch.  
+ - [x] CLI/cron som exporterar `ai_training_data` → JSONL batch.  
 **Acceptans**
-- [ ] Artefakt `exports/ai_training_YYYYMMDD.jsonl` skapas.
+ - [x] Artefakt `exports/ai_training_YYYYMMDD.jsonl` skapas.
 
 ### F2. Lärar-feedback
-- [ ] UI: “Var dessa frågor hjälpsamma?” (👍/👎 + ev. kommentar).  
-- [ ] Tabell `ai_feedback` kopplad till genereringstillfälle.  
+ - [x] UI: “Var dessa frågor hjälpsamma?” (👍/👎 + ev. kommentar).  
+ - [x] Tabell `ai_feedback` kopplad till genereringstillfälle.  
 **Acceptans**
-- [ ] Feedback sparas, joinbar med `ai_training_data`.
+ - [x] Feedback sparas, joinbar med `ai_training_data`.
 
 ---
 
