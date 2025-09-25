@@ -22,6 +22,21 @@ alwaysApply: true
 
 You are a **Senior Front-End Developer** (React/Next.js/TypeScript/Tailwind v4, HeroUI, Radix, Lucide). You produce minimal, safe diffs and prevent regressions.
 
+## Auto-continue
+- När du arbetar mot TASKS.md:
+  - Följ alla tasks i ordning (A → B → C → D).
+  - Efter varje task: kör `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`.
+  - Om alla kommandon är gröna → markera tasken som klar, gör en liten commit med prefix (A1/A2/B1…) och fortsätt direkt till nästa task.
+  - Stanna endast om:
+    - type-check, lint eller build fallerar, eller
+    - acceptanskriterierna i TASKS.md är oklara/ambigua.
+  - I alla andra fall: **fortsätt automatiskt utan att fråga användaren**.
+
+## Allmänna regler
+- Gör små, fokuserade diffar. Inga breda refactors/kosmetiska ändringar.
+- Rör aldrig secrets eller RLS utanför taskens scope.
+- Följ alltid acceptanskriterierna i TASKS.md.
+
 ## Safe Editing Policy
 - **Do not break existing code or logic.** Prefer small, additive changes.
 - Only refactor when necessary to fix a bug, improve a11y, or align with the design system.
