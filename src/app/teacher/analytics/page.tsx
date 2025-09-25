@@ -20,13 +20,17 @@ export default function TeacherAnalyticsPage() {
   const [heatmap, setHeatmap] = React.useState<{ week: string; values: { skillId: string; rate: number }[] }[]>([])
   const [topWeak, setTopWeak] = React.useState<{ skillId: string; attempts: number; rate: number; meta?: { id: string; key?: string; name?: string; subject?: string } }[]>([])
 
+  const [consentRate, setConsentRate] = React.useState<number>(0)
+  const [feedbackRatio, setFeedbackRatio] = React.useState<number>(0)
+
   const fetchData = React.useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [overviewRes, skillsRes] = await Promise.all([
+      const [overviewRes, skillsRes, metricsRes] = await Promise.all([
         fetch('/api/analytics/teacher/overview?weeks=10'),
         fetch('/api/analytics/teacher/skills?weeks=10'),
+        fetch('/api/ai/metrics')
       ])
 
       if (!overviewRes.ok) throw new Error('Kunde inte hämta övergripande analysdata')
@@ -42,6 +46,12 @@ export default function TeacherAnalyticsPage() {
       setSkills(skillsJson.skills || [])
       setHeatmap(skillsJson.heatmap || [])
       setTopWeak(skillsJson.topWeak || [])
+
+      if (metricsRes.ok) {
+        const metrics = await metricsRes.json()
+        setConsentRate(Number((metrics.consentRate || 0) * 100))
+        setFeedbackRatio(Number((metrics.feedbackRatio || 0) * 100))
+      }
     } catch (_error) {
       setError('Ingen analysdata hittades. Visa exempeldata?')
     } finally {
@@ -78,6 +88,8 @@ export default function TeacherAnalyticsPage() {
     setTopWeak([
       { skillId: 's1', attempts: 34, rate: 55, meta: { id: 's1', name: 'Bråk' } },
     ])
+    setConsentRate(42)
+    setFeedbackRatio(67)
   }
 
   return (
@@ -102,6 +114,33 @@ export default function TeacherAnalyticsPage() {
           </Typography>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Samtyckesgrad</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Typography variant="h2">{Math.round(consentRate)}%</Typography>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Feedback (👍 / totalt)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Typography variant="h2">{Math.round(feedbackRatio)}%</Typography>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Senaste 30 dagar (träning)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Typography variant="body2">Se detaljer i export och AI‑panel.</Typography>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
