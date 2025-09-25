@@ -46,7 +46,7 @@
 
 ---
 
-### AI2 — Skolverket-hämtning
+### AI2 — Skolverket-hämtning ✅
 **Gör:**
 - Skapa `src/lib/ai/skolverket.ts`:
   - `fetchSkolverketObjectives(subject, gradeBand): Promise<Array<{id:string;label:string}>>`
