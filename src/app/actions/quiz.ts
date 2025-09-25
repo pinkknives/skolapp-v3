@@ -108,28 +108,15 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
       }
     }
 
-    // If teacher consented to AI training, save anonymized training data stub
+    // Fire-and-forget async AI training data collection via Edge Function
     try {
-      const { data: us } = await supabase
-        .from('user_settings')
-        .select('consent_to_ai_training')
-        .eq('user_id', ownerId)
-        .maybeSingle()
-      if (us?.consent_to_ai_training) {
-        await supabase
-          .from('ai_training_data')
-          .insert({
-            teacher_id: ownerId,
-            quiz_id: quiz.id,
-            question_text: `[quiz-created] ${title}`,
-            question_type: null,
-            subject: null,
-            grade: null,
-          })
-      }
-    } catch (e) {
-      console.warn('ai_training_data insert skipped:', e)
-    }
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ''
+      fetch(`${baseUrl}/functions/v1/ai-training-collector`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ teacher_id: ownerId, quiz_id: quiz.id, title })
+      }).catch(() => {})
+    } catch {}
 
     revalidatePath('/teacher/quiz')
     return {
