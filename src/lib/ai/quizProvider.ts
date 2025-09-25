@@ -96,8 +96,9 @@ export class MockQuizProvider implements QuizAIProvider {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500));
     
-    // Simulate occasional failures (10% chance)
-    if (Math.random() < 0.1) {
+    // Optional: simulate failures via env flag (default 0 = disabled)
+    const mockFailureProb = Number(process.env.NEXT_PUBLIC_AI_MOCK_FAILURE_PROB || '0');
+    if (mockFailureProb > 0 && Math.random() < mockFailureProb) {
       throw new Error('AI service temporarily unavailable. Please try again.');
     }
 
@@ -480,13 +481,60 @@ export class AnthropicQuizProvider implements QuizAIProvider {
   }
 }
 
+// Browser-side provider that calls our server API route
+export class ApiQuizProvider implements QuizAIProvider {
+  name = 'Server API Provider';
+  isAvailable = true;
+
+  async generateQuestions(params: AiParams): Promise<AiQuestion[]> {
+    const body = {
+      subject: params.subject,
+      grade: params.grade,
+      count: params.count,
+      type: params.type === 'multiple-choice' ? 'flerval' : 'fritext',
+      difficulty: params.difficulty === 'easy' ? 'lätt' : params.difficulty === 'hard' ? 'svår' : 'medel',
+      extraContext: params.context
+    };
+
+    const resp = await fetch('/api/ai/generate-questions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      type ApiError = { error?: string } | undefined
+      const err = (await resp.json().catch(() => ({}))) as ApiError
+      throw new Error(err?.error || 'Kunde inte generera frågor med AI.');
+    }
+
+    const data = await resp.json();
+    // The API returns either { questions: [...] } or an array
+    const questions = Array.isArray(data) ? data : (data?.questions ?? []);
+    return questions as AiQuestion[];
+  }
+
+  async suggestTitle(): Promise<AiTitleSuggestion[]> { throw new Error('Not implemented'); }
+  async simplifyText(): Promise<AiTextSimplification> { throw new Error('Not implemented'); }
+  async varyDifficulty(): Promise<AiDifficultyVariation> { throw new Error('Not implemented'); }
+  async improveClarity(): Promise<AiClarityImprovement> { throw new Error('Not implemented'); }
+  async generateAnswers(): Promise<AiAnswerGeneration> { throw new Error('Not implemented'); }
+}
+
 // Provider factory and configuration
 class QuizAIService {
-  private providers: QuizAIProvider[] = [
-    new MockQuizProvider(),
-    new OpenAIQuizProvider(),
-    new AnthropicQuizProvider()
-  ];
+  private providers: QuizAIProvider[];
+
+  constructor() {
+    const isBrowser = typeof window !== 'undefined';
+    if (isBrowser) {
+      // In the browser, call our server API to use real AI; fall back to mock if needed
+      this.providers = [new ApiQuizProvider(), new MockQuizProvider()];
+    } else {
+      // On the server, prefer real providers
+      this.providers = [new OpenAIQuizProvider(), new MockQuizProvider(), new AnthropicQuizProvider()];
+    }
+  }
 
   getAvailableProviders(): QuizAIProvider[] {
     return this.providers.filter(p => p.isAvailable);
@@ -497,7 +545,11 @@ class QuizAIService {
     if (available.length === 0) {
       throw new Error('No AI providers available');
     }
-    return available[0]; // Return first available (Mock in dev, configured provider in prod)
+    // Prefer real providers over mock when available
+    const preferred = available.find(p => p.name === 'OpenAI GPT')
+      || available.find(p => p.name !== 'Mock AI Provider')
+      || available[0];
+    return preferred;
   }
 
   async generateQuestions(params: AiParams, providerId?: string): Promise<Question[]> {

@@ -15,10 +15,20 @@ if (!OPENAI_API_KEY) {
   }
 }
 
-export const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY || "placeholder-key-for-build",
-  // Optional organization and project configuration
-  ...(OPENAI_PROJECT_ID && { project: OPENAI_PROJECT_ID }),
-});
+// Important: Only instantiate the OpenAI client on the server.
+// Importing this file in a Client Component should NOT construct the client.
+const isServerRuntime = typeof window === 'undefined'
 
-export const isOpenAIAvailable = !!OPENAI_API_KEY;
+export const openai: OpenAI = (isServerRuntime
+  ? new OpenAI({
+      apiKey: OPENAI_API_KEY || "placeholder-key-for-build",
+      // Optional organization and project configuration
+      ...(OPENAI_PROJECT_ID && { project: OPENAI_PROJECT_ID }),
+    })
+  : (undefined as unknown as OpenAI)
+)
+
+// Client-safe availability flag: server checks real key; client uses NEXT_PUBLIC flag
+export const isOpenAIAvailable = isServerRuntime
+  ? !!OPENAI_API_KEY
+  : process.env.NEXT_PUBLIC_OPENAI_ENABLED !== 'false'
