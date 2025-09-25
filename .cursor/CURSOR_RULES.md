@@ -78,3 +78,14 @@ You are a **Senior Front-End Developer** (React/Next.js/TypeScript/Tailwind v4, 
 ## Security & Data
 - Ändra inte RLS/Supabase-policys via Cursor utan explicit uppdrag.
 - Logga aldrig hemligheter/API-nycklar. Ändra inte `.env*` i PR utan instruktion.
+
+## Rule: Bugfixing & Debugging
+- Alltid prioritera buggar och fel över nya funktioner.
+- Om `npm run type-check`, `npm run lint -- --max-warnings=0`, `npm run build` eller tester misslyckas:
+  - Felsök och fixa omedelbart innan nästa task.
+  - Gör minimala, fokuserade commits med prefix (t.ex. E1-fix).
+  - Fråga aldrig om lov att fixa — lös problemet direkt.
+- Sök efter roten till felet (imports, typer, async, hooks, policies, hydration m.m.) och åtgärda i rätt nivå.
+- När allt är grönt (type-check, lint, build, tests) → fortsätt automatiskt till nästa task.
+- Ändra inte på logik eller stil som inte är relaterad till felet.
+- Följ övriga regler i detta dokument.

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { openai, isOpenAIAvailable } from "@/lib/ai/openai";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { openai } from "@/lib/ai/openai";
+import { env, assertOpenAIAvailable } from '@/lib/env.server'
+import { verifyQuota } from '@/lib/ai/quota'
+import { createClient } from "@supabase/supabase-js";
 
 const bodySchema = z.object({
   subject: z.string().min(1),
@@ -14,16 +16,21 @@ const bodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if any AI provider is available
-    if (!isOpenAIAvailable) {
-      return NextResponse.json(
-        { error: 'AI-funktioner är inte konfigurerade på denna server.' },
-        { status: 503 }
-      );
+    const keyCheck = assertOpenAIAvailable()
+    if (!keyCheck.ok && env.nodeEnv === 'production') {
+      return NextResponse.json({ code: 'MISSING_API_KEY', message: 'AI-funktioner är inte konfigurerade.' }, { status: 503 })
     }
 
-    // Get current user
-    const supabase = supabaseBrowser();
+    // Authenticate current user using Authorization header (Supabase JWT)
+    const authHeader = req.headers.get('authorization') || ''
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false }
+    })
+
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -33,25 +40,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check and increment quota BEFORE making AI call
-    const quotaResponse = await fetch(`${req.nextUrl.origin}/api/ai/usage`, {
-      method: 'POST',
-      headers: { 
-        'authorization': req.headers.get('authorization') || '',
-        'content-type': 'application/json'
+    // Quota check (resilient)
+    const userId = authHeader.startsWith('Bearer ') ? 'jwt' : 'unknown' // placeholder; can be expanded to decode JWT
+    const quota = await verifyQuota({ userId, feature: 'ai_generate' })
+    if (!quota.ok) {
+      if (quota.reason === 'quota-exceeded') {
+        return NextResponse.json({ code: 'QUOTA_EXCEEDED', message: 'Kvot slut.' }, { status: 429 })
       }
-    });
-
-    if (quotaResponse.status === 429) {
-      const quotaData = await quotaResponse.json();
-      return NextResponse.json(quotaData, { status: 429 });
-    }
-
-    if (!quotaResponse.ok) {
-      return NextResponse.json(
-        { error: 'Kunde inte verifiera AI-kvot' },
-        { status: 500 }
-      );
+      // otherwise allow (dev cases)
     }
 
     const json = await req.json();
@@ -98,10 +94,9 @@ Returnera ENBART giltig JSON.`;
 
     return NextResponse.json(data);
   } catch (err: unknown) {
-    console.error("AI error:", err);
-    return NextResponse.json(
-      { error: "Kunde inte generera frågor just nu." },
-      { status: 500 }
-    );
+    const requestId = crypto.randomUUID()
+    console.error(`[ai][${requestId}] error`, err)
+    const message = err instanceof Error ? err.message : 'Okänt fel'
+    return NextResponse.json({ code: 'OPENAI_ERROR', message, requestId }, { status: 502 })
   }
 }

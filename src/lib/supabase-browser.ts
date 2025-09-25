@@ -1,6 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-export const supabaseBrowser = () => {
+let _client: SupabaseClient | null = null
+
+export const supabaseBrowser = (): SupabaseClient => {
+  if (_client) return _client
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -14,11 +18,12 @@ export const supabaseBrowser = () => {
     }
   }
 
-  return createClient(safeUrl, safeAnonKey, {
+  _client = createClient(safeUrl, safeAnonKey, {
     auth: {
-      // Avoid noisy localStorage writes in fallback runs
-      persistSession: false,
-      autoRefreshToken: false,
+      persistSession: true,
+      autoRefreshToken: true,
     },
   })
+
+  return _client
 }

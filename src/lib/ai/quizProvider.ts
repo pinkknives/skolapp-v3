@@ -487,6 +487,12 @@ export class ApiQuizProvider implements QuizAIProvider {
   isAvailable = true;
 
   async generateQuestions(params: AiParams): Promise<AiQuestion[]> {
+    // Attach current user's auth token so the API can authorize the request
+    const { supabaseBrowser } = await import('../supabase-browser')
+    const supabase = supabaseBrowser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+
     const body = {
       subject: params.subject,
       grade: params.grade,
@@ -498,7 +504,10 @@ export class ApiQuizProvider implements QuizAIProvider {
 
     const resp = await fetch('/api/ai/generate-questions', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {})
+      },
       body: JSON.stringify(body)
     });
 
@@ -509,9 +518,47 @@ export class ApiQuizProvider implements QuizAIProvider {
     }
 
     const data = await resp.json();
-    // The API returns either { questions: [...] } or an array
-    const questions = Array.isArray(data) ? data : (data?.questions ?? []);
-    return questions as AiQuestion[];
+    // The API returns either { questions: [...] } or an array with objects shaped like
+    // { type: 'flerval'|'fritext', question: string, options?: string[], correctIndex?: number, answerHint?: string, explanation?: string }
+    const raw = Array.isArray(data) ? data : (data?.questions ?? []);
+
+    type RawQuestion = {
+      type?: 'flerval' | 'fritext'
+      question?: string
+      options?: unknown
+      correctIndex?: unknown
+      answerHint?: unknown
+      explanation?: unknown
+    }
+
+    const toAi = (item: RawQuestion, idx: number): AiQuestion | null => {
+      if (!item) return null
+      if (item.type === 'flerval') {
+        const choices = Array.isArray(item.options) ? (item.options as unknown[]) : []
+        const correct = typeof item.correctIndex === 'number' ? (item.correctIndex as number) : -1
+        return {
+          kind: 'multiple-choice',
+          prompt: String(item.question || ''),
+          choices: choices.map((t, i: number) => ({ id: `c_${idx}_${i}`, text: String(t), correct: i === correct })),
+          explanation: typeof item.explanation === 'string' ? item.explanation : undefined,
+        }
+      }
+      if (item.type === 'fritext') {
+        return {
+          kind: 'free-text',
+          prompt: String(item.question || ''),
+          expectedAnswer: typeof item.answerHint === 'string' ? (item.answerHint as string) : 'Öppet svar',
+          explanation: typeof item.explanation === 'string' ? item.explanation : undefined,
+        }
+      }
+      return null
+    }
+
+    const mapped: AiQuestion[] = (raw as RawQuestion[])
+      .map((it: RawQuestion, i: number) => toAi(it, i))
+      .filter((q: AiQuestion | null): q is AiQuestion => q !== null)
+
+    return mapped
   }
 
   async suggestTitle(): Promise<AiTitleSuggestion[]> { throw new Error('Not implemented'); }

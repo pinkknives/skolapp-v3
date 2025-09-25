@@ -1,6 +1,6 @@
-import { NextRequest } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { redirect } from 'next/navigation'
+import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createServerClient, type CookieOptions, type CookieMethodsServerDeprecated } from '@supabase/ssr'
 import { upsertProfile } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
@@ -11,9 +11,27 @@ export async function GET(request: NextRequest) {
   const callbackUrl = requestUrl.searchParams.get('callbackUrl')
 
   if (code) {
-    const supabase = createClient(
+    const cookieStore = await cookies()
+
+    // Bridge Next.js cookies API to Supabase SSR (deprecated) methods for compatibility
+    const cookieMethods: CookieMethodsServerDeprecated = {
+      get(name: string) {
+        return cookieStore.get(name)?.value
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        cookieStore.set({ name, value, ...(options || {}) })
+      },
+      remove(name: string, options: CookieOptions) {
+        cookieStore.set({ name, value: '', ...(options || {}), maxAge: 0 })
+      },
+    }
+
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: cookieMethods,
+      }
     )
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
@@ -34,16 +52,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Choose redirect
-  if (callbackUrl) {
-    redirect(callbackUrl)
-  }
+  const redirectTo = callbackUrl
+    ? callbackUrl
+    : isSignup
+      ? '/teacher/quiz/create?onboarding=true'
+      : '/teacher?login=true'
 
-  if (isSignup) {
-    // Onboarding for new signups
-    redirect('/teacher/quiz/create?onboarding=true')
-  }
-
-  // Default after login
-  redirect('/teacher')
+  return NextResponse.redirect(new URL(redirectTo, request.url))
 }
