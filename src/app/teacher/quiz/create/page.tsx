@@ -41,7 +41,7 @@ function CreateQuizPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1')) // Mock teacher ID
-  const [showAIDraft, setShowAIDraft] = useState(false)
+  // Docked AI panel is always visible when feature flag is enabled
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
@@ -49,9 +49,7 @@ function CreateQuizPage() {
 
   // Check for ai-draft URL parameter
   useEffect(() => {
-    if (searchParams.get('type') === 'ai-draft' && canUseAI) {
-      setShowAIDraft(true)
-    }
+    // legacy: ?type=ai-draft no longer toggles modal
   }, [searchParams, canUseAI])
 
   const updateQuiz = (updates: Partial<Quiz>) => {
@@ -242,14 +240,9 @@ function CreateQuizPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Frågor</CardTitle>
-                    {canUseAI ? (
-                      <Button onClick={() => setShowAIDraft(true)} variant="outline" data-testid="ai-draft-button">
-                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        AI-utkast
-                      </Button>
-                    ) : (
+                  {canUseAI ? (
+                    <div />
+                  ) : (
                       <Button 
                         variant="outline" 
                         disabled
@@ -344,7 +337,7 @@ function CreateQuizPage() {
               {/* AI Assistant */}
               {canUseAI ? (
                 <AIAssistantPanel
-                  onGenerateQuestions={() => setShowAIDraft(true)}
+                  onGenerateQuestions={() => {}}
                   onGenerateTitle={() => {/* TODO: Implement title generation */}}
                   onGenerateAnswers={() => {/* TODO: Implement answer generation */}}
                   onSimplifyText={() => {/* TODO: Implement text simplification */}}
@@ -401,17 +394,20 @@ function CreateQuizPage() {
             </div>
           </div>
 
-          {/* AI Draft Modal */}
-          {showAIDraft && canUseAI && (
-            <ImprovedAIQuizDraft
-              quizTitle={quiz.title}
-              onQuestionsGenerated={handleAIQuestionsGenerated}
-              onClose={() => setShowAIDraft(false)}
-            />
+          {/* Docked AI Panel */}
+          {canUseAI && (
+            <div className="hidden lg:block">
+              <ImprovedAIQuizDraft
+                quizTitle={quiz.title}
+                onQuestionsGenerated={handleAIQuestionsGenerated}
+                onClose={() => {}}
+                variant="panel"
+              />
+            </div>
           )}
 
-          {/* AI Feature Paywall Modal */}
-          {showAIDraft && !canUseAI && (
+          {/* AI Feature Paywall Modal (kept for future toggle) */}
+          {false && !canUseAI && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
@@ -420,7 +416,7 @@ function CreateQuizPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowAIDraft(false)}
+                      onClick={() => {}}
                       className="text-neutral-500 hover:text-neutral-700"
                     >
                       ✕
@@ -429,7 +425,7 @@ function CreateQuizPage() {
                   <AIFeatureBlock
                     featureName="AI-assisterad quiz-generering"
                     description="Låt AI hjälpa dig att skapa engagerande quiz baserat på ditt ämne och mål. Få intelligenta förslag på frågor, svar och feedback."
-                    onUpgrade={() => setShowAIDraft(false)}
+                    onUpgrade={() => {}}
                   />
                 </div>
               </div>

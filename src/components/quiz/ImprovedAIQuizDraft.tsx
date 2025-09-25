@@ -239,7 +239,7 @@ interface AIFormData {
   context: string
 }
 
-export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }: ImprovedAIQuizDraftProps) {
+export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet' }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet' }) {
   const [step, setStep] = useState<'form' | 'generating' | 'preview' | 'error'>('form')
   const [formData, setFormData] = useState<AIFormData>({
     subject: '',
@@ -388,17 +388,9 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
   const isFormValid = formData.subject && formData.grade && formData.count > 0
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div 
-        ref={modalRef}
-        className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
-        role="dialog"
-        aria-labelledby="ai-modal-title"
-        aria-describedby="ai-modal-description ai-disclaimer"
-        tabIndex={-1}
-      >
-        <Card className="border-0">
+  // Wrapper render function to support panel vs sheet/modal variants
+  const renderCard = () => (
+    <Card className="border-0">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -887,7 +879,31 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
               )}
             </div>
           </CardFooter>
-        </Card>
+    </Card>
+  )
+
+  if (variant === 'panel') {
+    return (
+      <aside aria-label="AI-hjälp" className="sticky top-20">
+        <div ref={modalRef} className="max-h-[calc(100vh-8rem)] overflow-auto">
+          {renderCard()}
+        </div>
+      </aside>
+    )
+  }
+
+  // Default to previous modal behavior (sheet will be implemented in A2)
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        role="dialog"
+        aria-labelledby="ai-modal-title"
+        aria-describedby="ai-modal-description ai-disclaimer"
+        tabIndex={-1}
+      >
+        {renderCard()}
       </div>
     </div>
   )
