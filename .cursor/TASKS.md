@@ -31,11 +31,11 @@ What changed
 - Deferrad Supabase-klient i serverroutes för att undvika build-time env-krav.
 
 ### E2. Performance & LCP/CLS
-- [ ] Använd `next/image` + `sizes` på stora bilder/illustrationer.
-- [ ] Optimera charts/animationer för minimal layout shift (prefers-reduced-motion).
+- [x] Använd `next/image` + `sizes` på stora bilder/illustrationer.
+- [x] Optimera charts/animationer för minimal layout shift (prefers-reduced-motion).
 - [ ] Lighthouse ≥ 90 på teacher/student/class.
 **Acceptans**
-- [ ] Lighthouse-rapporter sparas som CI artifacts.
+- [x] Lighthouse-rapporter sparas som CI artifacts.
 
 ### E3. Testhårdning
 - [ ] Playwright: e2e för login, elevvy, klassvy, delad rapport.
