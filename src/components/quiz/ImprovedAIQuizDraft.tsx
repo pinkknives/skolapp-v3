@@ -266,8 +266,10 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [errorDetails, setErrorDetails] = useState<string>('')
   const [copySuccess, setCopySuccess] = useState(false)
+  const [liveText, setLiveText] = useState<string>('')
   const modalRef = useRef<HTMLDivElement>(null)
   const firstFieldRef = useRef<HTMLSelectElement>(null)
+  const prevFocusRef = useRef<Element | null>(null)
 
   // Draft persistence keys
   const draftKey = React.useMemo(() => {
@@ -315,6 +317,8 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
 
   // Focus management for accessibility
   useEffect(() => {
+    // capture previously focused element before moving focus
+    try { prevFocusRef.current = document.activeElement } catch {}
     if (modalRef.current) {
       modalRef.current.focus()
     }
@@ -332,6 +336,12 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
+        // try to restore focus to FAB or previous focus target
+        try {
+          const fab = document.querySelector('[data-ai-fab="true"]') as HTMLElement | null
+          if (fab) fab.focus()
+          else (prevFocusRef.current as HTMLElement | null)?.focus?.()
+        } catch {}
         onClose()
       }
     }
@@ -416,8 +426,15 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     const questionsToAdd = generatedQuestions.filter(q => selectedQuestions.has(q.id))
     if (questionsToAdd.length === 0) return
     onQuestionsGenerated(questionsToAdd)
+    setLiveText(`${questionsToAdd.length} frågor infogade`)
     // Clear draft after successful import
     try { localStorage.removeItem(draftKey) } catch {}
+    // restore focus to FAB or previous
+    try {
+      const fab = document.querySelector('[data-ai-fab="true"]') as HTMLElement | null
+      if (fab) fab.focus()
+      else (prevFocusRef.current as HTMLElement | null)?.focus?.()
+    } catch {}
     // Close modal after adding to make the update visible immediately
     onClose()
   }
@@ -428,6 +445,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     const chosen = selected[0] || generatedQuestions[0]
     if (!chosen) return
     onReplaceQuestion(pendingAction.index, chosen)
+    setLiveText('Fråga uppdaterad')
     if (onClearPending) onClearPending()
   }
 
@@ -502,6 +520,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
   // Wrapper render function to support panel vs sheet/modal variants
   const renderCard = () => (
     <Card className="border-0">
+          <div aria-live="polite" role="status" className="sr-only" data-testid="ai-live-region">{liveText}</div>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
