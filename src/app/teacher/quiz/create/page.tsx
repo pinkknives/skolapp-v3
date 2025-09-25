@@ -108,6 +108,16 @@ function CreateQuizPage() {
     }))
   }
 
+  // Wire per-question AI actions to open panel/sheet with context (handled inside ImprovedAIQuizDraft via global store in later tasks)
+  const handleAIActionRequested = (_params: { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }) => {
+    // For Milestone B1 minimal integration: just scroll to AI panel (no global store yet)
+    try {
+      const el = document.querySelector('[aria-label="AI-hjälp"]') as HTMLElement | null
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } catch {}
+    // Future steps (B1 continued): set context in panel
+  }
+
   const saveDraft = async () => {
     setIsSaving(true)
     try {
@@ -314,6 +324,7 @@ function CreateQuizPage() {
                           onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
                           onDelete={() => deleteQuestion(index)}
                           onDuplicate={() => duplicateQuestion(index)}
+                          onAIActionRequested={handleAIActionRequested}
                         />
                       ))}
                     </div>

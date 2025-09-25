@@ -65,7 +65,7 @@
 
 ## Milestone B — Per-fråga AI-åtgärder
 
-### B1. AI-meny i frågekort
+### B1. AI-meny i frågekort [x]
 **Mål**
 - AI-ikon i varje frågekort med: *Förbättra*, *Förenkla/Förtydliga*, *Generera distraktorer*, *Omgenerera fråga*.
 - Öppna panel/sheet i rätt åtgärdsflik, förifyll aktiv fråga.

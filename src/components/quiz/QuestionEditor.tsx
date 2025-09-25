@@ -20,9 +20,10 @@ interface QuestionEditorProps {
   onDuplicate: () => void
   /** Grade level for AI hints (optional) */
   gradeLevel?: string
+  onAIActionRequested?: (params: { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }) => void
 }
 
-export function QuestionEditor({ question, questionIndex, onChange, onDelete, onDuplicate, gradeLevel }: QuestionEditorProps) {
+export function QuestionEditor({ question, questionIndex, onChange, onDelete, onDuplicate, gradeLevel, onAIActionRequested }: QuestionEditorProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const handleBasicChange = (updates: Partial<Question>) => {
@@ -118,6 +119,19 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
             Fråga {questionIndex + 1} - {questionTypeLabels[question.type]}
           </CardTitle>
           <div className="flex gap-2">
+            {/* AI actions menu */}
+            {onAIActionRequested && (
+              <div className="relative">
+                <Button variant="outline" size="sm" onClick={() => onAIActionRequested({ action: 'improve', question, index: questionIndex })}>
+                  ✨ Förbättra
+                </Button>
+                <div className="hidden sm:flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => onAIActionRequested({ action: 'simplify', question, index: questionIndex })}>Förenkla</Button>
+                  <Button variant="ghost" size="sm" onClick={() => onAIActionRequested({ action: 'distractors', question, index: questionIndex })}>Distraktorer</Button>
+                  <Button variant="ghost" size="sm" onClick={() => onAIActionRequested({ action: 'regenerate', question, index: questionIndex })}>Omgenerera</Button>
+                </div>
+              </div>
+            )}
             <Button variant="ghost" size="sm" onClick={onDuplicate}>
               <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
