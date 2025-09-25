@@ -146,7 +146,7 @@
 
 ---
 
-### C4. Draft-hantering
+### C4. Draft-hantering [x]
 **Mål**
 - Behåll localStorage-drafts för panelen.
 - Cacha senaste per-frågeoperation (för Ångra).

@@ -269,6 +269,50 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
   const modalRef = useRef<HTMLDivElement>(null)
   const firstFieldRef = useRef<HTMLSelectElement>(null)
 
+  // Draft persistence keys
+  const draftKey = React.useMemo(() => {
+    const base = (quizTitle || 'untitled').toString().slice(0, 50)
+    return `sk_ai_panel_draft_${base}`
+  }, [quizTitle])
+
+  // Save draft helper
+  const saveDraft = React.useCallback(() => {
+    try {
+      const payload = {
+        formData,
+        step,
+        generatedQuestions,
+        selectedIds: Array.from(selectedQuestions),
+      }
+      localStorage.setItem(draftKey, JSON.stringify(payload))
+    } catch {}
+  }, [draftKey, formData, step, generatedQuestions, selectedQuestions])
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as {
+        formData?: AIFormData
+        step?: typeof step
+        generatedQuestions?: Question[]
+        selectedIds?: string[]
+      }
+      if (parsed.formData) setFormData(parsed.formData)
+      if (parsed.generatedQuestions && Array.isArray(parsed.generatedQuestions)) {
+        setGeneratedQuestions(parsed.generatedQuestions)
+        setSelectedQuestions(new Set(parsed.selectedIds || []))
+      }
+      if (parsed.step === 'preview' || parsed.step === 'form') setStep(parsed.step)
+    } catch {}
+  }, [draftKey])
+
+  // Auto-save draft on relevant changes
+  useEffect(() => {
+    saveDraft()
+  }, [saveDraft])
+
   // Focus management for accessibility
   useEffect(() => {
     if (modalRef.current) {
@@ -358,13 +402,22 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
       }
     }
     run()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingAction?.action, pendingAction?.question?.id])
+  }, [
+    pendingAction,
+    formData.subject,
+    formData.grade,
+    formData.type,
+    formData.difficulty,
+    formData.topics,
+    formData.context
+  ])
 
   const handleAcceptQuestions = () => {
     const questionsToAdd = generatedQuestions.filter(q => selectedQuestions.has(q.id))
     if (questionsToAdd.length === 0) return
     onQuestionsGenerated(questionsToAdd)
+    // Clear draft after successful import
+    try { localStorage.removeItem(draftKey) } catch {}
     // Close modal after adding to make the update visible immediately
     onClose()
   }
