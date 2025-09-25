@@ -240,6 +240,14 @@ interface AIFormData {
 }
 
 export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet' }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet' }) {
+  const [isPanelOpen, setIsPanelOpen] = React.useState(true)
+  React.useEffect(() => {
+    try {
+      const w = window.innerWidth
+      if (w >= 640 && w < 1024) setIsPanelOpen(false)
+      else setIsPanelOpen(true)
+    } catch {}
+  }, [])
   const [step, setStep] = useState<'form' | 'generating' | 'preview' | 'error'>('form')
   const [formData, setFormData] = useState<AIFormData>({
     subject: '',
@@ -884,10 +892,22 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
 
   if (variant === 'panel') {
     return (
-      <aside aria-label="AI-hjälp" className="sticky top-20">
-        <div ref={modalRef} className="max-h-[calc(100vh-8rem)] overflow-auto">
-          {renderCard()}
-        </div>
+      <aside aria-label="AI-hjälp" className="sticky top-20" data-state={isPanelOpen ? 'open' : 'closed'}>
+        {/* Sticky side tab for tablet to toggle open/closed */}
+        <button
+          type="button"
+          onClick={() => setIsPanelOpen((v) => !v)}
+          className="hidden md:block lg:hidden sticky top-20 -ml-2 mb-2 text-xs rounded-r bg-primary-600 text-white px-2 py-1"
+          aria-expanded={isPanelOpen}
+          aria-controls="ai-panel-content"
+        >
+          {isPanelOpen ? 'Stäng AI' : 'AI'}
+        </button>
+        {isPanelOpen && (
+          <div id="ai-panel-content" ref={modalRef} className="max-h-[calc(100vh-8rem)] overflow-auto">
+            {renderCard()}
+          </div>
+        )}
       </aside>
     )
   }
