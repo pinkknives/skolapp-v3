@@ -58,7 +58,7 @@
 
 ---
 
-### AI3 — Prompt-builder
+### AI3 — Prompt-builder ✅
 **Gör:**
 - Skapa `src/lib/ai/prompt.ts`:
   - `buildMessages(input, curriculum)` → `[system, developer, user]`
