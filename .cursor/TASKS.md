@@ -161,7 +161,7 @@
 
 ## Milestone D — A11y, Telemetri, Tester, Prestanda
 
-### D1. Tillgänglighet
+### D1. Tillgänglighet [x]
 **Mål**
 - Panel: `<aside aria-label="AI-hjälp">` (ej modal).
 - Sheet: `role="dialog" aria-modal="true"`, fokusfälla, ESC/drag, restore focus.
@@ -172,7 +172,7 @@
 
 ---
 
-### D2. Microcopy (svenska)
+### D2. Microcopy (svenska) [x]
 **Mål**
 - Konsekvent svensk microcopy i `form/generating/preview/error`.
 
@@ -181,7 +181,7 @@
 
 ---
 
-### D3. Telemetri + feature flag
+### D3. Telemetri + feature flag [x]
 **Mål**
 - Flagga `features.quizAI.docked`.
 - Events: `ai_panel_open/close`, `ai_action_improve/regenerate/distractors`, `ai_batch_apply`, `ai_question_replace`, `undo`.
@@ -191,7 +191,7 @@
 
 ---
 
-### D4. Tester
+### D4. Tester [x]
 **Mål**
 - RTL: panel/sheet-rendering, per-fråga-meny, fokus/ARIA.
 - Playwright: batch-flöde, per-fråga-förbättring, mobil FAB+sheet (half↔full, swipe).
@@ -202,7 +202,7 @@
 
 ---
 
-### D5. Prestanda
+### D5. Prestanda [x]
 **Mål**
 - Dynamic import av AI-panelen på mobil/tablet.
 - Skeleton loaders i `generating`.
