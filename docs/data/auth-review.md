@@ -22,7 +22,16 @@ Exempel: `/auth/signin` (email/password)
 
 ### Mailmallar
 - Verifiera i Supabase Studio → Authentication → Email Templates
-- Säkerställ svenska texter för: Signup confirmation, Magic link, Reset password
+- Säkerställ svenska texter (tonalitet som i appen) för:
+  - Signup confirmation (bekräftelse på konto)
+  - Magic link (engångslänk för inloggning)
+  - Reset password (återställning av lösenord)
+- Rekommenderad struktur per mall:
+  - Ämne: kort, tydligt (t.ex. "Bekräfta din e‑post till Skolapp")
+  - Hälsning + syfte på 1–2 rader
+  - Tydlig primärlänk-knapp
+  - Giltighetstid/om detta inte var du‑text
+  - Avslut med supportlänk
 
 ### Rekommendationer
 - Bekräfta att auth/callback hanterar återkomst från OAuth korrekt
