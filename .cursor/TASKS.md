@@ -57,7 +57,7 @@
  - [x] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
  - [x] Inställningsvy: toggle.  
 **Acceptans**
-- [ ] Beslut sparas i DB och kan ändras när som helst.
+ - [x] Beslut sparas i DB och kan ändras när som helst.
 
 ### E3. Insamling till träningsdata (opt-in)
 - [ ] Ny tabell `ai_training_data` (quiz, frågor, metadata) utan PII.  
