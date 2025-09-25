@@ -641,11 +641,14 @@ class QuizAIService {
     }
 
     const aiQuestions = await provider.generateQuestions(params);
-    
+
     // Convert AI questions to internal Question format
     return aiQuestions.map((aq, index) => {
+      const generatedId = (typeof globalThis !== 'undefined' && globalThis.crypto && 'randomUUID' in globalThis.crypto)
+        ? (globalThis.crypto as Crypto).randomUUID()
+        : `ai_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`;
       const baseQuestion = {
-        id: `ai_${Date.now()}_${index}`,
+        id: generatedId,
         points: 1,
         timeLimit: undefined,
         rubric: undefined,

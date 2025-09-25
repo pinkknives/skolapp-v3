@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai, isOpenAIAvailable } from "@/lib/ai/openai";
 import { env, assertOpenAIAvailable } from "@/lib/env.server";
 import { verifyQuota } from "@/lib/ai/quota";
-import { supabaseBrowser } from "@/lib/supabase-browser";
+import { createClient } from "@supabase/supabase-js";
 import { InputSchema, OutputSchema, type GenerateQuestionsInput, type GenerateQuestionsOutput, type QuestionType, type BloomLevel } from "@/lib/ai/schemas";
 import { fetchSkolverketObjectives } from "@/lib/ai/skolverket";
 import { buildMessages } from "@/lib/ai/prompt";
@@ -43,6 +43,7 @@ function normalizeOutput(raw: unknown, input: GenerateQuestionsInput): GenerateQ
 
 export async function POST(req: NextRequest) {
   try {
+    const requestId = crypto.randomUUID();
     const keyCheck = assertOpenAIAvailable();
     if ((env.nodeEnv === 'production' && !keyCheck.ok) || (typeof isOpenAIAvailable === 'boolean' && !isOpenAIAvailable)) {
       return NextResponse.json({ error: "AI-funktioner är inte konfigurerade på denna server." }, { status: 503 });
@@ -50,7 +51,12 @@ export async function POST(req: NextRequest) {
 
     // Authenticate current user using Authorization header (Supabase JWT)
     const authHeader = req.headers.get("authorization") || "";
-    const supabase = supabaseBrowser();
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
 
     const {
       data: { user },
@@ -158,15 +164,33 @@ export async function POST(req: NextRequest) {
     } as const;
 
     const isTest = process.env.NODE_ENV === 'test';
-    const resp = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: isTest ? [messages[0]!, messages[2]!] : messages,
-      temperature: isTest ? 0.7 : mapDifficultyToTemperature(input.difficulty),
-      max_tokens: 2000,
-      response_format: isTest ? { type: "json_object" } : { type: "json_schema", json_schema: responseJsonSchema },
-    });
+    let resp;
+    try {
+      resp = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages,
+        temperature: isTest ? 0.7 : mapDifficultyToTemperature(input.difficulty),
+        max_tokens: 2000,
+        response_format: isTest ? { type: "json_object" } : { type: "json_schema", json_schema: responseJsonSchema },
+      });
+    } catch (_primaryError) {
+      // Fallback: use plain json_object if json_schema is unsupported
+      try {
+        resp = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages,
+          temperature: 0.7,
+          max_tokens: 2000,
+          response_format: { type: "json_object" },
+        });
+      } catch (fallbackError) {
+        throw fallbackError;
+      }
+    }
 
     const text = resp.choices[0]?.message?.content ?? "";
+    // Debug log: entire AI content before any parsing/validation
+    console.info(`[ai][${requestId}] openai.raw`, { length: text.length, content: text });
     let raw: unknown = {};
     try {
       raw = JSON.parse(text);
@@ -190,6 +214,7 @@ export async function POST(req: NextRequest) {
     // Final validation
     const parsed = OutputSchema.safeParse(normalized);
     if (!parsed.success) {
+      console.warn(`[ai][${requestId}] validation_failed`, { normalized, issues: parsed.error.issues });
       return NextResponse.json(
         { error: "Validering av AI-svar misslyckades", details: parsed.error.flatten() },
         { status: 500 }
