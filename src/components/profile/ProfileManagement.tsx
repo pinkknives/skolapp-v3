@@ -9,6 +9,7 @@ import { UserWithProfile } from '@/lib/auth'
 import { updateProfileAction } from '@/app/actions/profile'
 import { TeacherVerification } from './TeacherVerification'
 import { User, Mail, GraduationCap, Settings, KeyRound } from 'lucide-react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { Stack } from '@/components/layout/Stack'
 import { FormField } from '@/components/ui/FormField'
@@ -22,6 +23,21 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [displayName, setDisplayName] = useState(user.profile?.display_name || '')
   const [role, setRole] = useState(user.profile?.role || 'teacher')
+  const [consent, setConsent] = useState<boolean>(false)
+  const [isUpdatingConsent, setIsUpdatingConsent] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const resp = await fetch('/api/user/settings/consent', { method: 'GET' })
+        if (resp.ok) {
+          const data = await resp.json()
+          setConsent(!!data.consent)
+        }
+      } catch {}
+    }
+    load()
+  }, [])
 
   const handleSave = async () => {
     setIsLoading(true)
@@ -248,6 +264,35 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         </CardHeader>
         <CardContent>
           <Stack gap="sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Typography variant="body2" className="text-neutral-600">Bidra anonymt till AI‑träning</Typography>
+                  <Typography variant="caption" className="text-neutral-500">Dina quiz kan användas anonymt för att förbättra frågeförslag</Typography>
+                </div>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={async (e) => {
+                      const next = e.target.checked
+                      setIsUpdatingConsent(true)
+                      try {
+                        const resp = await fetch('/api/user/settings/consent', {
+                          method: 'PATCH',
+                          headers: { 'content-type': 'application/json' },
+                          body: JSON.stringify({ consent: next })
+                        })
+                        if (resp.ok) setConsent(next)
+                      } finally {
+                        setIsUpdatingConsent(false)
+                      }
+                    }}
+                    disabled={isUpdatingConsent}
+                    className="h-4 w-4 text-primary-600"
+                  />
+                  <span className="text-sm">{isUpdatingConsent ? 'Uppdaterar...' : (consent ? 'Aktivt' : 'Av') }</span>
+                </label>
+              </div>
             <div className="flex justify-between">
             <Typography variant="body2" className="text-neutral-600">
               Medlem sedan

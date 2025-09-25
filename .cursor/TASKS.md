@@ -53,9 +53,9 @@
  - [x] Index skapade, validerade.
 
 ### E2. Consent – Samtyckesdialog + inställning
-- [ ] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
-- [x] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
-- [ ] Inställningsvy: toggle.  
+ - [ ] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
+ - [x] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
+ - [x] Inställningsvy: toggle.  
 **Acceptans**
 - [ ] Beslut sparas i DB och kan ändras när som helst.
 
