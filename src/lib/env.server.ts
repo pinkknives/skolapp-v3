@@ -15,7 +15,7 @@ const parsed = baseSchema.parse({
 export const env = {
   nodeEnv: parsed.NODE_ENV,
   openaiKey: parsed.OPENAI_API_KEY,
-  quotaCheck: parsed.NEXT_PUBLIC_AI_QUOTA_CHECK ?? (parsed.NODE_ENV === 'development' ? 'off' : 'on'),
+  quotaCheck: parsed.NEXT_PUBLIC_AI_QUOTA_CHECK ?? ((parsed.NODE_ENV === 'development' || parsed.NODE_ENV === 'test') ? 'off' : 'on'),
 }
 
 export function assertOpenAIAvailable(): { ok: boolean; reason?: string } {

@@ -98,7 +98,7 @@
 
 ---
 
-### AI6 — Tester
+### AI6 — Tester ✅
 **Gör:**
 - `src/tests/ai/generate-questions.test.ts`:
   - Mocka OpenAI-svar (JSON med 2 frågor).
@@ -109,7 +109,7 @@
 
 ---
 
-### AI7 — Finjustering & dokumentation
+### AI7 — Finjustering & dokumentation ✅
 **Gör:**
 - Mappa difficulty→temperatur (t.ex. `0.15 + 0.1*(difficulty-1)` clamp 0.15–0.7).
 - Liten README-sektion: hur funktionen används och vilka fält som behövs i UI.
