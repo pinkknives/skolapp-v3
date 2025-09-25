@@ -154,6 +154,7 @@ export function InviteModal({ classItem, onClose }: InviteModalProps) {
                     className="mx-auto mb-3"
                     width={200}
                     height={200}
+                    sizes="200px"
                   />
                   <Typography variant="body2" className="text-neutral-600">
                     Eleverna skannar med sin telefon

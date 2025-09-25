@@ -1,6 +1,8 @@
 // Billing utilities and Stripe integration
 import Stripe from 'stripe'
 import { supabaseBrowser } from '@/lib/supabase-browser'
+
+const ENTITLEMENTS_ENABLED = process.env.NEXT_PUBLIC_ENTITLEMENTS_ENABLED !== 'false'
 import type { BillingStatus, Entitlements, BillingInfo, UsageInfo, QuotaStatus } from '@/types/billing'
 
 // Initialize Stripe (server-side only)
@@ -39,6 +41,7 @@ export function getStripeConfig() {
  */
 export async function hasEntitlement(entitlementKey: keyof Entitlements): Promise<boolean> {
   const supabase = supabaseBrowser()
+  if (!ENTITLEMENTS_ENABLED) return false
   
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -46,6 +49,7 @@ export async function hasEntitlement(entitlementKey: keyof Entitlements): Promis
       return false
     }
 
+    if (!ENTITLEMENTS_ENABLED) return false
     const { data, error } = await supabase
       .from('entitlements')
       .select('*')
@@ -67,6 +71,24 @@ export async function hasEntitlement(entitlementKey: keyof Entitlements): Promis
  */
 export async function getUserBilling(): Promise<BillingInfo | null> {
   const supabase = supabaseBrowser()
+  if (!ENTITLEMENTS_ENABLED) {
+    const ent: Entitlements = {
+      ai_unlimited: true,
+      export_csv: false,
+      advanced_analytics: false,
+      seats: 1,
+      ai_monthly_quota: 0,
+      ai_monthly_used: 0,
+      period_start: '',
+      period_end: ''
+    }
+    const info: BillingInfo = {
+      billingStatus: null,
+      entitlements: ent,
+      plan: null,
+    }
+    return info
+  }
   
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -81,11 +103,13 @@ export async function getUserBilling(): Promise<BillingInfo | null> {
         .select('stripe_customer_id, subscription_status, plan')
         .eq('user_id', user.id)
         .single(),
-      supabase
-        .from('entitlements')
-        .select('*')
-        .eq('uid', user.id)
-        .single()
+      ENTITLEMENTS_ENABLED
+        ? supabase
+            .from('entitlements')
+            .select('*')
+            .eq('uid', user.id)
+            .single()
+        : Promise.resolve({ data: null as unknown, error: null as unknown })
     ])
 
     if (profileResult.error || entitlementsResult.error) {
@@ -93,7 +117,25 @@ export async function getUserBilling(): Promise<BillingInfo | null> {
     }
 
     const profile = profileResult.data
-    const entitlements = entitlementsResult.data
+    const entitlements: {
+      ai_unlimited: boolean
+      export_csv: boolean
+      advanced_analytics: boolean
+      seats: number
+      ai_monthly_quota: number
+      ai_monthly_used: number
+      period_start: string | null
+      period_end: string | null
+    } = entitlementsResult.data || {
+      ai_unlimited: true,
+      export_csv: false,
+      advanced_analytics: false,
+      seats: 1,
+      ai_monthly_quota: 0,
+      ai_monthly_used: 0,
+      period_start: null,
+      period_end: null,
+    }
 
     return {
       billingStatus: profile.subscription_status,
@@ -104,8 +146,8 @@ export async function getUserBilling(): Promise<BillingInfo | null> {
         seats: entitlements.seats,
         ai_monthly_quota: entitlements.ai_monthly_quota,
         ai_monthly_used: entitlements.ai_monthly_used,
-        period_start: entitlements.period_start,
-        period_end: entitlements.period_end
+      period_start: entitlements.period_start ?? '',
+      period_end: entitlements.period_end ?? ''
       },
       stripeCustomerId: profile.stripe_customer_id,
       plan: profile.plan
@@ -173,6 +215,15 @@ export async function getUsageInfo(): Promise<UsageInfo | null> {
       return null
     }
 
+    if (!ENTITLEMENTS_ENABLED) {
+      return {
+        ai_monthly_used: 0,
+        ai_monthly_quota: 0,
+        ai_unlimited: true,
+        period_start: null as unknown as string,
+        period_end: null as unknown as string,
+      }
+    }
     const { data, error } = await supabase
       .from('entitlements')
       .select('ai_monthly_used, ai_monthly_quota, ai_unlimited, period_start, period_end')

@@ -22,6 +22,7 @@ const heightClassMap = {
 }
 
 export function Distribution({ data, title = 'Resultatfördelning', height = 'md' }: DistributionProps) {
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return (
     <Card>
       <CardHeader>
@@ -41,7 +42,13 @@ export function Distribution({ data, title = 'Resultatfördelning', height = 'md
                   border: '1px solid hsl(var(--border))',
                 }}
               />
-              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[2,2,0,0]} />
+              <Bar
+                dataKey="count"
+                fill="hsl(var(--primary))"
+                radius={[2,2,0,0]}
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={prefersReducedMotion ? 0 : 300}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

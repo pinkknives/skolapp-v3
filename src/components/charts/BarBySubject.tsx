@@ -22,6 +22,7 @@ const heightClassMap = {
 }
 
 export function BarBySubject({ data, title = 'Resultat per ämne', height = 'md' }: BarBySubjectProps) {
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return (
     <Card>
       <CardHeader>
@@ -41,7 +42,13 @@ export function BarBySubject({ data, title = 'Resultat per ämne', height = 'md'
                   border: '1px solid hsl(var(--border))',
                 }}
               />
-              <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
+              <Bar
+                dataKey="value"
+                fill="hsl(var(--primary))"
+                radius={[4,4,0,0]}
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={prefersReducedMotion ? 0 : 300}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

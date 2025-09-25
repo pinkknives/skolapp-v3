@@ -210,6 +210,7 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
                   alt={(question as ImageQuestion).imageAlt || 'Preview'}
                   width={400}
                   height={256}
+                  sizes="(max-width: 768px) 100vw, 400px"
                   className="max-w-full h-auto max-h-64 rounded-md border object-contain"
                   priority={false}
                 />

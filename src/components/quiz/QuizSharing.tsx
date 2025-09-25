@@ -134,6 +134,7 @@ export function QuizSharing({ quiz, onClose, className }: QuizSharingProps) {
                   alt={`QR-kod för quiz ${quiz.title}`}
                   width={192}
                   height={192}
+                  sizes="192px"
                   className="w-48 h-48"
                   priority={false}
                 />

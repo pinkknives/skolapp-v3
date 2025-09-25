@@ -243,8 +243,28 @@ const nextConfig = {
   }
 }
 
-module.exports = process.env.ANALYZE === 'true' 
-  ? require('@next/bundle-analyzer')({
-      enabled: true,
-    })(withPWA(nextConfig))
+// Sentry webpack plugin (uploads sourcemaps when SENTRY_AUTH_TOKEN is present)
+const { withSentryConfig } = (() => {
+  try {
+    return require('@sentry/nextjs')
+  } catch {
+    return { withSentryConfig: (cfg) => cfg }
+  }
+})()
+
+const baseConfig = process.env.ANALYZE === 'true'
+  ? require('@next/bundle-analyzer')({ enabled: true })(withPWA(nextConfig))
   : withPWA(nextConfig)
+
+const sentryWebpackPluginOptions = {
+  silent: true,
+}
+
+const sentryBuildOptions = {
+  // Do not fail build locally if Sentry isn't configured
+  dryRun: !process.env.SENTRY_AUTH_TOKEN,
+  hideSourceMaps: true,
+  disableLogger: true,
+}
+
+module.exports = withSentryConfig(baseConfig, sentryWebpackPluginOptions, sentryBuildOptions)

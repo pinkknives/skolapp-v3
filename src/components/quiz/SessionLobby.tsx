@@ -276,6 +276,7 @@ export function SessionLobby({ session, quizTitle, quiz, onSessionUpdate }: Sess
                       alt="QR kod för att gå med i sessionen"
                       width={200}
                       height={200}
+                      sizes="200px"
                       className="mx-auto rounded-md border"
                     />
                     <Typography variant="caption" className="text-neutral-600 mt-2 block">

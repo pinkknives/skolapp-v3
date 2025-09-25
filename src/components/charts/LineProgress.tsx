@@ -23,6 +23,7 @@ const heightClassMap = {
 }
 
 export function LineProgress({ data, title = 'Utveckling över tid', height = 'md' }: LineProgressProps) {
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return (
     <Card>
       <CardHeader>
@@ -42,7 +43,15 @@ export function LineProgress({ data, title = 'Utveckling över tid', height = 'm
                   border: '1px solid hsl(var(--border))',
                 }}
               />
-              <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={!prefersReducedMotion}
+                animationDuration={prefersReducedMotion ? 0 : 300}
+              />
             </LineChart>
           </ResponsiveContainer>
         </motion.div>

@@ -96,8 +96,9 @@ export class MockQuizProvider implements QuizAIProvider {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500));
     
-    // Simulate occasional failures (10% chance)
-    if (Math.random() < 0.1) {
+    // Optional: simulate failures via env flag (default 0 = disabled)
+    const mockFailureProb = Number(process.env.NEXT_PUBLIC_AI_MOCK_FAILURE_PROB || '0');
+    if (mockFailureProb > 0 && Math.random() < mockFailureProb) {
       throw new Error('AI service temporarily unavailable. Please try again.');
     }
 
@@ -480,13 +481,135 @@ export class AnthropicQuizProvider implements QuizAIProvider {
   }
 }
 
+// Browser-side provider that calls our server API route
+export class ApiQuizProvider implements QuizAIProvider {
+  name = 'Server API Provider';
+  isAvailable = true;
+
+  async generateQuestions(params: AiParams): Promise<AiQuestion[]> {
+    // Attach current user's auth token so the API can authorize the request
+    const { supabaseBrowser } = await import('../supabase-browser')
+    const supabase = supabaseBrowser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+
+    const gradeBand = (() => {
+      const g = params.grade.toLowerCase();
+      if (g.includes('åk 1') || g.includes('åk 2') || g.includes('åk 3') || g === 'åk1' || g === 'åk2' || g === 'åk3') return 'ak1-3';
+      if (g.includes('åk 4') || g.includes('åk 5') || g.includes('åk 6') || g === 'åk4' || g === 'åk5' || g === 'åk6') return 'ak4-6';
+      if (g.includes('åk 7') || g.includes('åk 8') || g.includes('åk 9') || g === 'åk7' || g === 'åk8' || g === 'åk9') return 'ak7-9';
+      if (g.includes('gy1')) return 'gy1';
+      if (g.includes('gy2')) return 'gy2';
+      if (g.includes('gy3')) return 'gy3';
+      // fallback: try basic mapping
+      return g.includes('gym') ? 'gy1' : 'ak7-9';
+    })();
+
+    const difficulty = (() => {
+      switch (params.difficulty) {
+        case 'easy':
+          return 2;
+        case 'hard':
+          return 4;
+        default:
+          return 3;
+      }
+    })();
+
+    const type = params.type === 'multiple-choice' ? 'mcq' : params.type === 'free-text' ? 'open' : undefined;
+    const topic = (params.topics && params.topics[0]) || (params.context ? params.context.slice(0, 80) : params.subject);
+
+    const body = {
+      gradeBand,
+      subject: params.subject,
+      topic,
+      difficulty,
+      bloom: undefined as unknown as undefined,
+      type,
+      count: Math.max(1, Math.min(20, params.count)),
+      language: 'sv' as const,
+      extra: params.context || undefined,
+    };
+
+    const resp = await fetch('/api/ai/generate-questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {})
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      type ApiError = { error?: string } | undefined
+      const err = (await resp.json().catch(() => ({}))) as ApiError
+      throw new Error(err?.error || 'Kunde inte generera frågor med AI.');
+    }
+
+    const data = await resp.json();
+    const raw = (data?.questions ?? []) as Array<{
+      type?: 'mcq' | 'short' | 'numeric' | 'open'
+      prompt?: unknown
+      options?: unknown
+      answer?: unknown
+      rationale?: unknown
+    }>;
+
+    const mapped: AiQuestion[] = raw
+      .map((item, idx) => {
+        const prompt = String(item.prompt || '');
+        if (item.type === 'mcq') {
+          const options = Array.isArray(item.options) ? (item.options as unknown[]).map(String) : [];
+          let correctIdx = -1;
+          if (typeof item.answer === 'number') {
+            correctIdx = item.answer as number;
+          } else if (typeof item.answer === 'string') {
+            const s = String(item.answer);
+            const found = options.findIndex((o) => o.trim().toLowerCase() === s.trim().toLowerCase());
+            correctIdx = found >= 0 ? found : 0;
+          }
+          return {
+            kind: 'multiple-choice',
+            prompt,
+            choices: options.map((text, i) => ({ id: `c_${idx}_${i}`, text, correct: i === correctIdx })),
+            explanation: typeof item.rationale === 'string' ? (item.rationale as string) : undefined,
+          } as AiQuestion;
+        }
+        // open/short/numeric → map to free-text with answer as expectedAnswer if present
+        const expected = typeof item.answer === 'string' || typeof item.answer === 'number' ? String(item.answer) : 'Öppet svar';
+        return {
+          kind: 'free-text',
+          prompt,
+          expectedAnswer: expected,
+          explanation: typeof item.rationale === 'string' ? (item.rationale as string) : undefined,
+        } as AiQuestion;
+      })
+      .filter(Boolean) as AiQuestion[]
+
+    return mapped
+  }
+
+  async suggestTitle(): Promise<AiTitleSuggestion[]> { throw new Error('Not implemented'); }
+  async simplifyText(): Promise<AiTextSimplification> { throw new Error('Not implemented'); }
+  async varyDifficulty(): Promise<AiDifficultyVariation> { throw new Error('Not implemented'); }
+  async improveClarity(): Promise<AiClarityImprovement> { throw new Error('Not implemented'); }
+  async generateAnswers(): Promise<AiAnswerGeneration> { throw new Error('Not implemented'); }
+}
+
 // Provider factory and configuration
 class QuizAIService {
-  private providers: QuizAIProvider[] = [
-    new MockQuizProvider(),
-    new OpenAIQuizProvider(),
-    new AnthropicQuizProvider()
-  ];
+  private providers: QuizAIProvider[];
+
+  constructor() {
+    const isBrowser = typeof window !== 'undefined';
+    if (isBrowser) {
+      // In the browser, call our server API to use real AI; fall back to mock if needed
+      this.providers = [new ApiQuizProvider(), new MockQuizProvider()];
+    } else {
+      // On the server, prefer real providers
+      this.providers = [new OpenAIQuizProvider(), new MockQuizProvider(), new AnthropicQuizProvider()];
+    }
+  }
 
   getAvailableProviders(): QuizAIProvider[] {
     return this.providers.filter(p => p.isAvailable);
@@ -497,7 +620,11 @@ class QuizAIService {
     if (available.length === 0) {
       throw new Error('No AI providers available');
     }
-    return available[0]; // Return first available (Mock in dev, configured provider in prod)
+    // Prefer real providers over mock when available
+    const preferred = available.find(p => p.name === 'OpenAI GPT')
+      || available.find(p => p.name !== 'Mock AI Provider')
+      || available[0];
+    return preferred;
   }
 
   async generateQuestions(params: AiParams, providerId?: string): Promise<Question[]> {
@@ -514,11 +641,14 @@ class QuizAIService {
     }
 
     const aiQuestions = await provider.generateQuestions(params);
-    
+
     // Convert AI questions to internal Question format
     return aiQuestions.map((aq, index) => {
+      const generatedId = (typeof globalThis !== 'undefined' && globalThis.crypto && 'randomUUID' in globalThis.crypto)
+        ? (globalThis.crypto as Crypto).randomUUID()
+        : `ai_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`;
       const baseQuestion = {
-        id: `ai_${Date.now()}_${index}`,
+        id: generatedId,
         points: 1,
         timeLimit: undefined,
         rubric: undefined,

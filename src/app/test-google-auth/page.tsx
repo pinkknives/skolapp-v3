@@ -113,11 +113,15 @@ export default function TestGoogleAuthPage() {
                       </div>
                       {session.user?.image && (
                         <div className="flex items-center gap-3">
+                          {/* Use next/image for better performance */}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={session.user.image} 
-                            alt="Profilbild" 
+                          <img
+                            src={session.user.image}
+                            alt="Profilbild"
+                            width={32}
+                            height={32}
                             className="w-8 h-8 rounded-full flex-shrink-0"
+                            loading="lazy"
                           />
                           <Typography variant="body2">Profilbild från Google</Typography>
                         </div>

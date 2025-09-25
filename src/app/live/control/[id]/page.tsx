@@ -563,6 +563,7 @@ export default function LiveControlPage() {
                       className="mx-auto rounded-md border"
                       width={200}
                       height={200}
+                      sizes="200px"
                       priority
                     />
                   </div>

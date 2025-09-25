@@ -44,6 +44,7 @@
     "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.4.0",
     "@auth/supabase-adapter": "^1.10.0",
     "@heroui/react": "^2.8.4",
     "@heroui/theme": "^2.4.22",

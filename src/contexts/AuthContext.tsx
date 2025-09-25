@@ -4,6 +4,9 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { type User, type AuthState, type LoginCredentials, type RegisterData, type GuestSession, type UserRole } from '@/types/auth'
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import type { Session } from '@supabase/supabase-js'
+import { toast } from '@/components/ui/Toast'
+
+const PROFILE_TABLE_ENABLED = process.env.NEXT_PUBLIC_PROFILE_TABLE_ENABLED !== 'false'
 
 // Storage keys
 const GUEST_STORAGE_KEY = 'skolapp_guest'
@@ -90,12 +93,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         try {
-          // Fetch user profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single()
+          // Fetch user profile when table is enabled
+          const profile = PROFILE_TABLE_ENABLED
+            ? (await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single()
+              ).data
+            : null
           
           const user = convertSupabaseUser(session, profile)
           dispatch({ type: 'SET_USER', payload: user })
@@ -113,17 +119,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          // Fetch user profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single()
+          // Fetch user profile when table is enabled
+          const profile = PROFILE_TABLE_ENABLED
+            ? (
+                await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('user_id', session.user.id)
+                  .single()
+              ).data
+            : null
           
           const user = convertSupabaseUser(session, profile)
           dispatch({ type: 'SET_USER', payload: user })
+          // User feedback
+          toast.success('Inloggning lyckades! 👋', {
+            description: 'Välkommen tillbaka till Skolapp.',
+            duration: 4000,
+          })
         } else if (event === 'SIGNED_OUT') {
           dispatch({ type: 'SET_USER', payload: null })
+          toast.info('Du har loggats ut.', { duration: 3500 })
         }
       }
     )
