@@ -112,7 +112,7 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
   }
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6" data-question-index={questionIndex}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>

@@ -80,7 +80,7 @@
 
 ---
 
-### B2. Bevara inline-funktioner
+### B2. Bevara inline-funktioner [x]
 **Mål**
 - Behåll inline-edit, delete/duplicate, rätt-svars-toggle även efter AI-ersättning.
 
@@ -92,7 +92,7 @@
 
 ---
 
-### B3. Undo/återställ + micro-interaktioner
+### B3. Undo/återställ + micro-interaktioner [x]
 **Mål**
 - Spara **senaste** ändring per fråga (minst 1 nivå). Toast med Ångra.
 - Efter infogning/ersättning: auto-scroll till frågekort + fokus på titelinput.

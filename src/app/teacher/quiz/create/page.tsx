@@ -23,6 +23,7 @@ import { useEntitlements } from '@/hooks/useEntitlements'
 import { AIFeatureBlock } from '@/components/billing/AIFeatureBlock'
 import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
 import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
+import { toast } from '@/components/ui/Toast'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -109,13 +110,59 @@ function CreateQuizPage() {
   }
 
   // Wire per-question AI actions to open panel/sheet with context (handled inside ImprovedAIQuizDraft via global store in later tasks)
-  const handleAIActionRequested = (_params: { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }) => {
-    // For Milestone B1 minimal integration: just scroll to AI panel (no global store yet)
+  const [pendingAction, setPendingAction] = React.useState<{
+    action: 'improve' | 'simplify' | 'distractors' | 'regenerate';
+    question: Question;
+    index: number;
+  } | null>(null)
+
+  // Simple per-question undo ring buffer (size 1)
+  const undoBufferRef = React.useRef<Record<string, Question>>({})
+
+  const handleAIActionRequested = (params: { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }) => {
+    setPendingAction(params)
     try {
       const el = document.querySelector('[aria-label="AI-hjälp"]') as HTMLElement | null
       el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     } catch {}
-    // Future steps (B1 continued): set context in panel
+  }
+
+  const handleReplaceQuestionAt = (idx: number, updated: Question) => {
+    setQuiz(prev => {
+      const questions = prev.questions || []
+      const prevQ = questions[idx]
+      if (prevQ) {
+        undoBufferRef.current[prevQ.id] = prevQ
+      }
+      const next = { ...prev, questions: questions.map((q, i) => (i === idx ? updated : q)) }
+      return next
+    })
+    // Auto-scroll to the updated card and focus its title input
+    setTimeout(() => {
+      try {
+        const card = document.querySelector(`[data-question-index="${idx}"]`) as HTMLElement | null
+        card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const input = card?.querySelector('input, textarea') as HTMLElement | null
+        input?.focus()
+      } catch {}
+    }, 50)
+
+    // Toast with undo
+    toast.success('Fråga uppdaterad', {
+      action: {
+        label: 'Ångra',
+        onClick: () => {
+          setQuiz(prev => {
+            const questions = prev.questions || []
+            const current = questions[idx]
+            const prevVersion = current ? undoBufferRef.current[current.id] : undefined
+            if (!prevVersion) return prev
+            const next = { ...prev, questions: questions.map((q, i) => (i === idx ? prevVersion : q)) }
+            return next
+          })
+        }
+      }
+    })
   }
 
   const saveDraft = async () => {
@@ -414,6 +461,9 @@ function CreateQuizPage() {
                   onQuestionsGenerated={handleAIQuestionsGenerated}
                   onClose={() => {}}
                   variant="panel"
+                  pendingAction={pendingAction}
+                  onReplaceQuestion={handleReplaceQuestionAt}
+                  onClearPending={() => setPendingAction(null)}
                 />
               </div>
               <div className="lg:hidden">
@@ -422,6 +472,9 @@ function CreateQuizPage() {
                   onQuestionsGenerated={handleAIQuestionsGenerated}
                   onClose={() => {}}
                   variant="sheet"
+                  pendingAction={pendingAction}
+                  onReplaceQuestion={handleReplaceQuestionAt}
+                  onClearPending={() => setPendingAction(null)}
                 />
               </div>
             </>

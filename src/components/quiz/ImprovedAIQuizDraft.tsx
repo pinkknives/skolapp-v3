@@ -239,7 +239,9 @@ interface AIFormData {
   context: string
 }
 
-export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet' }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet' }) {
+type PendingAction = { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }
+
+export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet', pendingAction, onReplaceQuestion, onClearPending }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet'; pendingAction?: PendingAction | null; onReplaceQuestion?: (index: number, updated: Question) => void; onClearPending?: () => void }) {
   const [isPanelOpen, setIsPanelOpen] = React.useState(true)
   React.useEffect(() => {
     try {
@@ -334,6 +336,15 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     onQuestionsGenerated(questionsToAdd)
     // Close modal after adding to make the update visible immediately
     onClose()
+  }
+
+  const handleReplaceActiveQuestion = () => {
+    if (!pendingAction || !onReplaceQuestion) return
+    const selected = generatedQuestions.filter(q => selectedQuestions.has(q.id))
+    const chosen = selected[0] || generatedQuestions[0]
+    if (!chosen) return
+    onReplaceQuestion(pendingAction.index, chosen)
+    if (onClearPending) onClearPending()
   }
 
   const toggleQuestionSelection = (questionId: string) => {
@@ -883,6 +894,16 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                   >
                     {aiAssistant.actions.addSelected} ({selectedQuestions.size})
                   </Button>
+                  {pendingAction && onReplaceQuestion && (
+                    <Button
+                      onClick={handleReplaceActiveQuestion}
+                      disabled={generatedQuestions.length === 0}
+                      className="bg-primary-600 hover:bg-primary-700"
+                      aria-label="Ersätt aktiv fråga"
+                    >
+                      Ersätt aktiv
+                    </Button>
+                  )}
                 </>
               )}
             </div>
