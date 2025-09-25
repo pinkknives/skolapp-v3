@@ -13,7 +13,7 @@
 
 ## Milestone A — Layout & Varianter
 
-### A1. Panel-variant
+### A1. Panel-variant [x]
 **Mål**
 - Lägg prop `variant: 'panel' | 'sheet'` i `ImprovedAIQuizDraft`.
 - Bryt ur modal-beroenden. Skapa dockad `<aside>`-panel för desktop.
@@ -33,7 +33,7 @@
 
 ---
 
-### A2. Bottom sheet-variant (mobil)
+### A2. Bottom sheet-variant (mobil) [x]
 **Mål**
 - Implementera `variant="sheet"` (bottom sheet).
 - FAB på mobil som öppnar/stänger sheet. Half (~70vh) ↔ Full (100vh). Swipe/ESC stänger.
@@ -50,7 +50,7 @@
 
 ---
 
-### A3. Tablet-stöd
+### A3. Tablet-stöd [x]
 **Mål**
 - Panelen kollapsbar 640–1024px.
 - Sticky sidoflik för öppna/stäng utan skroll.
