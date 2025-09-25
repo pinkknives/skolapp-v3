@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     const feedbackRatio = totalFb > 0 ? helpful / totalFb : 0
 
     return NextResponse.json({ consentRate, rowsPerDay: perDay, feedbackRatio })
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: 'metrics_error' }, { status: 500 })
   }
 }

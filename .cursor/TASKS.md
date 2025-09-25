@@ -53,7 +53,7 @@
  - [x] Index skapade, validerade.
 
 ### E2. Consent – Samtyckesdialog + inställning
- - [ ] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
+ - [x] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
  - [x] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
  - [x] Inställningsvy: toggle.  
 **Acceptans**
@@ -62,7 +62,7 @@
 ### E3. Insamling till träningsdata (opt-in)
  - [x] Ny tabell `ai_training_data` (quiz, frågor, metadata) utan PII.  
  - [x] Hook vid quiz-save: om `consent_to_ai_training === true` → skriv anonym rad.  
- - [ ] Telemetri: logga consent accept/decline + saved rows.  
+ - [x] Telemetri: logga consent accept/decline + saved rows.  
 **Acceptans**
  - [x] Endast samtyckta lärare bidrar data.  
  - [x] Ingen PII sparas.
