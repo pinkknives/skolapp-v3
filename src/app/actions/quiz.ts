@@ -108,6 +108,29 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
       }
     }
 
+    // If teacher consented to AI training, save anonymized training data stub
+    try {
+      const { data: us } = await supabase
+        .from('user_settings')
+        .select('consent_to_ai_training')
+        .eq('user_id', ownerId)
+        .maybeSingle()
+      if (us?.consent_to_ai_training) {
+        await supabase
+          .from('ai_training_data')
+          .insert({
+            teacher_id: ownerId,
+            quiz_id: quiz.id,
+            question_text: `[quiz-created] ${title}`,
+            question_type: null,
+            subject: null,
+            grade: null,
+          })
+      }
+    } catch (e) {
+      console.warn('ai_training_data insert skipped:', e)
+    }
+
     revalidatePath('/teacher/quiz')
     return {
       success: true,

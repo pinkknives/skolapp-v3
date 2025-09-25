@@ -60,12 +60,12 @@
  - [x] Beslut sparas i DB och kan ändras när som helst.
 
 ### E3. Insamling till träningsdata (opt-in)
-- [ ] Ny tabell `ai_training_data` (quiz, frågor, metadata) utan PII.  
-- [ ] Hook vid quiz-save: om `consent_to_ai_training === true` → skriv anonym rad.  
-- [ ] Telemetri: logga consent accept/decline + saved rows.  
+ - [x] Ny tabell `ai_training_data` (quiz, frågor, metadata) utan PII.  
+ - [x] Hook vid quiz-save: om `consent_to_ai_training === true` → skriv anonym rad.  
+ - [ ] Telemetri: logga consent accept/decline + saved rows.  
 **Acceptans**
-- [ ] Endast samtyckta lärare bidrar data.  
-- [ ] Ingen PII sparas.
+ - [x] Endast samtyckta lärare bidrar data.  
+ - [x] Ingen PII sparas.
 
 ---
 
