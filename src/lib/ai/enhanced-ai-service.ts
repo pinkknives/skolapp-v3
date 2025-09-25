@@ -84,6 +84,59 @@ Svara alltid på svenska och använd pedagogiskt språk som är lämpligt för m
     }
   }
 
+  async performAction(
+    action: 'improve' | 'rewrite' | 'regenerate' | 'distractors',
+    params: EnhancedAIParams,
+    question?: { type?: 'multiple-choice' | 'free-text'; title?: string; options?: Array<{ id: string; text: string; isCorrect?: boolean }>; expectedAnswer?: string }
+  ): Promise<{ questions?: AdaptiveQuestion[]; transformed?: Question; distractors?: string[] }>{
+    if (action === 'regenerate') {
+      const qs = await this.generateAdaptiveQuestions({ ...params, count: Math.max(1, params.count || 1) })
+      return { questions: qs }
+    }
+
+    // Build a targeted prompt for single-question transformations
+    const baseContext = this.buildAdaptivePrompt({ ...params, count: 1 })
+    const qText = question?.title || ''
+    let userInstruction = ''
+    if (action === 'improve') {
+      userInstruction = `Förbättra följande frågetext för tydlighet och pedagogik, behåll samma typ: ${qText}`
+    } else if (action === 'rewrite') {
+      userInstruction = `Skriv om följande fråga på samma nivå men med ny formulering: ${qText}`
+    } else if (action === 'distractors') {
+      userInstruction = `Generera tre trovärdiga felaktiga svarsalternativ (distraktorer) för frågan: ${qText}. Returnera JSON {"distractors": ["...","...","..."]}`
+    }
+
+    const prompt = `${baseContext}\n\n${userInstruction}`
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: this.systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1200,
+        response_format: { type: 'json_object' }
+      })
+
+      const content = response.choices[0]?.message?.content
+      if (!content) throw new Error('No content returned from AI')
+
+      const data = JSON.parse(content)
+      if (action === 'distractors') {
+        const ds = Array.isArray(data.distractors) ? data.distractors.map((d: unknown) => String(d)) : []
+        return { distractors: ds }
+      }
+
+      const qs = this.validateAndFormatQuestions(data.questions || [])
+      return { questions: qs, transformed: qs[0]?.question }
+    } catch (error) {
+      console.error('Enhanced AI action error:', error)
+      throw new Error('Kunde inte utföra AI-åtgärden')
+    }
+  }
+
   async analyzeStudentPerformance(
     questions: Question[],
     answers: Array<{ questionId: string; answer: string; isCorrect: boolean; timeSpent: number }>

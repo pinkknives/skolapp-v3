@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { supabaseBrowser } from '@/lib/supabase-browser'
+import { createClient } from '@supabase/supabase-js'
 import { enhancedAIService } from '@/lib/ai/enhanced-ai-service'
 
 const enhancedGenerateSchema = z.object({
@@ -21,6 +21,18 @@ const enhancedGenerateSchema = z.object({
   studentLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional()
 })
 
+const actionSchema = z.object({
+  action: z.enum(['improve', 'rewrite', 'regenerate', 'distractors']),
+  params: enhancedGenerateSchema,
+  // minimal question payload for actions that transform an existing question
+  question: z.object({
+    type: z.enum(['multiple-choice', 'free-text']).optional(),
+    title: z.string().optional(),
+    options: z.array(z.object({ id: z.string(), text: z.string(), isCorrect: z.boolean().optional() })).optional(),
+    expectedAnswer: z.string().optional()
+  }).optional()
+})
+
 const personalizedGenerateSchema = z.object({
   studentProfile: z.object({
     strengths: z.array(z.string()),
@@ -36,8 +48,13 @@ const personalizedGenerateSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const supabase = supabaseBrowser()
+    // Check authentication (server-side, using Authorization header)
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: req.headers.get('authorization') || '' } },
+      auth: { persistSession: false }
+    })
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     
     if (userError || !user) {
@@ -69,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    
+
     // Check if this is a personalized request
     if (body.studentProfile) {
       const { studentProfile, params } = personalizedGenerateSchema.parse(body)
@@ -86,7 +103,17 @@ export async function POST(req: NextRequest) {
           followUpSuggestions: aq.followUpSuggestions
         }))
       })
-    } else {
+    }
+
+    // Unified actions endpoint
+    if (body.action) {
+      const { action, params, question } = actionSchema.parse(body)
+      const result = await enhancedAIService.performAction(action, params, question)
+      return NextResponse.json({ success: true, ...result })
+    }
+
+    // Default adaptive generation
+    {
       const params = enhancedGenerateSchema.parse(body)
       const questions = await enhancedAIService.generateAdaptiveQuestions(params)
       

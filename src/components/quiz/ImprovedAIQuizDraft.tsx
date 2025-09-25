@@ -330,6 +330,37 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     }
   }
 
+  // If a pending per-question action exists, auto-trigger a focused generation and keep only first result for replacement UX
+  useEffect(() => {
+    const run = async () => {
+      if (!pendingAction) return
+      try {
+        setStep('generating')
+        const aiParams: AiParams = {
+          subject: formData.subject || 'Allmänt',
+          grade: formData.grade || 'Åk 7',
+          count: 1,
+          type: formData.type,
+          difficulty: formData.difficulty,
+          topics: formData.topics ? formData.topics.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+          context: formData.context || undefined,
+          locale: 'sv-SE'
+        }
+        // Reuse normal generation for now; API consolidates in C3 server
+        const qs = await quizAI.generateQuestions(aiParams)
+        setGeneratedQuestions(qs)
+        setSelectedQuestions(new Set(qs.slice(0, 1).map(q => q.id)))
+        setStep('preview')
+      } catch (e) {
+        setErrorMessage('Kunde inte generera förslag just nu.')
+        setErrorDetails(e instanceof Error ? e.message : String(e))
+        setStep('error')
+      }
+    }
+    run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAction?.action, pendingAction?.question?.id])
+
   const handleAcceptQuestions = () => {
     const questionsToAdd = generatedQuestions.filter(q => selectedQuestions.has(q.id))
     if (questionsToAdd.length === 0) return
