@@ -746,6 +746,20 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                     .replace('{grade}', formData.grade)
                   }
                 </Typography>
+
+                {/* Skeleton preview placeholders for better perceived performance */}
+                <div className="mt-8 space-y-3 max-w-md mx-auto text-left">
+                  {[0,1,2].map((i) => (
+                    <div key={i} className="border border-neutral-200 rounded-lg p-4 animate-pulse">
+                      <div className="h-4 bg-neutral-200 rounded w-2/3 mb-3" />
+                      <div className="space-y-2">
+                        <div className="h-3 bg-neutral-200 rounded w-full" />
+                        <div className="h-3 bg-neutral-200 rounded w-5/6" />
+                        <div className="h-3 bg-neutral-200 rounded w-4/6" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
