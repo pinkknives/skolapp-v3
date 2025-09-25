@@ -43,14 +43,14 @@
 - [ ] Auth-flöden körbara i Playwright (signup, login, reset).
 
 ### E1. RLS & Åtkomstflöden
-- [ ] Verifiera att alla quiz-/resultattabeller har korrekt RLS:  
+ - [x] Verifiera att alla quiz-/resultattabeller har korrekt RLS:  
   - Lärare → sina klasser  
   - Elever → sina egna resultat  
-- [ ] Uppdatera policies om nödvändigt.  
-- [ ] Lägg saknade index (klass_id, quiz_id, elev_id).  
+ - [x] Uppdatera policies om nödvändigt.  
+ - [x] Lägg saknade index (klass_id, quiz_id, elev_id).  
 **Acceptans**
-- [ ] RLS testad med queries.  
-- [ ] Index skapade, validerade.
+ - [x] RLS testad med queries.  
+ - [x] Index skapade, validerade.
 
 ### E2. Consent – Samtyckesdialog + inställning
 - [ ] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
