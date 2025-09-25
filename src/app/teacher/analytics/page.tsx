@@ -7,6 +7,7 @@ import { Typography } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { SkillsHeatmap } from '@/components/analytics/SkillsHeatmap'
 import { TopWeakSkills } from '@/components/analytics/TopWeakSkills'
+import Link from 'next/link'
 
 export default function TeacherAnalyticsPage() {
   const [data, setData] = React.useState<AreaScorePoint[]>([])
@@ -91,6 +92,16 @@ export default function TeacherAnalyticsPage() {
           <Button size="sm" onClick={loadSample}>Exempeldata</Button>
         </div>
       </div>
+
+      <Card className="border-neutral-200 dark:border-neutral-800">
+        <CardContent>
+          <Typography variant="body2" className="text-neutral-700 dark:text-neutral-300">
+            Så använder vi datan: endast aggregerad klassnivå visas här. Ingen PII sparas i AI‑träningsdata.
+            Läs mer i <Link href="/integritet" className="underline hover:no-underline">Integritet</Link> och
+            {' '}<Link href="/villkor" className="underline hover:no-underline">Villkor</Link>.
+          </Typography>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
