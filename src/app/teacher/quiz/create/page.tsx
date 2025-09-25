@@ -394,16 +394,26 @@ function CreateQuizPage() {
             </div>
           </div>
 
-          {/* Docked AI Panel */}
+          {/* Docked AI Panel on desktop, sheet on mobile */}
           {canUseAI && (
-            <div className="hidden lg:block">
-              <ImprovedAIQuizDraft
-                quizTitle={quiz.title}
-                onQuestionsGenerated={handleAIQuestionsGenerated}
-                onClose={() => {}}
-                variant="panel"
-              />
-            </div>
+            <>
+              <div className="hidden lg:block">
+                <ImprovedAIQuizDraft
+                  quizTitle={quiz.title}
+                  onQuestionsGenerated={handleAIQuestionsGenerated}
+                  onClose={() => {}}
+                  variant="panel"
+                />
+              </div>
+              <div className="lg:hidden">
+                <ImprovedAIQuizDraft
+                  quizTitle={quiz.title}
+                  onQuestionsGenerated={handleAIQuestionsGenerated}
+                  onClose={() => {}}
+                  variant="sheet"
+                />
+              </div>
+            </>
           )}
 
           {/* AI Feature Paywall Modal (kept for future toggle) */}

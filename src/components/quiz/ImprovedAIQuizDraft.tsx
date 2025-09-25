@@ -894,10 +894,11 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
 
   // Default to previous modal behavior (sheet will be implemented in A2)
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-x-0 bottom-0 z-50 sm:hidden">
+      <div className="bg-black/30" onClick={onClose} aria-hidden="true" />
       <div
         ref={modalRef}
-        className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto p-2"
         role="dialog"
         aria-labelledby="ai-modal-title"
         aria-describedby="ai-modal-description ai-disclaimer"
