@@ -35,12 +35,12 @@
 - [x] Inspektera Supabase `auth.*`-tabeller (users, sessions, identities, mfa, verifications).  
 - [x] Skanna projektets auth-kod (`src/app/(auth)/**/*.{ts,tsx}`) för signup, login, reset password.  
 - [x] Dokumentera flöden i `docs/data/auth-review.md`.  
-- [ ] Verifiera mailmallar (signup, reset, magic links) – på svenska, rätt tonalitet.  
-- [ ] Lägg E2E-tester (Playwright) för signup/login/reset flows.  
+- [ ] Verifiera mailmallar (signup, reset, magic links) – på svenska, rätt tonalitet.  ← kontroll i Supabase Studio kvar  
+ - [x] Lägg E2E-tester (Playwright) för signup/login/reset flows.  
 **Acceptans**  
-- [ ] `auth-review.md` beskriver alla flöden.  
-- [ ] Mailmallar fungerar i dev + prod.  
-- [ ] Auth-flöden körbara i Playwright (signup, login, reset).
+- [x] `auth-review.md` beskriver alla flöden.  
+- [ ] Mailmallar fungerar i dev + prod.  ← provskicka & validera  
+- [x] Auth-flöden körbara i Playwright (signup, login, reset).
 
 ### E1. RLS & Åtkomstflöden
  - [x] Verifiera att alla quiz-/resultattabeller har korrekt RLS:  
@@ -116,10 +116,10 @@
 ---
 
 ## Gemensamma krav
-- [ ] Alla schemaändringar via migrations.  
-- [ ] RLS på alla nya tabeller.  
-- [ ] Inga PII i träningsdata.  
-- [ ] UI följer A11y + i18n (svenska).  
-- [ ] CI kör tester på dataflöden och nya policies.  
-- [ ] Mailmallar testas i dev + prod.  
-- [ ] Auth-, quiz- och consentflöden täckta i Playwright E2E.
+- [ ] Alla schemaändringar via migrations.  ← majoriteten via migrations; dubbelkolla äldre tabeller
+- [ ] RLS på alla nya tabeller.  ← bekräfta `ai_feedback`, `ai_training_data` policies i Studio
+- [ ] Inga PII i träningsdata.  ← granskat; håll koll vid framtida fält
+- [ ] UI följer A11y + i18n (svenska).  ← genomgått för nya vyer
+- [ ] CI kör tester på dataflöden och nya policies.  ← lägg CI‑steg för RLS‑prov
+- [ ] Mailmallar testas i dev + prod.  ← återstår att provskicka
+- [ ] Auth-, quiz- och consentflöden täckta i Playwright E2E.  ← utöka från smoke till full E2E
