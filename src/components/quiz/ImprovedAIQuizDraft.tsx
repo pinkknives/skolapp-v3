@@ -241,7 +241,7 @@ interface AIFormData {
 
 type PendingAction = { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }
 
-export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet', pendingAction, onReplaceQuestion, onClearPending }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet'; pendingAction?: PendingAction | null; onReplaceQuestion?: (index: number, updated: Question) => void; onClearPending?: () => void }) {
+export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet', pendingAction, onReplaceQuestion, onClearPending, batchMode = null as 'replace' | 'add' | null, onSetBatchMode, onBatchReplace }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet'; pendingAction?: PendingAction | null; onReplaceQuestion?: (index: number, updated: Question) => void; onClearPending?: () => void; batchMode?: 'replace' | 'add' | null; onSetBatchMode?: (m: 'replace' | 'add' | null) => void; onBatchReplace?: (qs: Question[]) => void }) {
   const [isPanelOpen, setIsPanelOpen] = React.useState(true)
   React.useEffect(() => {
     try {
@@ -347,6 +347,14 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     if (onClearPending) onClearPending()
   }
 
+  const handleBatchReplaceSelected = () => {
+    if (!onBatchReplace) return
+    const selected = generatedQuestions.filter(q => selectedQuestions.has(q.id))
+    if (selected.length === 0) return
+    onBatchReplace(selected)
+    if (onSetBatchMode) onSetBatchMode(null)
+  }
+
   const toggleQuestionSelection = (questionId: string) => {
     const newSelection = new Set(selectedQuestions)
     if (newSelection.has(questionId)) {
@@ -423,19 +431,30 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                   <Typography variant="caption" className="text-neutral-600" id="ai-modal-description">
                     {aiAssistant.modal.description}
                   </Typography>
+              {batchMode && (
+                <div className="mt-1 text-xs text-primary-700">Batch-läge: {batchMode === 'replace' ? 'Ersätt' : 'Lägg till'}</div>
+              )}
                 </div>
               </div>
-              <Button 
+          <div className="flex items-center gap-2">
+            {onSetBatchMode && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => onSetBatchMode('replace')}>Batch: ersätt</Button>
+                <Button variant="outline" size="sm" onClick={() => onSetBatchMode('add')}>Batch: lägg till</Button>
+              </>
+            )}
+            <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={onClose}
                 aria-label={aiAssistant.modal.closeLabel}
                 data-testid="ai-modal-close"
-              >
+          >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </Button>
+          </Button>
+          </div>
             </div>
           </CardHeader>
 
@@ -894,6 +913,16 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                   >
                     {aiAssistant.actions.addSelected} ({selectedQuestions.size})
                   </Button>
+                  {batchMode === 'replace' && onBatchReplace && (
+                    <Button
+                      onClick={handleBatchReplaceSelected}
+                      disabled={selectedQuestions.size === 0}
+                      className="bg-danger-600 hover:bg-danger-700"
+                      aria-label="Ersätt valda"
+                    >
+                      Ersätt valda
+                    </Button>
+                  )}
                   {pendingAction && onReplaceQuestion && (
                     <Button
                       onClick={handleReplaceActiveQuestion}

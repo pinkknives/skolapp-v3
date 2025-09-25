@@ -115,6 +115,7 @@ function CreateQuizPage() {
     question: Question;
     index: number;
   } | null>(null)
+  const [batchMode, setBatchMode] = React.useState<'replace' | 'add' | null>(null)
 
   // Simple per-question undo ring buffer (size 1)
   const undoBufferRef = React.useRef<Record<string, Question>>({})
@@ -163,6 +164,11 @@ function CreateQuizPage() {
         }
       }
     })
+  }
+
+  const handleBatchReplace = (newQuestions: Question[]) => {
+    setQuiz(prev => ({ ...prev, questions: newQuestions }))
+    toast.success(`Ersatte med ${newQuestions.length} frågor`)
   }
 
   const saveDraft = async () => {
@@ -464,6 +470,9 @@ function CreateQuizPage() {
                   pendingAction={pendingAction}
                   onReplaceQuestion={handleReplaceQuestionAt}
                   onClearPending={() => setPendingAction(null)}
+                  batchMode={batchMode}
+                  onSetBatchMode={setBatchMode}
+                  onBatchReplace={handleBatchReplace}
                 />
               </div>
               <div className="lg:hidden">
@@ -475,6 +484,9 @@ function CreateQuizPage() {
                   pendingAction={pendingAction}
                   onReplaceQuestion={handleReplaceQuestionAt}
                   onClearPending={() => setPendingAction(null)}
+                  batchMode={batchMode}
+                  onSetBatchMode={setBatchMode}
+                  onBatchReplace={handleBatchReplace}
                 />
               </div>
             </>

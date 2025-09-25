@@ -108,7 +108,7 @@
 
 ## Milestone C — Batch-generering & API
 
-### C1. Generera om alla (batch)
+### C1. Generera om alla (batch) [x]
 **Mål**
 - Global knapp ovanför frågelistan + i panelen.
 - Preview i panel/sheet med selektering. *Lägg till* / *Ersätt*.
