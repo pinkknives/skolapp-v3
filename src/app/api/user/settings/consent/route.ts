@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 function getServerSupabase(req: NextRequest) {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -35,6 +36,9 @@ export async function PATCH(req: NextRequest) {
     .from('user_settings')
     .upsert({ user_id: user.id, consent_to_ai_training: body.consent, updated_at: new Date().toISOString() })
   if (upsertErr) return NextResponse.json({ error: upsertErr.message }, { status: 500 })
+  try {
+    logTelemetryEvent('consent_update', { userId: user.id, consent: body.consent })
+  } catch {}
   return NextResponse.json({ success: true })
 }
 

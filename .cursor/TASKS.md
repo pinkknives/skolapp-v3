@@ -87,16 +87,16 @@
 ## Milestone G — Analys, Diagram & Transparens
 
 ### G1. Dashboard (lärare)
-- [ ] Diagram för klass/elev över tid: resultat, trender, svårighetsgrad.  
-- [ ] Index/vyer för prestanda.  
+- [x] Diagram för klass/elev över tid: resultat, trender, svårighetsgrad.  
+- [x] Index/vyer för prestanda.  
 **Acceptans**
-- [ ] Diagram visar korrekta aggregat.  
+- [x] Diagram visar korrekta aggregat.  
 
 ### G2. Transparens
-- [ ] Info-sektion: “Så används datan/anonymisering”.  
-- [ ] Länk till policy.  
+- [x] Info-sektion: “Så används datan/anonymisering”.  
+- [x] Länk till policy.  
 **Acceptans**
-- [ ] Text begriplig, på svenska.
+- [x] Text begriplig, på svenska.
 
 ---
 

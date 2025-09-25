@@ -13,4 +13,8 @@ export function track(eventName: string, properties?: Record<string, unknown>): 
   } catch {}
 }
 
+export function logTelemetryEvent(eventName: string, properties?: Record<string, unknown>): void {
+  track(eventName, properties)
+}
+
 
