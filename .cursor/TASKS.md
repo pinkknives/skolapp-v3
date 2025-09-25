@@ -1,222 +1,116 @@
-# Cursor Prompt – Milestone A–D (In-place AI-hjälp för Quiz)
+# Skolapp – Milestone E–H (Data, Supabase, Consent, Feedback)
 
-> Kör i ordning: **A → B → C → D**. Följ *exakt* nedan. Små, fokuserade diffar. Små commits med prefix **A1/A2/B1…**.
+> Kör i ordning: **E → F → G → H**.  
+> **Milestone E börjar med en fullständig data- & Supabase-granskning via MCP**.
 
 ## Körregler (obligatoriska)
 - Efter **varje** task: kör  
   `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
-- **Om alla tre är gröna:** markera tasken som `[x]`, gör **liten** commit `feat(quiz-ai): A1 …`, fortsätt DIREKT.
-- **Stoppa endast** om build/lint/type-check faller, eller om acceptans är oklar. I övrigt: fortsätt automatiskt.
-- Ändra **inte** secrets/RLS. Gör **inte** breda kosmetiska refactors.
+- **Om alla tre är gröna** → markera tasken som `[x]`, gör **liten** commit med prefix **E1/E2…**, och **fortsätt direkt**.
+- **Stanna endast** om:
+  1) type-check/lint/build faller, **eller**
+  2) acceptanskriterier är oklara/ambigua.
+- **MCP/Supabase**: Använd **read-only** inspektion i E0/E1. Alla förändringar sker via migrations/PR (inte via ad-hoc SQL).
 
 ---
 
-## Milestone A — Layout & Varianter
+## Milestone E — Data & Supabase + Consent
 
-### A1. Panel-variant [x]
-**Mål**
-- Lägg prop `variant: 'panel' | 'sheet'` i `ImprovedAIQuizDraft`.
-- Bryt ur modal-beroenden. Skapa dockad `<aside>`-panel för desktop.
-- Ta bort `showAIDraft`/`?type=ai-draft` i create-vyn.
-
-**Gör så här**
-1) I `ImprovedAIQuizDraft`:
-   - Inför `variant`-prop.
-   - Om `variant === 'panel'`: rendera utan overlay/stäng-X, med intern scroll: `max-h-[calc(100vh-8rem)] overflow-auto`.
-2) I `src/app/teacher/quiz/create/page.tsx` (eller `QuizQuestionsStep` om create går via wizard):
-   - Bygg grid: main + `<aside aria-label="AI-hjälp" class="sticky top-20 ...">`.
-   - Rendera `ImprovedAIQuizDraft variant="panel"` permanent.
-3) Ta bort logik för `showAIDraft` och URL-param `type=ai-draft`.
-
+### E0. Data Audit (MCP, read-only)
+- [ ] Lista tabeller, vyer, policies, triggers och index via MCP:
+  - `list_tables`, `list_extensions`, `list_migrations`, `get_project_url`
+  - Vid behov **read-only** `execute_sql` för `pg_policy`, `pg_indexes`, `information_schema`.
+- [ ] Dokumentera datamodellen (ER-översikt) med fokus på:
+  - `users/teachers/students`, `classes`, `quizzes`, `questions`, `answers/responses`, `reports/analytics`.
+  - Primärnycklar, FK, ON DELETE-beteenden, unika index.
+  - RLS: vilka tabeller har `USING/WITH CHECK`, vilka roller (anon/auth/service).
+- [ ] Granska datapipor:
+  - Konto & inloggning (auth-tabeller), klass-/elevkopplingar, resultatskrivningar.
+  - Analytics/diagram: vilka tabeller/vyer läses? aggregeringar? materialiserade vyer?
+- [ ] Exportera **TypeScript-typer** via MCP `generate_typescript_types` (om tillgängligt) och jämför med lokala typer (drizzle/zod/types).
 **Acceptans**
-- Panelen syns till höger (≥1024px), sticky, utan overlay. Build/lint/type-check gröna.
+- [ ] `docs/data/ERD.md` skapad (eller uppdaterad) med tabellkarta, relationer och RLS-sammanfattning.
+- [ ] `docs/data/types.ts` genererad/validerad mot appens typer.
+- [ ] Lista på **gap/inkonsistenser** och föreslagna migrations (utan att köra dem).
 
----
-
-### A2. Bottom sheet-variant (mobil) [x]
-**Mål**
-- Implementera `variant="sheet"` (bottom sheet).
-- FAB på mobil som öppnar/stänger sheet. Half (~70vh) ↔ Full (100vh). Swipe/ESC stänger.
-- Fokusfälla + restore focus.
-
-**Gör så här**
-1) `ImprovedAIQuizDraft`: branch för `sheet`:
-   - `fixed bottom-0 inset-x-0`, drag-handle, trap focus, `aria-modal="true" role="dialog"`.
-2) Skapa `FAB`-komponent (`fixed bottom-4 right-4`, respektera `env(safe-area-inset-bottom)`).
-3) I create-vyn: mounta FAB endast `<640px` som togglar `sheet`.
-
+### E1. RLS & Åtkomstflöden (review)
+- [ ] Kartlägg **allt** som skriver/läser elevresultat och quizdata:
+  - API-routes/Edge Functions som interagerar med Supabase.
+  - Klient-SDK-anrop (auth-krav, row-scoping).
+- [ ] Verifiera att **minsta behörighet** gäller (lärare ser bara sina klasser/elevdata, elever ser bara sitt).
+- [ ] Identifiera saknade index för vanliga JOIN/WHERE (klass, quiz, tidsintervall).
 **Acceptans**
-- Mobil: FAB öppnar sheet (half/full), swipe/ESC stänger, fokus återställs till FAB.
+- [ ] `docs/data/rls-review.md` med tydlig tabell/route-matris.
+- [ ] Lista på exakta index/migrations som krävs (men **inte** körda).
 
----
-
-### A3. Tablet-stöd [x]
-**Mål**
-- Panelen kollapsbar 640–1024px.
-- Sticky sidoflik för öppna/stäng utan skroll.
-
-**Gör så här**
-- Lägg `data-state="open|closed"` på panelen. Skapa smal “AI”-flik (`position: sticky`) som togglar state.
-
+### E2. Consent – Samtyckesdialog + inställning
+- [ ] UI: första-körningen/”Skapa quiz” visar dialog om anonymiserad datadelning för att förbättra AI.
+- [ ] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.
+- [ ] Inställningsvy: toggle för att ändra beslut.
 **Acceptans**
-- Tablet: panel kan öppnas/stängas via flik utan att scrolla.
+- [ ] Beslut sparas i DB, kan ändras när som helst. Behandlas på klientsidan (feature flaggar UI).
 
----
-
-## Milestone B — Per-fråga AI-åtgärder
-
-### B1. AI-meny i frågekort [x]
-**Mål**
-- AI-ikon i varje frågekort med: *Förbättra*, *Förenkla/Förtydliga*, *Generera distraktorer*, *Omgenerera fråga*.
-- Öppna panel/sheet i rätt åtgärdsflik, förifyll aktiv fråga.
-- Diff-preview före ersättning.
-
-**Gör så här**
-- I `QuestionEditor`: lägg overflow-meny/ikon. Vid val: kalla `openAIAction({ action, question })`.
-- I `ImprovedAIQuizDraft`: stöd för per-fråge-context och diff-preview (`före/efter`) + *Ersätt* / *Infoga* / *Avbryt*.
-
+### E3. Insamling till träningsdata (opt-in)
+- [ ] Ny tabell `ai_training_data` (quiz, frågor, metadata), **utan PII**:
+  - Normalisera bort elev-ID, namn, e-post. Hasha/lossa ev. lärar-ID (k-anonymitet vid behov).
+- [ ] Hook vid quiz-save: om `consent_to_ai_training === true` → skriv anonym post.
+- [ ] Telemetri: `consent_accepted/declined`, `ai_training_data_saved`.
 **Acceptans**
-- Klick på AI-ikon visar diff-preview och kan ersätta/infoga. Fokus hoppar till uppdaterat fält. Toast “Fråga uppdaterad” + Ångra.
+- [ ] Endast lärare som samtyckt genererar träningsrader.
+- [ ] Ingen PII sparas. Telemetri visar antal/kvot.
 
 ---
 
-### B2. Bevara inline-funktioner [x]
-**Mål**
-- Behåll inline-edit, delete/duplicate, rätt-svars-toggle även efter AI-ersättning.
+## Milestone F — AI-träning & Feedbackloop
 
-**Gör så här**
-- Återanvänd befintliga handlers; se till att ersättningen skriver in i samma state-struktur.
-
+### F1. Export-pipeline (JSONL)
+- [ ] Export av `ai_training_data` till JSONL: `{prompt, context, targets, tags, lang}`.
+- [ ] CLI/cron (Edge Function/Scheduled) som bygger en batch.
 **Acceptans**
-- Inline-UI fungerar identiskt före/efter AI-ersättning.
+- [ ] Artefakt `exports/ai_training_YYYYMMDD.jsonl` skapas lokalt/CI-artifact.
 
----
-
-### B3. Undo/återställ + micro-interaktioner [x]
-**Mål**
-- Spara **senaste** ändring per fråga (minst 1 nivå). Toast med Ångra.
-- Efter infogning/ersättning: auto-scroll till frågekort + fokus på titelinput.
-
-**Gör så här**
-- Lokal ring-buffer (min 1) i state/localStorage.
-- Utility för `scrollIntoView` + `focus()`.
-
+### F2. Lärar-feedback
+- [ ] UI: “Var dessa frågor hjälpsamma?” (👍/👎 + kort motivering).
+- [ ] Tabell `ai_feedback` kopplad till genereringstillfälle (utan elevdata).
 **Acceptans**
-- Ångra återställer föregående version. Ny/ersatt fråga scrollas in och fokuseras.
+- [ ] Feedback sparas och kan joinas mot träningsrader.
 
 ---
 
-## Milestone C — Batch-generering & API
+## Milestone G — Analys, Diagram & Transparens
 
-### C1. Generera om alla (batch) [x]
-**Mål**
-- Global knapp ovanför frågelistan + i panelen.
-- Preview i panel/sheet med selektering. *Lägg till* / *Ersätt*.
-
-**Gör så här**
-- Återanvänd mock/preview-mekaniken. Koppla till `onQuestionsGenerated`.
-
+### G1. Dashboard (lärare)
+- [ ] Översikt per klass/elev över tid: aggregat, trendlinjer, svårighetsgrad.
+- [ ] Prestanda: index/vyer för toppfrågor, felmönster.
 **Acceptans**
-- Flera frågor genereras om i ett svep och kan väljas/införas utan sidbyte.
+- [ ] Diagram visar korrekta aggregeringar på klass- och elevnivå.
 
----
-
-### C2. Lägg till fler frågor [x]
-**Mål**
-- Knapp i panelen för att addera fler frågor utan att ersätta.
-
-**Gör så här**
-- Samma preview-flöde som C1 men merge istället för replace.
-
+### G2. Transparens & förtroende
+- [ ] Info-sektion: hur datan används/anonymiseras.
+- [ ] Länk till policy/”Så funkar det”.
 **Acceptans**
-- Befintliga frågor finns kvar; nya läggs till selektivt.
+- [ ] Text godkänd (svenska, begriplig, icke-juridisk men korrekt).
 
 ---
 
-### C3. API-actions
-**Mål**
-- Konsolidera till `enhanced-generate` med `action: 'improve' | 'rewrite' | 'regenerate' | 'distractors'`.
-- Zod-schema + felhantering.
+## Milestone H — Skalning & Robusthet
 
-**Gör så här**
-- Uppdatera serverroute/payload/guards. En enhetlig fetch-helper `aiAction(payload)`.
-
+### H1. Köer & async-insamling
+- [ ] Flytta insamling till kö/async (Edge Function + queue) så quiz-save inte blockar.
 **Acceptans**
-- Alla åtgärder går via samma endpoint; validering/fel visas korrekt i UI.
+- [ ] Under last (25+ samtidiga) är svarstider stabila.
 
----
-
-### C4. Draft-hantering [x]
-**Mål**
-- Behåll localStorage-drafts för panelen.
-- Cacha senaste per-frågeoperation (för Ångra).
-
-**Gör så här**
-- LS-nycklar namngett per quiz/id. Clear efter accept enligt befintlig policy.
-
+### H2. Metrics/Observability
+- [ ] Mätpunkter: consent-rate, träningsrader/dag, feedback-ratio, export-frekvens.
+- [ ] Larm vid avvikelser.
 **Acceptans**
-- Reload behåller panelens utkast; ångra fungerar för senaste operation.
+- [ ] Dashboard/alerts visar hälsa och datavolymer.
 
 ---
 
-## Milestone D — A11y, Telemetri, Tester, Prestanda
-
-### D1. Tillgänglighet [x]
-**Mål**
-- Panel: `<aside aria-label="AI-hjälp">` (ej modal).
-- Sheet: `role="dialog" aria-modal="true"`, fokusfälla, ESC/drag, restore focus.
-- Live-region för “N nya frågor infogade” / “Fråga uppdaterad”.
-
-**Acceptans**
-- Tabb-ordning korrekt. Skärmläsare får feedback.
-
----
-
-### D2. Microcopy (svenska) [x]
-**Mål**
-- Konsekvent svensk microcopy i `form/generating/preview/error`.
-
-**Acceptans**
-- Alla texter på svenska, enhetlig ton.
-
----
-
-### D3. Telemetri + feature flag [x]
-**Mål**
-- Flagga `features.quizAI.docked`.
-- Events: `ai_panel_open/close`, `ai_action_improve/regenerate/distractors`, `ai_batch_apply`, `ai_question_replace`, `undo`.
-
-**Acceptans**
-- Flagga kan slå av/på nya UI:t; events syns i logg.
-
----
-
-### D4. Tester [x]
-**Mål**
-- RTL: panel/sheet-rendering, per-fråga-meny, fokus/ARIA.
-- Playwright: batch-flöde, per-fråga-förbättring, mobil FAB+sheet (half↔full, swipe).
-- Lighthouse (manuellt/CI-artifact): fokus/kontrast OK.
-
-**Acceptans**
-- Samtliga nya tester gröna i CI.
-
----
-
-### D5. Prestanda [x]
-**Mål**
-- Dynamic import av AI-panelen på mobil/tablet.
-- Skeleton loaders i `generating`.
-
-**Acceptans**
-- Låg initial load; tydlig “generating” skeleton.
-
----
-
-## Slutkontroll (DoD)
-- Desktop: dockad panel alltid synlig (ingen modal i create-vyn).
-- Tablet: kollapsbar panel m. sticky flik.
-- Mobil: FAB + bottom sheet (half/full, swipe/ESC, fokusfälla).
-- Per-fråga-åtgärder med diff-preview + fokus/undo.
-- Batch: generera om alla + lägg till fler utan sidbyte.
-- Telemetri/flag OK, A11y OK, tester gröna.
-
+## Gemensamma krav
+- [ ] Alla schemaändringar via migrations + index.
+- [ ] **RLS** på nya tabeller. Minsta behörighet verifierad.
+- [ ] **Inga PII** i `ai_training_data`/`ai_feedback`.
+- [ ] A11y, i18n (svenska) och telemetri på ny UI.
+- [ ] CI: artefakter för export (F1), samt rapporter för E-granskning.
