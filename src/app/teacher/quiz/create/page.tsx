@@ -47,6 +47,7 @@ function CreateQuizPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { canUseAI } = useEntitlements()
+  const dockedEnabled = process.env.NEXT_PUBLIC_FEATURE_QUIZ_AI_DOCKED !== 'false'
 
   // Check for ai-draft URL parameter
   useEffect(() => {
@@ -460,7 +461,7 @@ function CreateQuizPage() {
           </div>
 
           {/* Docked AI Panel on desktop, sheet on mobile */}
-          {canUseAI && (
+          {canUseAI && dockedEnabled && (
             <>
               <div className="hidden lg:block">
                 <ImprovedAIQuizDraft

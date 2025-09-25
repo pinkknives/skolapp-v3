@@ -10,6 +10,7 @@ import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion } fro
 import { quizAI, AiParams, GRADE_LEVELS, DIFFICULTY_LEVELS, QUESTION_TYPES } from '@/lib/ai/quizProvider'
 import { aiAssistant } from '@/locales/sv/quiz'
 import { Plus, AlertTriangle, RefreshCw, Copy, Check } from 'lucide-react'
+import { track } from '@/lib/telemetry'
 
 interface ImprovedAIQuizDraftProps {
   quizTitle?: string
@@ -356,6 +357,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     setStep('generating')
     setErrorMessage('')
     setErrorDetails('')
+    track('ai_panel_generate', { subject: formData.subject, grade: formData.grade, type: formData.type, count: formData.count })
     
     try {
       // Prepare AI parameters according to the interface specification
@@ -427,6 +429,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     if (questionsToAdd.length === 0) return
     onQuestionsGenerated(questionsToAdd)
     setLiveText(`${questionsToAdd.length} frågor infogade`)
+    track('ai_panel_add_selected', { count: questionsToAdd.length })
     // Clear draft after successful import
     try { localStorage.removeItem(draftKey) } catch {}
     // restore focus to FAB or previous
@@ -446,6 +449,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     if (!chosen) return
     onReplaceQuestion(pendingAction.index, chosen)
     setLiveText('Fråga uppdaterad')
+    track('ai_question_replace', { index: pendingAction.index })
     if (onClearPending) onClearPending()
   }
 
@@ -454,6 +458,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
     const selected = generatedQuestions.filter(q => selectedQuestions.has(q.id))
     if (selected.length === 0) return
     onBatchReplace(selected)
+    track('ai_batch_apply', { count: selected.length, mode: 'replace' })
     if (onSetBatchMode) onSetBatchMode(null)
   }
 
