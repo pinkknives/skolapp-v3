@@ -23,6 +23,7 @@ import { useEntitlements } from '@/hooks/useEntitlements'
 import { AIFeatureBlock } from '@/components/billing/AIFeatureBlock'
 import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
 import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
+import { toast } from '@/components/ui/Toast'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -41,17 +42,16 @@ function CreateQuizPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [quiz, setQuiz] = useState<Partial<Quiz>>(() => createDefaultQuiz('teacher-1')) // Mock teacher ID
-  const [showAIDraft, setShowAIDraft] = useState(false)
+  // Docked AI panel is always visible when feature flag is enabled
   const [showOnboarding, setShowOnboarding] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { canUseAI } = useEntitlements()
+  const dockedEnabled = process.env.NEXT_PUBLIC_FEATURE_QUIZ_AI_DOCKED !== 'false'
 
   // Check for ai-draft URL parameter
   useEffect(() => {
-    if (searchParams.get('type') === 'ai-draft' && canUseAI) {
-      setShowAIDraft(true)
-    }
+    // legacy: ?type=ai-draft no longer toggles modal
   }, [searchParams, canUseAI])
 
   const updateQuiz = (updates: Partial<Quiz>) => {
@@ -108,6 +108,69 @@ function CreateQuizPage() {
       ...prev,
       questions: [...(prev.questions || []), ...questions]
     }))
+    toast.success(`${questions.length} frågor tillagda`)
+  }
+
+  // Wire per-question AI actions to open panel/sheet with context (handled inside ImprovedAIQuizDraft via global store in later tasks)
+  const [pendingAction, setPendingAction] = React.useState<{
+    action: 'improve' | 'simplify' | 'distractors' | 'regenerate';
+    question: Question;
+    index: number;
+  } | null>(null)
+  const [batchMode, setBatchMode] = React.useState<'replace' | 'add' | null>(null)
+
+  // Simple per-question undo ring buffer (size 1)
+  const undoBufferRef = React.useRef<Record<string, Question>>({})
+
+  const handleAIActionRequested = (params: { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }) => {
+    setPendingAction(params)
+    try {
+      const el = document.querySelector('[aria-label="AI-hjälp"]') as HTMLElement | null
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } catch {}
+  }
+
+  const handleReplaceQuestionAt = (idx: number, updated: Question) => {
+    setQuiz(prev => {
+      const questions = prev.questions || []
+      const prevQ = questions[idx]
+      if (prevQ) {
+        undoBufferRef.current[prevQ.id] = prevQ
+      }
+      const next = { ...prev, questions: questions.map((q, i) => (i === idx ? updated : q)) }
+      return next
+    })
+    // Auto-scroll to the updated card and focus its title input
+    setTimeout(() => {
+      try {
+        const card = document.querySelector(`[data-question-index="${idx}"]`) as HTMLElement | null
+        card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const input = card?.querySelector('input, textarea') as HTMLElement | null
+        input?.focus()
+      } catch {}
+    }, 50)
+
+    // Toast with undo
+    toast.success('Fråga uppdaterad', {
+      action: {
+        label: 'Ångra',
+        onClick: () => {
+          setQuiz(prev => {
+            const questions = prev.questions || []
+            const current = questions[idx]
+            const prevVersion = current ? undoBufferRef.current[current.id] : undefined
+            if (!prevVersion) return prev
+            const next = { ...prev, questions: questions.map((q, i) => (i === idx ? prevVersion : q)) }
+            return next
+          })
+        }
+      }
+    })
+  }
+
+  const handleBatchReplace = (newQuestions: Question[]) => {
+    setQuiz(prev => ({ ...prev, questions: newQuestions }))
+    toast.success(`Ersatte med ${newQuestions.length} frågor`)
   }
 
   const saveDraft = async () => {
@@ -242,14 +305,9 @@ function CreateQuizPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Frågor</CardTitle>
-                    {canUseAI ? (
-                      <Button onClick={() => setShowAIDraft(true)} variant="outline" data-testid="ai-draft-button">
-                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        AI-utkast
-                      </Button>
-                    ) : (
+                  {canUseAI ? (
+                    <div />
+                  ) : (
                       <Button 
                         variant="outline" 
                         disabled
@@ -321,6 +379,7 @@ function CreateQuizPage() {
                           onChange={(updatedQuestion) => updateQuestion(index, updatedQuestion)}
                           onDelete={() => deleteQuestion(index)}
                           onDuplicate={() => duplicateQuestion(index)}
+                          onAIActionRequested={handleAIActionRequested}
                         />
                       ))}
                     </div>
@@ -344,7 +403,7 @@ function CreateQuizPage() {
               {/* AI Assistant */}
               {canUseAI ? (
                 <AIAssistantPanel
-                  onGenerateQuestions={() => setShowAIDraft(true)}
+                  onGenerateQuestions={() => {}}
                   onGenerateTitle={() => {/* TODO: Implement title generation */}}
                   onGenerateAnswers={() => {/* TODO: Implement answer generation */}}
                   onSimplifyText={() => {/* TODO: Implement text simplification */}}
@@ -401,17 +460,42 @@ function CreateQuizPage() {
             </div>
           </div>
 
-          {/* AI Draft Modal */}
-          {showAIDraft && canUseAI && (
-            <ImprovedAIQuizDraft
-              quizTitle={quiz.title}
-              onQuestionsGenerated={handleAIQuestionsGenerated}
-              onClose={() => setShowAIDraft(false)}
-            />
+          {/* Docked AI Panel on desktop, sheet on mobile */}
+          {canUseAI && dockedEnabled && (
+            <>
+              <div className="hidden lg:block">
+                <ImprovedAIQuizDraft
+                  quizTitle={quiz.title}
+                  onQuestionsGenerated={handleAIQuestionsGenerated}
+                  onClose={() => {}}
+                  variant="panel"
+                  pendingAction={pendingAction}
+                  onReplaceQuestion={handleReplaceQuestionAt}
+                  onClearPending={() => setPendingAction(null)}
+                  batchMode={batchMode}
+                  onSetBatchMode={setBatchMode}
+                  onBatchReplace={handleBatchReplace}
+                />
+              </div>
+              <div className="lg:hidden">
+                <ImprovedAIQuizDraft
+                  quizTitle={quiz.title}
+                  onQuestionsGenerated={handleAIQuestionsGenerated}
+                  onClose={() => {}}
+                  variant="sheet"
+                  pendingAction={pendingAction}
+                  onReplaceQuestion={handleReplaceQuestionAt}
+                  onClearPending={() => setPendingAction(null)}
+                  batchMode={batchMode}
+                  onSetBatchMode={setBatchMode}
+                  onBatchReplace={handleBatchReplace}
+                />
+              </div>
+            </>
           )}
 
-          {/* AI Feature Paywall Modal */}
-          {showAIDraft && !canUseAI && (
+          {/* AI Feature Paywall Modal (kept for future toggle) */}
+          {false && !canUseAI && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
@@ -420,7 +504,7 @@ function CreateQuizPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowAIDraft(false)}
+                      onClick={() => {}}
                       className="text-neutral-500 hover:text-neutral-700"
                     >
                       ✕
@@ -429,7 +513,7 @@ function CreateQuizPage() {
                   <AIFeatureBlock
                     featureName="AI-assisterad quiz-generering"
                     description="Låt AI hjälpa dig att skapa engagerande quiz baserat på ditt ämne och mål. Få intelligenta förslag på frågor, svar och feedback."
-                    onUpgrade={() => setShowAIDraft(false)}
+                    onUpgrade={() => {}}
                   />
                 </div>
               </div>

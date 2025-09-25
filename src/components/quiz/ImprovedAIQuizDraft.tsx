@@ -10,6 +10,7 @@ import { Question, MultipleChoiceQuestion, FreeTextQuestion, ImageQuestion } fro
 import { quizAI, AiParams, GRADE_LEVELS, DIFFICULTY_LEVELS, QUESTION_TYPES } from '@/lib/ai/quizProvider'
 import { aiAssistant } from '@/locales/sv/quiz'
 import { Plus, AlertTriangle, RefreshCw, Copy, Check } from 'lucide-react'
+import { track } from '@/lib/telemetry'
 
 interface ImprovedAIQuizDraftProps {
   quizTitle?: string
@@ -239,7 +240,17 @@ interface AIFormData {
   context: string
 }
 
-export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }: ImprovedAIQuizDraftProps) {
+type PendingAction = { action: 'improve' | 'simplify' | 'distractors' | 'regenerate'; question: Question; index: number }
+
+export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, variant = 'panel' as 'panel' | 'sheet', pendingAction, onReplaceQuestion, onClearPending, batchMode = null as 'replace' | 'add' | null, onSetBatchMode, onBatchReplace }: ImprovedAIQuizDraftProps & { variant?: 'panel' | 'sheet'; pendingAction?: PendingAction | null; onReplaceQuestion?: (index: number, updated: Question) => void; onClearPending?: () => void; batchMode?: 'replace' | 'add' | null; onSetBatchMode?: (m: 'replace' | 'add' | null) => void; onBatchReplace?: (qs: Question[]) => void }) {
+  const [isPanelOpen, setIsPanelOpen] = React.useState(true)
+  React.useEffect(() => {
+    try {
+      const w = window.innerWidth
+      if (w >= 640 && w < 1024) setIsPanelOpen(false)
+      else setIsPanelOpen(true)
+    } catch {}
+  }, [])
   const [step, setStep] = useState<'form' | 'generating' | 'preview' | 'error'>('form')
   const [formData, setFormData] = useState<AIFormData>({
     subject: '',
@@ -256,11 +267,59 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [errorDetails, setErrorDetails] = useState<string>('')
   const [copySuccess, setCopySuccess] = useState(false)
+  const [liveText, setLiveText] = useState<string>('')
   const modalRef = useRef<HTMLDivElement>(null)
   const firstFieldRef = useRef<HTMLSelectElement>(null)
+  const prevFocusRef = useRef<Element | null>(null)
+
+  // Draft persistence keys
+  const draftKey = React.useMemo(() => {
+    const base = (quizTitle || 'untitled').toString().slice(0, 50)
+    return `sk_ai_panel_draft_${base}`
+  }, [quizTitle])
+
+  // Save draft helper
+  const saveDraft = React.useCallback(() => {
+    try {
+      const payload = {
+        formData,
+        step,
+        generatedQuestions,
+        selectedIds: Array.from(selectedQuestions),
+      }
+      localStorage.setItem(draftKey, JSON.stringify(payload))
+    } catch {}
+  }, [draftKey, formData, step, generatedQuestions, selectedQuestions])
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as {
+        formData?: AIFormData
+        step?: typeof step
+        generatedQuestions?: Question[]
+        selectedIds?: string[]
+      }
+      if (parsed.formData) setFormData(parsed.formData)
+      if (parsed.generatedQuestions && Array.isArray(parsed.generatedQuestions)) {
+        setGeneratedQuestions(parsed.generatedQuestions)
+        setSelectedQuestions(new Set(parsed.selectedIds || []))
+      }
+      if (parsed.step === 'preview' || parsed.step === 'form') setStep(parsed.step)
+    } catch {}
+  }, [draftKey])
+
+  // Auto-save draft on relevant changes
+  useEffect(() => {
+    saveDraft()
+  }, [saveDraft])
 
   // Focus management for accessibility
   useEffect(() => {
+    // capture previously focused element before moving focus
+    try { prevFocusRef.current = document.activeElement } catch {}
     if (modalRef.current) {
       modalRef.current.focus()
     }
@@ -278,6 +337,12 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
+        // try to restore focus to FAB or previous focus target
+        try {
+          const fab = document.querySelector('[data-ai-fab="true"]') as HTMLElement | null
+          if (fab) fab.focus()
+          else (prevFocusRef.current as HTMLElement | null)?.focus?.()
+        } catch {}
         onClose()
       }
     }
@@ -292,6 +357,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
     setStep('generating')
     setErrorMessage('')
     setErrorDetails('')
+    track('ai_panel_generate', { subject: formData.subject, grade: formData.grade, type: formData.type, count: formData.count })
     
     try {
       // Prepare AI parameters according to the interface specification
@@ -320,12 +386,80 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
     }
   }
 
+  // If a pending per-question action exists, auto-trigger a focused generation and keep only first result for replacement UX
+  useEffect(() => {
+    const run = async () => {
+      if (!pendingAction) return
+      try {
+        setStep('generating')
+        const aiParams: AiParams = {
+          subject: formData.subject || 'Allmänt',
+          grade: formData.grade || 'Åk 7',
+          count: 1,
+          type: formData.type,
+          difficulty: formData.difficulty,
+          topics: formData.topics ? formData.topics.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+          context: formData.context || undefined,
+          locale: 'sv-SE'
+        }
+        // Reuse normal generation for now; API consolidates in C3 server
+        const qs = await quizAI.generateQuestions(aiParams)
+        setGeneratedQuestions(qs)
+        setSelectedQuestions(new Set(qs.slice(0, 1).map(q => q.id)))
+        setStep('preview')
+      } catch (e) {
+        setErrorMessage('Kunde inte generera förslag just nu.')
+        setErrorDetails(e instanceof Error ? e.message : String(e))
+        setStep('error')
+      }
+    }
+    run()
+  }, [
+    pendingAction,
+    formData.subject,
+    formData.grade,
+    formData.type,
+    formData.difficulty,
+    formData.topics,
+    formData.context
+  ])
+
   const handleAcceptQuestions = () => {
     const questionsToAdd = generatedQuestions.filter(q => selectedQuestions.has(q.id))
     if (questionsToAdd.length === 0) return
     onQuestionsGenerated(questionsToAdd)
+    setLiveText(`${questionsToAdd.length} frågor infogade`)
+    track('ai_panel_add_selected', { count: questionsToAdd.length })
+    // Clear draft after successful import
+    try { localStorage.removeItem(draftKey) } catch {}
+    // restore focus to FAB or previous
+    try {
+      const fab = document.querySelector('[data-ai-fab="true"]') as HTMLElement | null
+      if (fab) fab.focus()
+      else (prevFocusRef.current as HTMLElement | null)?.focus?.()
+    } catch {}
     // Close modal after adding to make the update visible immediately
     onClose()
+  }
+
+  const handleReplaceActiveQuestion = () => {
+    if (!pendingAction || !onReplaceQuestion) return
+    const selected = generatedQuestions.filter(q => selectedQuestions.has(q.id))
+    const chosen = selected[0] || generatedQuestions[0]
+    if (!chosen) return
+    onReplaceQuestion(pendingAction.index, chosen)
+    setLiveText('Fråga uppdaterad')
+    track('ai_question_replace', { index: pendingAction.index })
+    if (onClearPending) onClearPending()
+  }
+
+  const handleBatchReplaceSelected = () => {
+    if (!onBatchReplace) return
+    const selected = generatedQuestions.filter(q => selectedQuestions.has(q.id))
+    if (selected.length === 0) return
+    onBatchReplace(selected)
+    track('ai_batch_apply', { count: selected.length, mode: 'replace' })
+    if (onSetBatchMode) onSetBatchMode(null)
   }
 
   const toggleQuestionSelection = (questionId: string) => {
@@ -388,17 +522,10 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
   const isFormValid = formData.subject && formData.grade && formData.count > 0
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div 
-        ref={modalRef}
-        className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
-        role="dialog"
-        aria-labelledby="ai-modal-title"
-        aria-describedby="ai-modal-description ai-disclaimer"
-        tabIndex={-1}
-      >
-        <Card className="border-0">
+  // Wrapper render function to support panel vs sheet/modal variants
+  const renderCard = () => (
+    <Card className="border-0">
+          <div aria-live="polite" role="status" className="sr-only" data-testid="ai-live-region">{liveText}</div>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -412,19 +539,30 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   <Typography variant="caption" className="text-neutral-600" id="ai-modal-description">
                     {aiAssistant.modal.description}
                   </Typography>
+              {batchMode && (
+                <div className="mt-1 text-xs text-primary-700">Batch-läge: {batchMode === 'replace' ? 'Ersätt' : 'Lägg till'}</div>
+              )}
                 </div>
               </div>
-              <Button 
+          <div className="flex items-center gap-2">
+            {onSetBatchMode && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => onSetBatchMode('replace')}>Batch: ersätt</Button>
+                <Button variant="outline" size="sm" onClick={() => onSetBatchMode('add')}>Batch: lägg till</Button>
+              </>
+            )}
+            <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={onClose}
                 aria-label={aiAssistant.modal.closeLabel}
                 data-testid="ai-modal-close"
-              >
+          >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </Button>
+          </Button>
+          </div>
             </div>
           </CardHeader>
 
@@ -608,6 +746,20 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                     .replace('{grade}', formData.grade)
                   }
                 </Typography>
+
+                {/* Skeleton preview placeholders for better perceived performance */}
+                <div className="mt-8 space-y-3 max-w-md mx-auto text-left">
+                  {[0,1,2].map((i) => (
+                    <div key={i} className="border border-neutral-200 rounded-lg p-4 animate-pulse">
+                      <div className="h-4 bg-neutral-200 rounded w-2/3 mb-3" />
+                      <div className="space-y-2">
+                        <div className="h-3 bg-neutral-200 rounded w-full" />
+                        <div className="h-3 bg-neutral-200 rounded w-5/6" />
+                        <div className="h-3 bg-neutral-200 rounded w-4/6" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -883,11 +1035,68 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
                   >
                     {aiAssistant.actions.addSelected} ({selectedQuestions.size})
                   </Button>
+                  {batchMode === 'replace' && onBatchReplace && (
+                    <Button
+                      onClick={handleBatchReplaceSelected}
+                      disabled={selectedQuestions.size === 0}
+                      className="bg-danger-600 hover:bg-danger-700"
+                      aria-label="Ersätt valda"
+                    >
+                      Ersätt valda
+                    </Button>
+                  )}
+                  {pendingAction && onReplaceQuestion && (
+                    <Button
+                      onClick={handleReplaceActiveQuestion}
+                      disabled={generatedQuestions.length === 0}
+                      className="bg-primary-600 hover:bg-primary-700"
+                      aria-label="Ersätt aktiv fråga"
+                    >
+                      Ersätt aktiv
+                    </Button>
+                  )}
                 </>
               )}
             </div>
           </CardFooter>
-        </Card>
+    </Card>
+  )
+
+  if (variant === 'panel') {
+    return (
+      <aside aria-label="AI-hjälp" className="sticky top-20" data-state={isPanelOpen ? 'open' : 'closed'}>
+        {/* Sticky side tab for tablet to toggle open/closed */}
+        <button
+          type="button"
+          onClick={() => setIsPanelOpen((v) => !v)}
+          className="hidden md:block lg:hidden sticky top-20 -ml-2 mb-2 text-xs rounded-r bg-primary-600 text-white px-2 py-1"
+          aria-expanded={isPanelOpen}
+          aria-controls="ai-panel-content"
+        >
+          {isPanelOpen ? 'Stäng AI' : 'AI'}
+        </button>
+        {isPanelOpen && (
+          <div id="ai-panel-content" ref={modalRef} className="max-h-[calc(100vh-8rem)] overflow-auto">
+            {renderCard()}
+          </div>
+        )}
+      </aside>
+    )
+  }
+
+  // Default to previous modal behavior (sheet will be implemented in A2)
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 sm:hidden">
+      <div className="bg-black/30" onClick={onClose} aria-hidden="true" />
+      <div
+        ref={modalRef}
+        className="bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto p-2"
+        role="dialog"
+        aria-labelledby="ai-modal-title"
+        aria-describedby="ai-modal-description ai-disclaimer"
+        tabIndex={-1}
+      >
+        {renderCard()}
       </div>
     </div>
   )

@@ -493,7 +493,7 @@ export class ApiQuizProvider implements QuizAIProvider {
     const { data: { session } } = await supabase.auth.getSession()
     const accessToken = session?.access_token
 
-    const gradeBand = (() => {
+    const _gradeBand = (() => {
       const g = params.grade.toLowerCase();
       if (g.includes('åk 1') || g.includes('åk 2') || g.includes('åk 3') || g === 'åk1' || g === 'åk2' || g === 'åk3') return 'ak1-3';
       if (g.includes('åk 4') || g.includes('åk 5') || g.includes('åk 6') || g === 'åk4' || g === 'åk5' || g === 'åk6') return 'ak4-6';
@@ -517,27 +517,25 @@ export class ApiQuizProvider implements QuizAIProvider {
     })();
 
     const type = params.type === 'multiple-choice' ? 'mcq' : params.type === 'free-text' ? 'open' : undefined;
-    const topic = (params.topics && params.topics[0]) || (params.context ? params.context.slice(0, 80) : params.subject);
+    const _topic = (params.topics && params.topics[0]) || (params.context ? params.context.slice(0, 80) : params.subject);
 
-    const body = {
-      gradeBand,
-      subject: params.subject,
-      topic,
-      difficulty,
-      bloom: undefined as unknown as undefined,
-      type,
-      count: Math.max(1, Math.min(20, params.count)),
-      language: 'sv' as const,
-      extra: params.context || undefined,
-    };
+    // legacy body (no longer used)
 
-    const resp = await fetch('/api/ai/generate-questions', {
+    const resp = await fetch('/api/ai/enhanced-generate', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {})
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        subject: params.subject,
+        grade: params.grade,
+        difficulty: difficulty === 2 ? 'lätt' : difficulty === 4 ? 'svår' : 'medel',
+        count: Math.max(1, Math.min(20, params.count)),
+        type: type === 'mcq' ? 'multiple-choice' : 'free-text',
+        topics: params.topics,
+        extraContext: params.context
+      })
     });
 
     if (!resp.ok) {
@@ -548,43 +546,25 @@ export class ApiQuizProvider implements QuizAIProvider {
 
     const data = await resp.json();
     const raw = (data?.questions ?? []) as Array<{
-      type?: 'mcq' | 'short' | 'numeric' | 'open'
-      prompt?: unknown
-      options?: unknown
-      answer?: unknown
-      rationale?: unknown
+      question: import('@/types/quiz').Question
     }>;
 
     const mapped: AiQuestion[] = raw
-      .map((item, idx) => {
-        const prompt = String(item.prompt || '');
-        if (item.type === 'mcq') {
-          const options = Array.isArray(item.options) ? (item.options as unknown[]).map(String) : [];
-          let correctIdx = -1;
-          if (typeof item.answer === 'number') {
-            correctIdx = item.answer as number;
-          } else if (typeof item.answer === 'string') {
-            const s = String(item.answer);
-            const found = options.findIndex((o) => o.trim().toLowerCase() === s.trim().toLowerCase());
-            correctIdx = found >= 0 ? found : 0;
-          }
+      .map((item) => {
+        const q = item.question
+        if (q.type === 'multiple-choice') {
           return {
             kind: 'multiple-choice',
-            prompt,
-            choices: options.map((text, i) => ({ id: `c_${idx}_${i}`, text, correct: i === correctIdx })),
-            explanation: typeof item.rationale === 'string' ? (item.rationale as string) : undefined,
-          } as AiQuestion;
+            prompt: q.title,
+            choices: (q.options || []).map((o) => ({ id: o.id, text: o.text, correct: !!o.isCorrect }))
+          } as AiQuestion
         }
-        // open/short/numeric → map to free-text with answer as expectedAnswer if present
-        const expected = typeof item.answer === 'string' || typeof item.answer === 'number' ? String(item.answer) : 'Öppet svar';
         return {
           kind: 'free-text',
-          prompt,
-          expectedAnswer: expected,
-          explanation: typeof item.rationale === 'string' ? (item.rationale as string) : undefined,
-        } as AiQuestion;
-      })
-      .filter(Boolean) as AiQuestion[]
+          prompt: q.title,
+          expectedAnswer: (q as import('@/types/quiz').FreeTextQuestion).expectedAnswer || ''
+        } as AiQuestion
+      }) as AiQuestion[]
 
     return mapped
   }

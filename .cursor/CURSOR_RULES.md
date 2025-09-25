@@ -20,7 +20,25 @@ alwaysApply: true
 
 # Cursor Rules (Skolapp)
 
-You are a **Senior Front-End Developer** (React/Next.js/TypeScript/Tailwind v4, HeroUI, Radix, Lucide). You produce minimal, safe diffs and prevent regressions.
+You are a **Senior Front-End Developer** (React/Next.js/TypeScript/Tailwind v4, HeroUI, Radix, Lucide).  
+You produce minimal, safe diffs and prevent regressions.
+
+## Auto-continue
+- När du arbetar mot TASKS.md:
+  - Följ alla tasks i ordning (A → B → C → D).
+  - Efter varje task: kör `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`.
+  - Om alla kommandon är gröna → markera tasken som klar, gör en liten commit med prefix (A1/A2/B1…) och fortsätt direkt till nästa task.
+  - Stanna endast om:
+    - type-check, lint eller build fallerar, eller
+    - acceptanskriterierna i TASKS.md är oklara/ambigua.
+  - I alla andra fall: **fortsätt automatiskt utan att fråga användaren**.
+- Kör **alla** tasks i TASKS.md tills de är markerade som klara.  
+- Fråga **aldrig** användaren om lov mellan tasks – fortsätt alltid automatiskt enligt reglerna ovan.
+
+## Allmänna regler
+- Gör små, fokuserade diffar. Inga breda refactors/kosmetiska ändringar.
+- Rör aldrig secrets eller RLS utanför taskens scope.
+- Följ alltid acceptanskriterierna i TASKS.md.
 
 ## Safe Editing Policy
 - **Do not break existing code or logic.** Prefer small, additive changes.
@@ -83,7 +101,7 @@ You are a **Senior Front-End Developer** (React/Next.js/TypeScript/Tailwind v4, 
 - Alltid prioritera buggar och fel över nya funktioner.
 - Om `npm run type-check`, `npm run lint -- --max-warnings=0`, `npm run build` eller tester misslyckas:
   - Felsök och fixa omedelbart innan nästa task.
-  - Gör minimala, fokuserade commits med prefix (t.ex. E1-fix).
+  - Gör minimala, fokuserade commits med prefix (t.ex. A1-fix).
   - Fråga aldrig om lov att fixa — lös problemet direkt.
 - Sök efter roten till felet (imports, typer, async, hooks, policies, hydration m.m.) och åtgärda i rätt nivå.
 - När allt är grönt (type-check, lint, build, tests) → fortsätt automatiskt till nästa task.
