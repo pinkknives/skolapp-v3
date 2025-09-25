@@ -70,7 +70,7 @@
 
 ---
 
-### AI4 — Route-implementation (OpenAI JSON-mode)
+### AI4 — Route-implementation (OpenAI JSON-mode) ✅
 **Gör:**
 - Implementera/ersätt `src/app/api/ai/generate-questions/route.ts`:
   - Parse request m. `InputSchema`.
