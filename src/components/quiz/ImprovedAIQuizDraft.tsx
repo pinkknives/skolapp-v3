@@ -322,7 +322,10 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose }
 
   const handleAcceptQuestions = () => {
     const questionsToAdd = generatedQuestions.filter(q => selectedQuestions.has(q.id))
+    if (questionsToAdd.length === 0) return
     onQuestionsGenerated(questionsToAdd)
+    // Close modal after adding to make the update visible immediately
+    onClose()
   }
 
   const toggleQuestionSelection = (questionId: string) => {
