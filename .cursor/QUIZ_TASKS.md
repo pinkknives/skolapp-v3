@@ -87,7 +87,7 @@
 
 ---
 
-### AI5 — UI-koppling & params
+### AI5 — UI-koppling & params ✅
 **Gör:**
 - Säkerställ att Quiz-assistenten skickar ALLA fält: årskurs (gradeBand), ämne, topic/subtopic, difficulty, bloom?, type?, count, extra.
 - Om n/a i UI: sätt rimliga defaults (ex: `type` auto, `bloom` auto).
