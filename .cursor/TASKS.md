@@ -1,19 +1,34 @@
 # Skolapp – Milestone E–J (Nästa fas)
 
-> Kör i ordning: **E → F → G → H → I → J**.  
-> Efter varje task: `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`.  
-> Små commits per task med prefix **E1/E2 …**. Undvik breda kosmetiska diffar.
+> Kör i ordning: **E → F → G → H → I → J**.
+
+## Körregler (obligatoriska)
+- Efter **varje** task: kör  
+  `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
+- **Om alla tre kommandon är gröna** → markera tasken som `[x]`, gör en **liten** commit
+  med prefix **E1/E2/E3…**, och **fortsätt DIREKT** till **nästa** task.
+- **Stanna endast** om:
+  1) type-check/lint/build misslyckas, **eller**  
+  2) acceptanskriterier är oklara/ambigua.  
+  I alla andra fall: **fortsätt automatiskt** tills alla tasks är klara.
+- Gör inte breda kosmetiska förändringar. Endast minimala, fokuserade diffar per task.
+- Rör inte secrets/RLS utanför taskens scope.
 
 ---
 
 ## Milestone E — Production Hardening & Kvalitet
 
 ### E1. Observability & Felspårning
-- [ ] Lägg till Sentry (webb + Edge/Server routes) med release & sourcemaps.
-- [ ] Lägg till correlation-id i API-svar/logg och skicka till log drain (Supabase/Logflare).
+- [x] Lägg till Sentry (webb + Edge/Server routes) med release & sourcemaps.
+- [x] Lägg till correlation-id i API-svar/logg och skicka till log drain (Supabase/Logflare).
 **Acceptans**
-- [ ] Exceptions hamnar i Sentry med versions-tagg och stacktraces.
-- [ ] Varje request korreleras i loggar via `x-correlation-id`.
+- [x] Exceptions hamnar i Sentry med versions-tagg och stacktraces.
+- [x] Varje request korreleras i loggar via `x-correlation-id`.
+
+What changed
+- `next.config.js`: aktivera Sentry-plugin (release/sourcemaps via withSentryConfig).
+- `src/middleware.ts`: sätt `x-correlation-id` på alla requests och logga.
+- Deferrad Supabase-klient i serverroutes för att undvika build-time env-krav.
 
 ### E2. Performance & LCP/CLS
 - [ ] Använd `next/image` + `sizes` på stora bilder/illustrationer.
