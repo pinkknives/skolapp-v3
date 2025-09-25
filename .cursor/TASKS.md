@@ -19,22 +19,22 @@
 ## Milestone E — Data, Supabase & Consent
 
 ### E0. Data Audit & Fix
-- [ ] Kör MCP: `list_tables`, `list_extensions`, `list_migrations`, `generate_typescript_types`, `execute_sql` (queries för `pg_indexes`, `pg_policies`, `information_schema`).
-- [ ] Skapa/uppdatera docs:  
+ - [x] Kör MCP: `list_tables`, `list_extensions`, `list_migrations`, `generate_typescript_types`, `execute_sql` (queries för `pg_indexes`, `pg_policies`, `information_schema`).
+ - [x] Skapa/uppdatera docs:  
   - `docs/data/ERD.md` (tabeller, relationer, index, vyer)  
   - `docs/data/rls-review.md` (RLS policies, roll-matris)  
   - `docs/data/types.generated.ts` (Supabase TS-typer)  
   - `docs/data/types.diff.md` (skillnader mot lokala typer)  
   - `docs/data/gaps-and-migrations.md` (gap + planerade migrations)
-- [ ] Om gap hittas → skapa migrationer och kör `apply_migration`.
+ - [x] Om gap hittas → skapa migrationer och kör `apply_migration`.
 **Acceptans**
-- [ ] `docs/data/*` skapade/uppdaterade.
-- [ ] Gap åtgärdade via migrationer eller listade i `gaps-and-migrations.md`.
+- [x] `docs/data/*` skapade/uppdaterade.
+- [x] Gap åtgärdade via migrationer eller listade i `gaps-and-migrations.md`.
 
 ### E0a. Auth-flöden (konto, login, reset, mail)
-- [ ] Inspektera Supabase `auth.*`-tabeller (users, sessions, identities, mfa, verifications).  
-- [ ] Skanna projektets auth-kod (`src/app/(auth)/**/*.{ts,tsx}`) för signup, login, reset password.  
-- [ ] Dokumentera flöden i `docs/data/auth-review.md`.  
+- [x] Inspektera Supabase `auth.*`-tabeller (users, sessions, identities, mfa, verifications).  
+- [x] Skanna projektets auth-kod (`src/app/(auth)/**/*.{ts,tsx}`) för signup, login, reset password.  
+- [x] Dokumentera flöden i `docs/data/auth-review.md`.  
 - [ ] Verifiera mailmallar (signup, reset, magic links) – på svenska, rätt tonalitet.  
 - [ ] Lägg E2E-tester (Playwright) för signup/login/reset flows.  
 **Acceptans**  
@@ -54,7 +54,7 @@
 
 ### E2. Consent – Samtyckesdialog + inställning
 - [ ] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
-- [ ] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
+- [x] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
 - [ ] Inställningsvy: toggle.  
 **Acceptans**
 - [ ] Beslut sparas i DB och kan ändras när som helst.
