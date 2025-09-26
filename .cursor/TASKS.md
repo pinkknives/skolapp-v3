@@ -102,7 +102,7 @@
 
 ### L3. Mobil UI-polish
  - [x] Sticky bottombar/FAB (AI, Live, Bibliotek).
- - [ ] Touch-targets ≥44 px, safe areas, reducerad motion.
+ - [x] Touch-targets ≥44 px, safe areas, reducerad motion.
 **Acceptans**
  - [ ] Lighthouse PWA ≥ 90; inga kritiska layoutskift.
 

@@ -125,22 +125,22 @@ export default function TeacherPage() {
       </Section>
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-neutral-950/95 border-t border-neutral-200 dark:border-neutral-800 safe-area-inset-bottom:px-4">
-        <div className="max-w-3xl mx-auto">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-neutral-950/95 border-t border-neutral-200 dark:border-neutral-800 pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-3xl mx-auto px-4">
           <div className="grid grid-cols-3 gap-2 p-3">
-            <Button variant="outline" asChild className="justify-center">
+            <Button variant="outline" asChild className="justify-center h-11">
               <Link href="/teacher/quiz/create" aria-label="AI & Skapa">
                 <Bot className="w-4 h-4" />
                 <span className="sr-only">AI & Skapa</span>
               </Link>
             </Button>
-            <Button asChild className="justify-center">
+            <Button asChild className="justify-center h-11">
               <Link href="/live/join" aria-label="Live">
                 <Radio className="w-4 h-4" />
                 <span className="sr-only">Live</span>
               </Link>
             </Button>
-            <Button variant="outline" asChild className="justify-center">
+            <Button variant="outline" asChild className="justify-center h-11">
               <Link href="/teacher/library" aria-label="Bibliotek">
                 <Library className="w-4 h-4" />
                 <span className="sr-only">Bibliotek</span>

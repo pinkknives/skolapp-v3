@@ -1,0 +1,15 @@
+---
+description: "Billing & plans (Stripe) + upgrade UX"
+globs:
+  - "src/app/(billing)/**/*"
+  - "src/app/api/billing/**/*"
+  - "src/**/*"
+alwaysApply: false
+---
+
+- Stripe: Checkout & Customer Portal via secure server routes; verify webhook signatures; idempotent retries.
+- Subscription model: `free|teacher_bas|teacher_pro|school`, quotas for quiz & AI usage.
+- **Upgrade UX**: if a free user triggers locked features (AI, live limits), show a clean Swedish modal/sheet:
+  - Short explanation, plan cards (Free/Bas/Pro/Skola), clear CTA “Uppgradera”.
+  - On mobile use bottom sheet variant.
+- School admin: invite by email (Swedish template), add/remove teachers; simple, low-friction flows.

@@ -1,0 +1,12 @@
+---
+description: "Accessibility (WCAG 2.1 AA) basics"
+globs:
+  - "app/**/*"
+  - "components/**/*"
+  - "src/**/*"
+alwaysApply: false
+---
+
+- Visible focus (`focus-visible:*`), semantic elements, correct `aria-*`.
+- Keyboard navigation: Tab/Shift+Tab, Enter/Space, Escape.
+- Color contrast ≥ 4.5:1; respect `prefers-reduced-motion`.

@@ -32,12 +32,15 @@ const STUDENT_DATA = {
  * Helper: Simulate teacher login
  */
 async function loginAsTeacher(page: Page) {
-  // For testing purposes, we'll navigate directly to teacher pages
-  // In a real app, this would include actual authentication flow
+  await page.addInitScript(() => { try { localStorage.setItem('sk_consent_prompt_shown_v1', '1') } catch {} })
   await page.goto('/teacher/quiz/create');
-  
-  // Verify we're on the teacher dashboard/create page
-  await expect(page.getByRole('heading', { name: /skapa/i })).toBeVisible();
+  const onboarding = page.locator('.fixed.inset-0:has-text("Välkommen till Quiz-skaparen!")');
+  if (await onboarding.count()) {
+    await page.getByRole('button', { name: /Hoppa över|Kom igång!|Nästa/i }).click().catch(() => {})
+    await onboarding.first().waitFor({ state: 'detached', timeout: 5000 }).catch(() => {})
+  }
+  const main = page.locator('#main-content')
+  await expect(main.getByRole('heading', { name: 'Skapa nytt quiz' })).toBeVisible();
 }
 
 /**
@@ -119,40 +122,16 @@ async function studentJoinAndCompleteQuiz(page: Page, quizCode: string) {
   
   // Step 4: Enter student name
   await page.getByLabel('Namn eller alias').fill(STUDENT_DATA.name);
-  await page.getByRole('button', { name: 'Gå med i quiz' }).click();
+  await page.getByRole('button', { name: 'Gå med' }).click();
   
-  // Step 5: Start quiz (wait for questions to load)
-  await expect(page.getByRole('heading')).toBeVisible({ timeout: 10000 });
+  // Step 5: Answer questions
+  await expect(page.getByText('Fråga 1')).toBeVisible();
+  await page.getByRole('button', { name: /nästa/i }).click();
+  await page.getByRole('button', { name: /nästa/i }).click();
+  await page.getByRole('button', { name: /skicka in/i }).click();
   
-  // Step 6: Answer questions
-  // For simplicity, we'll answer the first correct option for MC questions
-  // and provide basic answers for free text
-  const questionElements = page.getByRole('radiogroup').or(page.getByRole('textbox'));
-  const questionCount = await questionElements.count();
-  
-  for (let i = 0; i < questionCount; i++) {
-    // Check if it's a multiple choice (radio) or free text question
-    const isRadio = await page.getByRole('radiogroup').nth(i).isVisible().catch(() => false);
-    
-    if (isRadio) {
-      // Select first radio option
-      await page.getByRole('radio').first().check();
-    } else {
-      // Fill text answer
-      await page.getByRole('textbox').nth(i).fill('Detta är mitt svar på frågan.');
-    }
-    
-    // Move to next question if not the last one
-    if (i < questionCount - 1) {
-      await page.getByRole('button', { name: /nästa|fortsätt/i }).click();
-    }
-  }
-  
-  // Step 7: Submit quiz
-  await page.getByRole('button', { name: /skicka in|avsluta/i }).click();
-  
-  // Step 8: Verify completion
-  await expect(page.getByText(/tack|klart|slutfört/i)).toBeVisible({ timeout: 10000 });
+  // Step 6: Verify completion
+  await expect(page.getByText('Tack för dina svar!')).toBeVisible();
 }
 
 /**

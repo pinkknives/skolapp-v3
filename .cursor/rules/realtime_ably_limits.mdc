@@ -1,0 +1,10 @@
+---
+description: "Realtime (Ably) guardrails & cost awareness"
+globs:
+  - "src/**/*"
+alwaysApply: false
+---
+
+- **Free**: max 1 live session simultaneously, ≤20 participants, 30 min/session, message rate limits.
+- **Paid**: higher limits; log `realtime.usage` (messages/minutes/participants).
+- Use sensible defaults (timeouts, exponential backoff); surface a friendly banner when nearing limits.

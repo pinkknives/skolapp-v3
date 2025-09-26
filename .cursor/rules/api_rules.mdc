@@ -1,0 +1,11 @@
+---
+description: "API routes & validation rules"
+globs:
+  - "src/app/api/**/*.ts"
+alwaysApply: false
+---
+
+- Validate inputs with **Zod**; return standardized shape `{ data?: T, error?: string }`.
+- Never expose secrets or env vars in responses.
+- Handle errors explicitly; log non-PII details only.
+- Keep business logic in server/edge layer—no client secrets.

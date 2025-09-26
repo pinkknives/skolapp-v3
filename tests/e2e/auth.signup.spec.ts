@@ -7,19 +7,15 @@ test.describe('Auth - Signup', () => {
   test('fills form and shows confirmation text', async ({ page }) => {
     await page.goto('/auth?mode=register')
 
-    await expect(page.getByRole('heading', { name: /skapa konto|registrera/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Skapa ditt lärarkonto/i })).toBeVisible()
 
-    // Submit empty to see validations
-    await page.getByRole('button', { name: /skapa konto|registrera/i }).click()
-    await expect(page.locator('body')).toContainText(/e-post|lösenord|visningsnamn/i)
+    // Fill fields (button is disabled until valid)
+    await page.getByLabel(/Visningsnamn/i).fill('Test Lärare')
+    await page.getByLabel(/E-postadress/i).fill(`teacher.e2e+${Date.now()}@example.com`)
+    await page.getByLabel(/^Lösenord$/i, { exact: true }).fill('Password123!')
+    await page.getByLabel(/Bekräfta lösenord/i).fill('Password123!')
 
-    // Fill fields
-    await page.getByLabel(/visningsnamn/i).fill('Test Lärare')
-    await page.getByLabel(/e-post/i).fill(`teacher.e2e+${Date.now()}@example.com`)
-    await page.getByLabel(/^lösenord$/i).fill('Password123!')
-    await page.getByLabel(/bekräfta lösenord/i).fill('Password123!')
-
-    await page.getByRole('button', { name: /skapa konto|registrera/i }).click()
+    await page.getByRole('button', { name: /Skapa konto/i }).click()
 
     // Either success banner or confirmation hint should appear
     await expect(page.locator('body')).toContainText(/bekräfta|verifier|mejl|konto/i)
