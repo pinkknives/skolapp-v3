@@ -281,7 +281,7 @@ function CreateQuizPage() {
                 <div className="p-6 border-b">
                   <Heading level={3}>Får vi använda dina quiz anonymiserat?</Heading>
                   <Typography variant="body2" className="text-neutral-600 mt-2">
-                    Om du samtycker kan dina quizfrågor användas anonymt för att förbättra AI‑förslagen för alla lärare.
+                    Får vi använda dina quiz <strong>anonymiserat</strong> för att förbättra Skolapp?
                   </Typography>
                 </div>
                 <div className="p-6 flex gap-3 justify-end">
@@ -300,7 +300,7 @@ function CreateQuizPage() {
                       }
                     }}
                   >
-                    Nej, inte nu
+                    Nej
                   </Button>
                   <Button
                     onClick={async () => {
@@ -316,7 +316,7 @@ function CreateQuizPage() {
                       }
                     }}
                   >
-                    Ja, jag samtycker
+                    Ja
                   </Button>
                 </div>
               </div>
