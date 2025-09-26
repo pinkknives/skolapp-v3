@@ -1,161 +1,159 @@
-# Skolapp – Milestone I–N (Nästa fas)
+# Skolapp – Milestone E–G (Data, Consent, Auth E2E, Skolverkets API)
 
-> Kör i ordning: **I → J → K → L → M → N**.
+> Kör i ordning: **E → F → G**.  
+> Fokus: korrekt datagrund (RLS + consent + träningsdata), fullständig Auth E2E inkl. mail, samt robust integration med Skolverkets API.
+
+---
 
 ## Körregler (obligatoriska)
 - Efter **varje** task: kör  
   `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
-- **Om alla tre kommandon är gröna** → markera tasken som `[x]`, gör en **liten** commit
-  med prefix **I1/I2/J1…**, och **fortsätt DIREKT** till **nästa** task.
+- **Om alla tre är gröna** → markera tasken som `[x]`, gör **liten** commit med prefix **E1/E2…**, och **fortsätt DIREKT** till nästa task.
 - **Stanna endast** om:
   1) type-check/lint/build misslyckas, **eller**  
   2) acceptanskriterier är oklara/ambigua.  
   I alla andra fall: **fortsätt automatiskt** tills alla tasks är klara.
-- Gör inte breda kosmetiska förändringar. Endast minimala, fokuserade diffar per task.
-- Alla DB-ändringar via migrations; RLS krävs för nya tabeller.
-- Följ A11y (WCAG 2.1 AA) & i18n (svenska), och logga telemetri för nya flöden.
+- Alla DB-ändringar via **Supabase migrations** (inte ad-hoc SQL).
+- Följ A11y (WCAG 2.1 AA) & i18n (svenska). Logga telemetri för nya flöden.
 
 ---
 
-## Milestone I — Organisationer, Roller & SSO
+## Milestone E — Data, Consent & Träningsdata
 
-### I1. Org-modell & roller
- - [x] Tabeller: `organisations`, `organisation_members` (role: admin/teacher), koppling till `schools/classes`.
- - [x] RLS: isolera data per org; admin kan bjuda in lärare.
+### E1. Consent (UI + DB)
+- [ ] Migration: **`2025-10-01T01_add_user_settings_consent.sql`**  
+  - Tabell `user_settings` (om saknas): `user_id PK/FK`, `consent_to_ai_training boolean NOT NULL DEFAULT false`, `updated_at timestamptz default now()`  
+  - Index: `user_settings_user_id_idx`
+- [ ] UI: vid första quiz-skapande → modal på svenska:  
+  “Får vi använda dina quiz **anonymiserat** för att förbättra Skolapp?” (Ja/Nej)  
+  - Inställningssida: toggle för att ändra samtycke.
+- [ ] Telemetri: `consent.accepted`, `consent.declined`, `consent.changed`
 **Acceptans**
- - [x] Lärare ser bara data inom sin org; admin kan invitera/ta bort.
-
-### I2. Org-invites
- - [x] Endpoint + e-postmall för org-inbjudan (svenska).
- - [x] Länk leder till join-sida; felhantering för ogiltig/utgången invite.
-**Acceptans**
- - [x] Lärare kan gå med via e-postlänk; auditlogg skapas.
-
-### I3. SSO (Google/Microsoft)
- - [x] Supabase OAuth för Google/Microsoft; mappa domän → org (konfig).
- - [x] “Föreslå org” på första login om domän matchar en befintlig org.
-**Acceptans**
- - [x] Login funkar med båda IdP; org-mappning dokumenterad/testad.
-
-### I4. Auditlogg
- - [x] Tabell `audit_logs` (actor, action, resource, org_id, ts).
- - [x] Logga nyckelhändelser: inbjudan, rolländring, export, radering.
-**Acceptans**
- - [x] Admin kan se senaste händelser för sin org.
+- [ ] Användarens val sparas i `user_settings` och går att ändra.
+- [ ] Ingen insamling sker om `consent_to_ai_training = false`.
 
 ---
 
-## Milestone J — Innehållsbibliotek & Delning
-
-### J1. Bibliotek (mallar & versioner)
- - [x] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
- - [x] Importera quiz → biblioteks-mall; skapa ny version vid ändring.
- **Acceptans**
- - [x] Lärare kan spara/återanvända mallar; versionshistorik visas.
-
-### J2. Sök & taggar
- - [x] Fulltextsök på titel/ämne/årskurs; taggar per item.
- - [x] Snabbfilter: ämne, svårighetsgrad, typ.
+### E2. Träningsdata (AI) – insamling & RLS
+- [ ] Migration: **`2025-10-01T02_create_ai_training_data.sql`**  
+  - Tabell `ai_training_data`:  
+    ```
+    id uuid pk default gen_random_uuid(),
+    teacher_id uuid not null,
+    quiz_id uuid not null,
+    payload jsonb not null,     -- anonymiserad struktur (frågor, meta)
+    subject text not null,
+    grade_span text not null,
+    created_at timestamptz default now()
+    ```
+  - Index: `ai_training_data_quiz_id_idx`, `ai_training_data_teacher_id_idx`, `ai_training_data_created_at_idx`
+  - **RLS**:  
+    - `SELECT`: endast `teacher_id = auth.uid()` **eller** service-role  
+    - `INSERT`: endast `teacher_id = auth.uid()` **eller** server/edge-funktion  
+    - `UPDATE/DELETE`: endast service-role
+- [ ] Server-hook: vid “quiz-save” → **om** `consent_to_ai_training === true` → skriv anonym rad till `ai_training_data`  
+  - **PII-säkring**: ta bort elevnamn, e-post, fria texter som kan identifiera.
+- [ ] Telemetri: `ai_training.saved_row` (quiz_id, n_questions)
 **Acceptans**
- - [x] Hitta relevanta mallar < 2s; filtren fungerar.
-
-### J3. Delning
- - [x] Delningslänk inom org; val för read-only/kopiera.
- - [x] Cross-org delning via signerad länk (begränsad livslängd).
-**Acceptans**
- - [x] Andra lärare kan importera/kopiera mall utan att se elevdata.
+- [ ] Samtyckta lärare genererar rader i `ai_training_data`, övriga inte.
+- [ ] RLS-test: anon/auth kan **inte** läsa andras rader; service kan.
 
 ---
 
-## Milestone K — Live-undervisning 2.0
-
-### K1. Live-sessioner
- - [x] “Starta live” (lärare) → elevklient joinar session (presence).
- - [x] Live-resultat/agg uppdateras i realtid (Ably/Supabase Realtime).
+### E3. Lärarfeedback (👍/👎 + kommentar)
+- [ ] Migration: **`2025-10-01T03_create_ai_feedback.sql`**  
+  - Tabell `ai_feedback`:  
+    ```
+    id uuid pk default gen_random_uuid(),
+    teacher_id uuid not null,
+    training_row_id uuid not null references ai_training_data(id) on delete cascade,
+    rating integer not null check (rating in (1,-1)),  -- 1 = 👍, -1 = 👎
+    comment text,
+    created_at timestamptz default now()
+    ```
+  - Index: `ai_feedback_training_row_id_idx`, `ai_feedback_teacher_id_idx`
+  - **RLS**:  
+    - `SELECT`: `teacher_id = auth.uid()` **eller** service-role  
+    - `INSERT`: `teacher_id = auth.uid()`  
+    - `UPDATE/DELETE`: endast service-role
+- [ ] UI: efter generering/infogning visas: “Var detta hjälpsamt? 👍/👎 + valfri kommentar”
+- [ ] Telemetri: `ai_feedback.submit` (rating, hasComment)
 **Acceptans**
- - [x] 25+ samtidiga elever utan tapp; latens < 300ms LAN-nära.
-
-### K2. Kontroller & anti-fusk (light)
- - [x] Pausa/lås fråga, dölj/visa rätt svar, tidsgräns.
- - [x] “Elev är off-tab” signal (heuristik) – endast indikation, ej block.
-**Acceptans**
- - [x] Kontroller påverkar klienter i realtid; off-tab markeras.
-
-### K3. Snabbkommandon
- - [x] Tangentbordsgenvägar för lärare (N nästa fråga, P paus, R visa rätt svar).
-**Acceptans**
- - [x] Genvägar fungerar och är dokumenterade i UI.
+- [ ] Feedback sparas och går att join:a med `ai_training_data`.
+- [ ] RLS blockerar obehöriga läs/skriv.
 
 ---
 
-## Milestone L — PWA, Push & Mobilfinish
+## Milestone F — Auth & Mail E2E
 
-### L1. PWA & offline
- - [x] Manifest, Workbox-strategier (quiz-genomförande fungerar offline).
- - [x] Sync-queue för svar vid återkoppling.
+### F1. Svenska mailmallar (Supabase Auth)
+- [ ] Sätt mallar (svenska) för: **Confirm signup**, **Magic link**, **Reset password**  
+  - Källsanning i repo: `emails/auth/{confirm,magiс,reset}.mdx`  
+  - Variabler: länk, giltighetstid, supportadress, enkel footer utan PII
+- [ ] Script: `scripts/verify-emails.ts` för dev-smoke (Mailpit/Mailhog alt. stub)
 **Acceptans**
- - [x] Offline-genomförande sparas och synkas korrekt.
-
-### L2. Push-notiser
-- [ ] Web Push (OneSignal/FCM): “quiz startar”, “resultat klara”.
-- [ ] Inställning per användare/klass.
-**Acceptans**
-- [ ] Push levereras; opt-in/opt-out fungerar.
-
-### L3. Mobil UI-polish
- - [x] Sticky bottombar/FAB där relevant (AI, Live, Bibliotek).
-- [ ] Touch-targets ≥44px, keyboard-safe areas, reducerad motion.
-**Acceptans**
-- [ ] Lighthouse PWA ≥ 90; inga layoutskift i kritiska vyer.
+- [ ] Provskick i dev + prod fungerar och landar i rätt vyer.
+- [ ] `docs/data/auth-review.md` visar malltexter + skärmklipp.
 
 ---
 
-## Milestone M — Planer & Billing
-
-### M1. Planer & kvoter
-- [ ] Free/Pro/Skola: kvoter (klasser, AI-anrop/mån, delade mallar).
-- [ ] UI-indikatorer + graceful degrade när tak nås.
+### F2. Playwright – fulla auth-flöden
+- [ ] `tests/e2e/auth.signup.spec.ts`: fyll formulär → se “confirm email” → simulera länk → landa inloggad  
+- [ ] `tests/e2e/auth.login.spec.ts`: lyckad login + felhantering  
+- [ ] `tests/e2e/auth.reset.spec.ts`: initiera reset → länk → nytt lösen → login OK
+- [ ] Kör i CI (Chromium + minst WebKit/Firefox)
 **Acceptans**
-- [ ] Server-kvoter hårda; tydlig UX vid tak.
-
-### M2. Stripe Billing
-- [ ] Checkout + kundportal (org-admin).
-- [ ] Webhooks som uppdaterar plan/status i DB.
-**Acceptans**
-- [ ] Upp/nedgradering syns inom 1 min; fel återhämtas.
+- [ ] Alla tre flöden gröna i CI; bryter på regressioner.
 
 ---
 
-## Milestone N — Kvalitet, Observability & QA-grind
-
-### N1. Observability
- - [x] Sentry (webb + edge/server) med release & sourcemaps.
- - [x] Correlation-id i API & log drain.
+### F3. RLS-prober i CI
+- [ ] Litet teststeg (Node/TS) som försöker otillåtna SELECT/INSERT på `ai_training_data`/`ai_feedback` med `anon`/`auth` → ska fallera
 **Acceptans**
- - [x] Exceptions i Sentry m. versions-tagg; korrelerade loggar.
+- [ ] CI-markör “RLS suite” grön; röd på policy-regression.
 
-### N2. Performance & stabilitet
-- [ ] `next/image` + `sizes` för stora medier.
- - [x] Profilera live-sessioner; backoff/retry-strategier.
-**Acceptans**
-- [ ] LCP/CLS stabila; live håller vid packet loss.
+---
 
-### N3. Testhårdning
- - [x] Playwright: auth (inkl. mail), org-invite, live-session, bibliotek.
- - [x] SQL/RLS-tester (pgTAP eller scriptade probes).
-**Acceptans**
- - [x] CI kör Chromium + minst WebKit/Firefox; RLS-suite grön.
+## Milestone G — Skolverkets API (robust integration)
 
-### N4. Release-gate
- - [x] “Go/No-Go” pipeline: type-check, lint (0 varningar), build, e2e, RLS-probes, Lighthouse.
+### G1. Health + version + fallback
+- [ ] Service: `src/services/skolverket/client.ts` (fetch m. timeout 5–8s, retry 3x, 429-backoff)  
+- [ ] Endpoint: `/api/health/skolverket` (200/503 + latency + ev. versionssträng)
+- [ ] Read-through cache (Supabase/Redis) + TTL per resurstyp; stöd ETag om finns
+- [ ] Fallback: visa “senast kända giltiga” med banderoll “Uppdatering pågår”
 **Acceptans**
- - [x] Merge blockeras om något steg faller.
+- [ ] P95 < 2s vid cache-hit; fallback fungerar utan UI-krascher.
+
+---
+
+### G2. Schema-validering & kontraktstester
+- [ ] Zod-scheman för de fält som används (ämnes-/kurs-/kunskapskrav)
+- [ ] Contract tests: mock + (flag) live‐körningar i CI
+**Acceptans**
+- [ ] Brytande API-ändringar flaggas i CI (schema-fel/snapshot-diff).
+
+---
+
+### G3. E2E: kursval → mål → UI
+- [ ] Playwright: skapa quiz → välj kurs/ämne → hämta mål → rendera → spara  
+- [ ] “API down”-scenario: UI degraderar till fallback
+**Acceptans**
+- [ ] Båda scenarierna gröna i CI. Snapshot-diff kräver manuell godkännande.
+
+---
+
+### G4. Observability & larm
+- [ ] Telemetri: `skolverket.request`, `.cacheHit`, `.cacheMiss`, `.fallback`, `.version`, `.error`  
+- [ ] Cron (5–15 min) “syntetiska requests” + alerts vid p95 > 2s eller 5xx-kvot ↑
+**Acceptans**
+- [ ] Dashboard visar trender; larm triggar inom 2 min vid störning.
 
 ---
 
 ## Gemensamma krav
-- [ ] Nya tabeller har migrations, index och **RLS**.
-- [ ] Inga hårdkodade färg-hex (använd tokens/neutral-*).
-- [ ] A11y: kontrast ≥ 4.5:1, aria-attribut, synlig fokus.
-- [ ] Telemetri: varje ny route/event loggas anonymiserat (GDPR).
-- [ ] Kort README-sektion per milstolpe (setup, endpoints, env).
+- [ ] **Alla** nya tabeller via migrations med index **och RLS**.  
+- [ ] Inga PII i `ai_training_data` eller loggar.  
+- [ ] UI på svenska, A11y (kontrast, aria, fokus, tangentbord) verifierad.  
+- [ ] CI kör: type-check, lint (0 varningar), build, **Playwright**, **RLS-prober**.  
+- [ ] Dokumentation uppdaterad (`docs/data/ERD.md`, `docs/data/rls-review.md`, `docs/skolverket/health.md`).
+
