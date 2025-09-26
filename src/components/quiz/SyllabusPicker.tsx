@@ -45,7 +45,7 @@ export function SyllabusPicker({ value, onChange, className }: Props) {
 
   if (loading) {
     return (
-      <Card className={className}>
+      <Card className={className} data-testid="syllabus-picker">
         <CardContent className="p-4">
           <Typography variant="body2">Laddar ämnen...</Typography>
         </CardContent>
@@ -54,7 +54,7 @@ export function SyllabusPicker({ value, onChange, className }: Props) {
   }
 
   return (
-    <Card className={className}>
+    <Card className={className} data-testid="syllabus-picker">
       <CardContent className="p-4 space-y-3">
         {fallback && (
           <div className="p-3 rounded-md border border-warning-200 bg-warning-50">
