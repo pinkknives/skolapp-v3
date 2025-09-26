@@ -25,6 +25,7 @@ import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
 import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
 import { toast } from '@/components/ui/Toast'
 import { AIQuotaDisplay } from '@/components/billing/AIQuotaDisplay'
+import { SyllabusPicker } from '@/components/quiz/SyllabusPicker'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -474,6 +475,12 @@ function CreateQuizPage() {
             {/* Sidebar */}
             <div className="space-y-4">
               <AIQuotaDisplay />
+              <SyllabusPicker
+                onChange={(code) => {
+                  setQuiz(prev => ({ ...prev, subjectCode: code }))
+                }}
+                className=""
+              />
               {/* AI Assistant */}
               {canUseAI ? (
                 <AIAssistantPanel
