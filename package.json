@@ -41,7 +41,8 @@
     "health:stripe": "tsx scripts/health/stripe.ts",
     "health:skolverket": "tsx scripts/health/skolverket.ts",
     "health:all": "npm run health:openai && npm run health:ably && npm run health:supabase && npm run health:stripe && npm run health:skolverket",
-    "validate:env": "node scripts/validate-env.js"
+    "validate:env": "node scripts/validate-env.js",
+    "verify:emails": "tsx scripts/verify-emails.ts"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.10.0",
