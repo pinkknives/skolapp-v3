@@ -1,0 +1,12 @@
+---
+description: "Performance & stability"
+globs:
+  - "app/**/*"
+  - "components/**/*"
+  - "src/**/*"
+alwaysApply: false
+---
+
+- Use `next/image` with proper `sizes`; avoid layout shift.
+- Lazy/dynamic import heavy UI; memoize where needed.
+- Degrade gracefully on poor networks; retries/backoff on API.

@@ -596,6 +596,13 @@ class QuizAIService {
   }
 
   getDefaultProvider(): QuizAIProvider {
+    const isBrowser = typeof window !== 'undefined';
+    // Prefer mock provider explicitly when test flag is set in browser (Playwright init script)
+    if (isBrowser && (window as unknown as { AI_MODE?: string }).AI_MODE === 'mock') {
+      const mock = this.providers.find(p => p.name === 'Mock AI Provider');
+      if (mock) return mock;
+    }
+
     const available = this.getAvailableProviders();
     if (available.length === 0) {
       throw new Error('No AI providers available');

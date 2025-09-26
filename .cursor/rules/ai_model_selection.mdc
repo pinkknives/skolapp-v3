@@ -1,0 +1,12 @@
+---
+description: "Simple model selection (GPT-3.5 vs GPT-4o)"
+globs:
+  - "src/**/*"
+alwaysApply: false
+---
+
+- Backend endpoints accept `model: "gpt-3.5" | "gpt-4o"`.
+- **Teacher Bas**: default 3.5; 4o allowed until monthly quota; then silent fallback to 3.5 + subtle notice.
+- **Pro/School**: default 4o; fallback to 3.5 if 4o quota depleted.
+- UI: a single Swedish toggle/dropdown: **Standard (GPT-3.5)** / **Avancerad (GPT-4o)**; remember last choice; avoid jargon.
+- Telemetry: chosen model & fallback events.

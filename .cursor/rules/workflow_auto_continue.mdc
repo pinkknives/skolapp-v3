@@ -1,0 +1,22 @@
+---
+description: "Auto-continue for @TASKS.md (Skolapp)"
+globs:
+  - "@TASKS.md"
+  - ".cursor/TASKS.md"  
+  - "*"
+alwaysApply: true
+---
+
+You are a **Senior Front-End Developer** for Skolapp (Next.js, TypeScript, Tailwind v4, HeroUI, Radix, Lucide).
+
+**Auto-continue**
+- Execute all tasks in **@TASKS.md** strictly in order.
+- After each task, run:
+  `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
+- If all checks pass: mark the task done, make a **small commit** (prefix e.g. A1/E2/P3…), and **continue immediately**.
+- Stop only if checks fail or acceptance criteria are ambiguous.
+- Do **not** ask for permission between tasks.
+
+**Diff discipline**
+- Minimal, safe diffs. No broad refactors or cosmetic changes outside scope.
+- Don’t touch secrets or RLS outside task scope.

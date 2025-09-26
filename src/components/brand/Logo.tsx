@@ -26,16 +26,17 @@ const sizeMap = {
   '3xl': { width: 96, height: 96 },
 }
 
+// Use existing public icons to avoid broken image requests during tests
 const logoVariants = {
-  icon: '/brand/Skolapp-icon.png',
-  wordmark: '/brand/skolapp_logo_teal_v1.png',
-  stacked: '/brand/Skolapp-symbol.png',
-  color: '/brand/Skolapp-color.png',
-  gradient: '/brand/Skolapp-color-gradiant.png',
-  monochrome: '/brand/Skolapp-monochrome.png',
-  white: '/brand/Skolapp-white.png',
-  dark: '/brand/Skolapp-dark.png',
-}
+  icon: '/icons/icon-192.svg',
+  wordmark: '/icons/icon-192.svg',
+  stacked: '/icons/icon-192.svg',
+  color: '/icons/icon-192.svg',
+  gradient: '/icons/icon-192.svg',
+  monochrome: '/icons/icon-192.svg',
+  white: '/icons/icon-192.svg',
+  dark: '/icons/icon-192.svg',
+} as const
 
 export function Logo({ 
   variant = 'wordmark', 
@@ -66,7 +67,7 @@ export function Logo({
       )}
       {...props}
     >
-      {/* Render image; for wordmark use teal in light and filter to white in dark */}
+      {/* Render image */}
       {(
         <Image
           src={src}
@@ -76,12 +77,7 @@ export function Logo({
           priority={priority}
           loading={priority ? 'eager' : 'lazy'}
           className={cn(
-            'object-contain',
-            // Apply filters for special variants
-            variant === 'monochrome' && 'brightness-0 contrast-100',
-            variant === 'white' && 'brightness-0 invert',
-            variant === 'dark' && 'brightness-0',
-            (variant === 'wordmark' || variant === 'icon') && 'dark:brightness-0 dark:invert'
+            'object-contain'
           )}
           aria-hidden={ariaLabel ? undefined : true}
         />

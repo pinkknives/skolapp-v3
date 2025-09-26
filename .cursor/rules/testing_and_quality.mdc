@@ -1,0 +1,13 @@
+---
+description: "Testing & quality gates"
+globs:
+  - "src/**/*"
+  - "tests/**/*"
+  - "*"
+alwaysApply: true
+---
+
+- Keep types strict; avoid `any`.
+- Don’t introduce new lint errors.
+- Add/adjust tests for changed logic and critical UI states.
+- CI must stay green (type-check, lint, build; Playwright where applicable).

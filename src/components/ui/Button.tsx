@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { Slot } from '@radix-ui/react-slot'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-x-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-offset-neutral-900 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
+  'inline-flex items-center justify-center gap-x-2 whitespace-nowrap rounded-md text-sm font-medium motion-safe:transition-all motion-safe:duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 dark:focus-visible:ring-offset-neutral-900 disabled:pointer-events-none disabled:opacity-50 motion-safe:active:scale-95 motion-reduce:transform-none motion-reduce:transition-none',
   {
     variants: {
       variant: {
@@ -19,7 +19,7 @@ const buttonVariants = cva(
         link: 'text-primary-600 underline-offset-4 hover:underline hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300',
       },
       size: {
-        sm: 'h-10 px-4 text-xs rounded-md',
+        sm: 'h-11 px-4 text-xs rounded-md',
         md: 'h-12 px-6 py-3',
         lg: 'h-14 px-8 text-base',
         xl: 'h-16 px-10 text-lg',
@@ -113,7 +113,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             <Loader2
               size={16}
               strokeWidth={2}
-              className="absolute left-1/2 -translate-x-1/2 animate-spin"
+              className="absolute left-1/2 -translate-x-1/2 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           )}

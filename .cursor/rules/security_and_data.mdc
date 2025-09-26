@@ -1,0 +1,12 @@
+---
+description: "Security & data hygiene (RLS, secrets, PII)"
+globs:
+  - "src/**/*.ts"
+  - "src/**/*.tsx"
+  - "*"
+alwaysApply: true
+---
+
+- **Never** modify `.env*`, secrets or RLS policies unless explicitly in a task.
+- Don’t log PII or keys; scrub sensitive fields in telemetry.
+- Respect RLS boundaries for org/user data; prefer parameterized queries.

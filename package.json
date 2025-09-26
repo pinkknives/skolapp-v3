@@ -31,6 +31,7 @@
     "e2e:webkit": "playwright test --project=webkit",
     "e2e:ci": "playwright test --project=chromium --project=firefox --project=webkit --max-failures=5",
     "lighthouse": "lhci autorun",
+    "lighthouse:ci": "node scripts/lighthouse-ci.js",
     "qa:full": "npm run lint && npm run type-check && npm run build && npm run test:cross-browser && npm run lighthouse",
     "etl:skolverket": "node scripts/etl/skolverket.js",
     "etl:skolverket:fresh": "node scripts/etl/skolverket.js --fresh",
@@ -44,7 +45,8 @@
     "health:skolverket:synthetic": "tsx scripts/health/skolverket-synthetic.ts",
     "validate:env": "node scripts/validate-env.js",
     "verify:emails": "tsx scripts/verify-emails.ts",
-    "rls:probe": "tsx scripts/rls-probe.ts"
+    "rls:probe": "tsx scripts/rls-probe.ts",
+    "release:gate": "npm run type-check && npm run lint -- --max-warnings=0 && npm run build && npm run e2e:chromium && node scripts/run-rls-tests.js && npm run lighthouse:ci"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.10.0",

@@ -6,6 +6,7 @@
  */
 
 import { Page } from '@playwright/test';
+import type { Question } from '@/types/quiz';
 
 declare global {
   interface Window {
@@ -60,6 +61,27 @@ export const MOCK_AI_QUESTIONS: AiQuestion[] = [
   }
 ];
 
+function toInternalQuestion(aq: AiQuestion): Question {
+  const id = `q_${Math.random().toString(36).slice(2)}`;
+  if (aq.kind === 'multiple-choice') {
+    return {
+      id,
+      type: 'multiple-choice',
+      title: aq.prompt,
+      points: 1,
+      options: aq.choices.map((c) => ({ id: c.id, text: c.text, isCorrect: !!c.correct }))
+    } as Question;
+  }
+  return {
+    id,
+    type: 'free-text',
+    title: aq.prompt,
+    points: 1,
+    expectedAnswer: aq.expectedAnswer,
+    acceptedAnswers: [aq.expectedAnswer]
+  } as Question;
+}
+
 /**
  * Setup AI route interception for deterministic testing
  */
@@ -69,7 +91,7 @@ export async function setupAIMock(page: Page) {
     window.AI_MODE = 'mock';
   });
 
-  // Intercept API calls to AI provider
+  // Generic fallback for any other AI API routes (legacy)
   await page.route('**/api/ai/**', async (route) => {
     await route.fulfill({
       status: 200,
@@ -84,11 +106,22 @@ export async function setupAIMock(page: Page) {
     });
   });
 
+  // Specific mock for enhanced generate API used by the UI (registered last to take precedence)
+  await page.route('**/api/ai/enhanced-generate', async (route) => {
+    // Simulate small delay
+    await new Promise((r) => setTimeout(r, 300));
+    const questions = MOCK_AI_QUESTIONS.map((aq) => ({ question: toInternalQuestion(aq) }));
+    await route.fulfill({
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questions })
+    });
+  });
+
   // Also intercept direct provider calls if any
   await page.route('**/ai/generate**', async (route) => {
     // Simulate network delay for realistic testing
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
     await route.fulfill({
       status: 200,
       headers: {

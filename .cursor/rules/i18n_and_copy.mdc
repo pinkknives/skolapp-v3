@@ -1,0 +1,12 @@
+---
+description: "Language & copy rules (Swedish UI)"
+globs:
+  - "app/**/*"
+  - "components/**/*"
+  - "src/**/*"
+alwaysApply: false
+---
+
+- All UI copy is **Swedish**, concise and teacher-friendly.
+- Reuse existing microcopy for errors/status. Avoid tech jargon.
+- Keep tone warm, clear, inclusive (works for äldre användare också).
