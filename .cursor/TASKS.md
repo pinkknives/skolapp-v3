@@ -31,10 +31,10 @@
 - [x] Lärare kan bli inbjudna och gå med i org; auditlogg skapas.
 
 ### I3. SSO (Google/Microsoft)
-- [ ] Supabase OAuth (Google/Microsoft). Domän→org-mappning.
-- [ ] Första login: föreslå org om domän matchar.
+- [x] Supabase OAuth (Google/Microsoft). Domän→org-mappning.
+- [x] Första login: föreslå org om domän matchar.
 **Acceptans**
-- [ ] Login fungerar; org-mappning dokumenterad och testad.
+- [x] Login fungerar; org-mappning dokumenterad och testad.
 
 ### I4. Auditlogg
 - [ ] Tabell `audit_logs(actor, action, resource, org_id, ts)`.

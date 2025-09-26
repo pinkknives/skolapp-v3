@@ -25,15 +25,25 @@ import {
 interface ImprovedAuthFormProps {
   mode: AuthMode
   onModeChange?: (mode: AuthMode) => void
+  suggestedOrgId?: string
 }
 
-export function ImprovedAuthForm({ mode, onModeChange }: ImprovedAuthFormProps) {
+export function ImprovedAuthForm({ mode, onModeChange, suggestedOrgId }: ImprovedAuthFormProps) {
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [state, setState] = useState<AuthState>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [orgHint, setOrgHint] = useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (suggestedOrgId) {
+      setOrgHint('Din e‑post domän matchar en organisation – du kan bli automatiskt föreslagen där vid första inloggning.')
+    } else {
+      setOrgHint(null)
+    }
+  }, [suggestedOrgId])
 
   const isLogin = mode === 'login'
 
@@ -165,7 +175,7 @@ export function ImprovedAuthForm({ mode, onModeChange }: ImprovedAuthFormProps) 
             <form onSubmit={handleSubmit}>
               <Stack gap="lg">
                 <Stack gap="md">
-                  <FormField label="E-postadress">
+                  <FormField label="E-postadress" helperText={orgHint || undefined}>
                     <Input
                       type="email"
                       value={email}
