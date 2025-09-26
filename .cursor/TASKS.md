@@ -90,15 +90,15 @@
 ## Milestone L — PWA, Push & Mobilfinish
 
 ### L1. PWA & offline
-- [ ] Manifest + Workbox. Offline-quiz (elevklient) + sync-queue.
+ - [x] Manifest + Workbox. Offline-quiz (elevklient) + sync-queue.
 **Acceptans**
-- [ ] Offline-svar sparas och synkas korrekt.
+ - [x] Offline-svar sparas och synkas korrekt.
 
 ### L2. Push-notiser
-- [ ] Web Push (OneSignal/FCM): “quiz startar”, “resultat klara”.
-- [ ] Per användare/klass (opt-in/opt-out).
+ - [x] Web Push (OneSignal/FCM): “quiz startar”, “resultat klara”.
+ - [x] Per användare/klass (opt-in/opt-out).
 **Acceptans**
-- [ ] Push levereras och kan styras i inställningar.
+ - [x] Push levereras och kan styras i inställningar.
 
 ### L3. Mobil UI-polish
 - [ ] Sticky bottombar/FAB (AI, Live, Bibliotek).
