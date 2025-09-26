@@ -133,9 +133,9 @@
 - [x] Exceptions i Sentry med version; spårbara loggar.
 
 ### N2. Performance & stabilitet
-- [ ] `next/image` + `sizes`. Profilering live-sessioner; retry/backoff.
+- [x] `next/image` + `sizes`. Profilering live-sessioner; retry/backoff.
 **Acceptans**
-- [ ] LCP/CLS stabila; live tål packet loss.
+- [x] LCP/CLS stabila; live tål packet loss.
 
 ### N3. Testhårdning
 - [ ] Playwright: auth (inkl. mail), org-invite, live, bibliotek.
