@@ -127,10 +127,10 @@
 ## Milestone N — Kvalitet, Observability & Release-gate
 
 ### N1. Observability
-- [ ] Sentry (web + edge/server) med release/sourcemaps.
-- [ ] Correlation-id i API + log drain.
+- [x] Sentry (web + edge/server) med release/sourcemaps.
+- [x] Correlation-id i API + log drain.
 **Acceptans**
-- [ ] Exceptions i Sentry med version; spårbara loggar.
+- [x] Exceptions i Sentry med version; spårbara loggar.
 
 ### N2. Performance & stabilitet
 - [ ] `next/image` + `sizes`. Profilering live-sessioner; retry/backoff.
