@@ -1,0 +1,62 @@
+[
+  {
+    "url": "http://localhost:3000/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost--2025_09_26_23_28_31.report.html",
+    "jsonPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost--2025_09_26_23_28_31.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 0.98,
+      "best-practices": 0.96,
+      "seo": 0.9
+    }
+  },
+  {
+    "url": "http://localhost:3000/login",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-login-2025_09_26_23_28_46.report.html",
+    "jsonPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-login-2025_09_26_23_28_46.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 0.96,
+      "best-practices": 0.96,
+      "seo": 0.9
+    }
+  },
+  {
+    "url": "http://localhost:3000/teacher",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-teacher-2025_09_26_23_29_01.report.html",
+    "jsonPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-teacher-2025_09_26_23_29_01.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 0.95,
+      "best-practices": 0.96,
+      "seo": 0.9
+    }
+  },
+  {
+    "url": "http://localhost:3000/student",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-student-2025_09_26_23_29_13.report.html",
+    "jsonPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-student-2025_09_26_23_29_13.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 0.9
+    }
+  },
+  {
+    "url": "http://localhost:3000/teacher/classes",
+    "isRepresentativeRun": true,
+    "htmlPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-teacher_classes-2025_09_26_23_29_26.report.html",
+    "jsonPath": "/Users/maximilianmarklund/skolapp-v3/lhci_reports/localhost-teacher_classes-2025_09_26_23_29_26.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 0.98,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  }
+]

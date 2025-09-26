@@ -104,7 +104,7 @@
  - [x] Sticky bottombar/FAB (AI, Live, Bibliotek).
  - [x] Touch-targets ≥44 px, safe areas, reducerad motion.
 **Acceptans**
- - [ ] Lighthouse PWA ≥ 90; inga kritiska layoutskift.
+ - [x] Lighthouse PWA ≥ 90; inga kritiska layoutskift.
 
 ---
 
@@ -138,21 +138,21 @@
 - [x] LCP/CLS stabila; live tål packet loss.
 
 ### N3. Testhårdning
-- [ ] Playwright: auth (inkl. mail), org-invite, live, bibliotek.
-- [ ] SQL/RLS-prober (pgTAP/scripts) i CI (Chromium + WebKit/Firefox).
+- [x] Playwright: auth (inkl. mail), org-invite, live, bibliotek.
+- [x] SQL/RLS-prober (pgTAP/scripts) i CI (Chromium + WebKit/Firefox).
 **Acceptans**
-- [ ] E2E + RLS grönt i CI.
+- [x] E2E + RLS grönt i CI.
 
 ### N4. Release-gate
-- [ ] Pipeline: type-check, lint (0 varningar), build, e2e, RLS-prober, Lighthouse.
+- [x] Pipeline: type-check, lint (0 varningar), build, e2e, RLS-prober, Lighthouse.
 **Acceptans**
-- [ ] Merge blockeras om något steg faller.
+- [x] Merge blockeras om något steg faller.
 
 ---
 
 ## Gemensamma krav
-- [ ] Alla nya tabeller har migrations, index och **RLS**.
-- [ ] Inga hårdkodade färg-hex (använd tokens/neutral-*).
-- [ ] A11y: kontrast ≥ 4.5:1, aria-attribut, synlig fokus.
-- [ ] Telemetri: varje ny route/event loggas anonymiserat (GDPR).
-- [ ] Kort README-sektion per milstolpe (setup, endpoints, env).
+- [x] Alla nya tabeller har migrations, index och **RLS**.
+- [x] Inga hårdkodade färg-hex (använd tokens/neutral-*).
+- [x] A11y: kontrast ≥ 4.5:1, aria-attribut, synlig fokus.
+- [x] Telemetri: varje ny route/event loggas anonymiserat (GDPR).
+- [x] Kort README-sektion per milstolpe (setup, endpoints, env).
