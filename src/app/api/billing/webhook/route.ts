@@ -46,116 +46,62 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
-        console.log('Checkout session completed:', session.id)
-        
-        // Handle successful checkout
-        // In a real app, you would:
-        // 1. Create or update user subscription in your database
-        // 2. Send confirmation email
-        // 3. Grant access to premium features
-        
-        break
-      }
+        const subscriptionId = session.subscription
+        const customerId = session.customer
+        const planMeta = session.metadata?.plan
+        const orgId = session.metadata?.org_id || null
+        const uid = session.metadata?.uid || null
 
-      case 'customer.subscription.created': {
-        const subscription = event.data.object
-        console.log('Subscription created:', subscription.id)
-        
-        // Update entitlements based on subscription status
-        try {
-          const customerId = subscription.customer
-          const status = subscription.status
-          const subscriptionId = subscription.id
-          await supabaseService.rpc('update_user_billing_status', {
-            customer_id: customerId,
-            new_status: status,
-            subscription_id: subscriptionId
-          })
-        } catch (e) {
-          console.error('Failed to update billing status (created):', e)
+        if (subscriptionId && customerId && planMeta && (orgId || uid)) {
+          await supabaseService.from('subscriptions').upsert({
+            org_id: orgId || null,
+            user_id: orgId ? null : uid,
+            plan: planMeta,
+            stripe_customer_id: String(customerId),
+            stripe_subscription_id: String(subscriptionId),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: orgId ? 'org_id' : 'user_id' })
         }
-        
         break
       }
 
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object
-        console.log('Subscription updated:', subscription.id)
-        
-        // Reflect status/plan changes in entitlements
-        try {
-          const customerId = subscription.customer
-          const status = subscription.status
-          const subscriptionId = subscription.id
-          await supabaseService.rpc('update_user_billing_status', {
-            customer_id: customerId,
-            new_status: status,
-            subscription_id: subscriptionId
-          })
-        } catch (e) {
-          console.error('Failed to update billing status (updated):', e)
-        }
-        
-        break
-      }
-
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = event.data.object
-        console.log('Subscription cancelled:', subscription.id)
-        
-        // Revoke premium by setting plan to free
-        try {
-          const customerId = subscription.customer
-          const status = subscription.status || 'canceled'
-          const subscriptionId = subscription.id
-          await supabaseService.rpc('update_user_billing_status', {
-            customer_id: customerId,
-            new_status: status,
-            subscription_id: subscriptionId
-          })
-        } catch (e) {
-          console.error('Failed to update billing status (deleted):', e)
+        const currentPeriodEnd = subscription.current_period_end
+        const stripeSubId = subscription.id
+        const customerId = subscription.customer
+
+        // Try to find matching subscription by stripe_customer_id or stripe_subscription_id
+        const { data: rows } = await supabaseService
+          .from('subscriptions')
+          .select('id')
+          .or(`stripe_customer_id.eq.${customerId},stripe_subscription_id.eq.${stripeSubId}`)
+          .limit(1)
+
+        if (rows && rows.length > 0) {
+          await supabaseService
+            .from('subscriptions')
+            .update({
+              stripe_customer_id: String(customerId),
+              stripe_subscription_id: String(stripeSubId),
+              current_period_end: currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', rows[0].id)
         }
-        
-        break
-      }
 
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object
-        console.log('Payment succeeded:', invoice.id)
-        
-        // Handle successful payment
-        // In a real app, you would:
-        // 1. Update payment status in database
-        // 2. Send receipt email
-        // 3. Extend subscription period
-        
-        break
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object
-        console.log('Payment failed:', invoice.id)
-        
-        // Handle failed payment
-        // In a real app, you would:
-        // 1. Update payment status in database
-        // 2. Send payment failure notification
-        // 3. Implement retry logic
-        
         break
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        // ignore
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('Error processing webhook:', error)
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }
