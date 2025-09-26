@@ -7,40 +7,78 @@ function serverClient(req: NextRequest) {
   return createClient(url, key, { global: { headers: { Authorization: req.headers.get('authorization') || '' } }, auth: { persistSession: false } })
 }
 
-export async function GET(req: NextRequest) {
-  const supabase = serverClient(req)
-  const { searchParams } = new URL(req.url)
-  const libraryId = searchParams.get('library_id')
-  let query = supabase.from('library_items').select('id, title, item_type, subject, grade, created_at, latest_version_id')
-  if (libraryId) query = query.eq('library_id', libraryId)
-  const { data, error } = await query.order('created_at', { ascending: false })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ items: data || [] })
-}
-
 export async function POST(req: NextRequest) {
   const supabase = serverClient(req)
-  const body = await req.json().catch(() => ({})) as { library_id?: string; item_type?: 'quiz'|'question'; title?: string; subject?: string; grade?: string; content?: unknown }
-  if (!body.library_id || !body.item_type || !body.title || !body.content) return NextResponse.json({ error: 'Bad Request' }, { status: 400 })
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: item, error: insErr } = await supabase
+  const body = await req.json().catch(() => ({})) as {
+    orgId?: string
+    quizId: string
+    title: string
+    tags?: string[]
+  }
+  if (!body.quizId || !body.title) {
+    return NextResponse.json({ error: 'Bad Request' }, { status: 400 })
+  }
+
+  const orgId = body.orgId || null
+  if (!orgId) {
+    return NextResponse.json({ error: 'Missing orgId' }, { status: 400 })
+  }
+
+  const { data: lib } = await supabase
+    .from('libraries')
+    .select('id')
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  let libraryId = lib?.id as string | undefined
+  if (!libraryId) {
+    const { data: created, error: createErr } = await supabase
+      .from('libraries')
+      .insert({ org_id: orgId, name: 'Standardbibliotek', created_by: user.id })
+      .select('id')
+      .single()
+    if (createErr) return NextResponse.json({ error: createErr.message }, { status: 500 })
+    libraryId = created.id
+  }
+
+  // Fetch quiz basic info; tolerant to schema variation
+  const { data: quiz } = await supabase
+    .from('quizzes')
+    .select('id, title')
+    .eq('id', body.quizId)
+    .maybeSingle()
+
+  const payload = {
+    source: 'quiz',
+    quizId: body.quizId,
+    title: quiz?.title || body.title
+  }
+
+  const { data: item, error: itemErr } = await supabase
     .from('library_items')
-    .insert({ library_id: body.library_id, item_type: body.item_type, title: body.title, subject: body.subject || null, grade: body.grade || null, created_by: user.id })
+    .insert({ library_id: libraryId, type: 'quiz', title: body.title, tags: body.tags || null })
     .select('id')
     .single()
-  if (insErr || !item) return NextResponse.json({ error: insErr?.message || 'insert_failed' }, { status: 500 })
+  if (itemErr) return NextResponse.json({ error: itemErr.message }, { status: 500 })
 
-  const { data: ver, error: verErr } = await supabase
+  const { data: version, error: verErr } = await supabase
     .from('item_versions')
-    .insert({ item_id: item.id, version_no: 1, content: body.content, created_by: user.id })
+    .insert({ item_id: item.id, version_no: 1, payload, created_by: user.id })
     .select('id')
     .single()
-  if (verErr || !ver) return NextResponse.json({ error: verErr?.message || 'version_failed' }, { status: 500 })
+  if (verErr) return NextResponse.json({ error: verErr.message }, { status: 500 })
 
-  await supabase.from('library_items').update({ latest_version_id: ver.id }).eq('id', item.id)
-  return NextResponse.json({ success: true, itemId: item.id, versionId: ver.id })
+  await supabase
+    .from('library_items')
+    .update({ latest_version_id: version.id })
+    .eq('id', item.id)
+
+  return NextResponse.json({ success: true, itemId: item.id })
 }
 
 
