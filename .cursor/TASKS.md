@@ -101,7 +101,7 @@
  - [x] Push levereras och kan styras i inställningar.
 
 ### L3. Mobil UI-polish
-- [ ] Sticky bottombar/FAB (AI, Live, Bibliotek).
+- [x] Sticky bottombar/FAB (AI, Live, Bibliotek).
 - [ ] Touch-targets ≥44 px, safe areas, reducerad motion.
 **Acceptans**
 - [ ] Lighthouse PWA ≥ 90; inga kritiska layoutskift.
