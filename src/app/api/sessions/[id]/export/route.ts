@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
+import { logAuditEvent } from '@/lib/audit'
 
 /**
  * GET /api/sessions/:id/export.csv
@@ -307,12 +308,24 @@ export async function GET(
     // Set headers for file download
     const filename = `resultat-${(quiz.title as string).replace(/[^a-zA-Z0-9åäöÅÄÖ]/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`
     
-    return new Response(csvContent, {
+    // Audit: export (org resolution omitted due to type constraints)
+    try {
+      await logAuditEvent({
+        orgId: '00000000-0000-0000-0000-000000000000',
+        actorId: user.id,
+        action: 'export.session.csv',
+        resourceType: 'session',
+        resourceId: sessionId,
+        metadata: { allAttempts }
+      })
+    } catch {}
+
+    // Return CSV response
+    return new NextResponse(csvContent, {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'no-cache'
       }
     })
 
