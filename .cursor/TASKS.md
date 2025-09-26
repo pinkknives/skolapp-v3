@@ -37,53 +37,53 @@
 - [x] Login fungerar; org-mappning dokumenterad och testad.
 
 ### I4. Auditlogg
-- [ ] Tabell `audit_logs(actor, action, resource, org_id, ts)`.
-- [ ] Logga: invite, rollbyte, export, radering.
+- [x] Tabell `audit_logs(actor, action, resource, org_id, ts)`.
+- [x] Logga: invite, rollbyte, export, radering.
 **Acceptans**
-- [ ] Admin kan se senaste händelser.
+- [x] Admin kan se senaste händelser.
 
 ---
 
 ## Milestone J — Innehållsbibliotek & Delning
 
 ### J1. Bibliotek & versioner
-- [ ] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
-- [ ] Importera quiz → biblioteksmall; ny version vid ändring.
+ - [x] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
+ - [x] Importera quiz → biblioteksmall; ny version vid ändring.
 **Acceptans**
-- [ ] Lärare kan spara/återanvända mallar; versionshistorik syns.
+ - [x] Lärare kan spara/återanvända mallar; versionshistorik syns.
 
 ### J2. Sök & taggar
-- [ ] Fulltextsök (titel/ämne/årskurs) + taggar.
-- [ ] Filter: ämne, svårighet, typ.
+ - [x] Fulltextsök (titel/ämne/årskurs) + taggar.
+ - [x] Filter: ämne, svårighet, typ.
 **Acceptans**
-- [ ] Hitta relevant mall < 2s; filtren fungerar.
+ - [x] Hitta relevant mall < 2s; filtren fungerar.
 
 ### J3. Delning
-- [ ] Delningslänk inom org (read-only/kopiera).
-- [ ] Cross-org: signerad länk (begränsad livslängd).
+ - [x] Delningslänk inom org (read-only/kopiera).
+ - [x] Cross-org: signerad länk (begränsad livslängd).
 **Acceptans**
-- [ ] Import/kopia utan att exponera elevdata.
+ - [x] Import/kopia utan att exponera elevdata.
 
 ---
 
 ## Milestone K — Live-undervisning 2.0
 
 ### K1. Live-sessioner
-- [ ] “Starta live” (lärare) → elever joinar (presence).
-- [ ] Realtime-agg (Ably/Supabase Realtime).
+ - [x] “Starta live” (lärare) → elever joinar (presence).
+ - [x] Realtime-agg (Ably/Supabase Realtime).
 **Acceptans**
-- [ ] 25+ samtidiga elever utan tapp; latens < 300 ms LAN-nära.
+ - [x] 25+ samtidiga elever utan tapp; latens < 300 ms LAN-nära.
 
 ### K2. Kontroller & anti-fusk (light)
-- [ ] Pausa/lås fråga, visa/dölj rätt svar, tidsgräns.
-- [ ] “Off-tab” indikering (heuristik).
+ - [x] Pausa/lås fråga, visa/dölj rätt svar, tidsgräns.
+ - [x] “Off-tab” indikering (heuristik).
 **Acceptans**
-- [ ] Klienter reagerar i realtid; status synkroniseras.
+ - [x] Klienter reagerar i realtid; status synkroniseras.
 
 ### K3. Genvägar
-- [ ] Tangentbord: N (nästa), P (paus), R (visa svar).
+ - [x] Tangentbord: N (nästa), P (paus), R (visa svar).
 **Acceptans**
-- [ ] Genvägar fungerar och förklaras i UI.
+ - [x] Genvägar fungerar och förklaras i UI.
 
 ---
 
