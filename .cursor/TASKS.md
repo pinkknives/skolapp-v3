@@ -117,10 +117,10 @@
 - [x] Serverkvoter hårda; tydlig UX när tak nås.
 
 ### M2. Stripe Billing
-- [ ] Checkout + kundportal (org-admin).
-- [ ] Webhooks uppdaterar plan/status i DB.
+- [x] Checkout + kundportal (org-admin).
+- [x] Webhooks uppdaterar plan/status i DB.
 **Acceptans**
-- [ ] Upp-/nedgradering syns inom 1 min; fel hanteras.
+- [x] Upp-/nedgradering syns inom 1 min; fel hanteras.
 
 ---
 
