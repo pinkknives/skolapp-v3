@@ -962,6 +962,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                                         headers: { 'content-type': 'application/json' },
                                         body: JSON.stringify({ rating: 1, question_title: question.title })
                                       })
+                                      track('ai_feedback.submit', { rating: 1, hasComment: false })
                                     } catch {}
                                   }}
                                   aria-label="Gilla förslag"
@@ -979,6 +980,7 @@ export function ImprovedAIQuizDraft({ quizTitle, onQuestionsGenerated, onClose, 
                                         headers: { 'content-type': 'application/json' },
                                         body: JSON.stringify({ rating: -1, question_title: question.title })
                                       })
+                                      track('ai_feedback.submit', { rating: -1, hasComment: false })
                                     } catch {}
                                   }}
                                   aria-label="Ogilla förslag"

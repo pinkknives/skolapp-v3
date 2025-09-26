@@ -32,12 +32,28 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.consent !== 'boolean') {
     return NextResponse.json({ error: 'Bad Request' }, { status: 400 })
   }
+  // Read previous state to determine telemetry event
+  const { data: prevRow } = await supabase
+    .from('user_settings')
+    .select('consent_to_ai_training')
+    .eq('user_id', user.id)
+    .maybeSingle()
   const { error: upsertErr } = await supabase
     .from('user_settings')
     .upsert({ user_id: user.id, consent_to_ai_training: body.consent, updated_at: new Date().toISOString() })
   if (upsertErr) return NextResponse.json({ error: upsertErr.message }, { status: 500 })
   try {
-    logTelemetryEvent('consent_update', { userId: user.id, consent: body.consent })
+    const previous = !!prevRow?.consent_to_ai_training
+    // Always emit changed with previous/current for observability
+    logTelemetryEvent('consent.changed', { userId: user.id, previous, current: body.consent })
+    // Emit accepted/declined on transitions
+    if (previous !== body.consent) {
+      if (body.consent) {
+        logTelemetryEvent('consent.accepted', { userId: user.id })
+      } else {
+        logTelemetryEvent('consent.declined', { userId: user.id })
+      }
+    }
   } catch {}
   return NextResponse.json({ success: true })
 }

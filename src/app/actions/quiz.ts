@@ -108,15 +108,40 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
       }
     }
 
-    // Fire-and-forget async AI training data collection via Edge Function
+    // Save anonymized AI training data if teacher consented
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ''
-      fetch(`${baseUrl}/functions/v1/ai-training-collector`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ teacher_id: ownerId, quiz_id: quiz.id, title })
-      }).catch(() => {})
-    } catch {}
+      // Check consent
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('consent_to_ai_training')
+        .eq('user_id', ownerId)
+        .maybeSingle()
+
+      if (settings?.consent_to_ai_training) {
+        // Compose anonymized payload (title only at creation; questions added later)
+        const payload = { title }
+        const subject = 'unknown'
+        const gradeSpan = 'unknown'
+
+        await supabase
+          .from('ai_training_data')
+          .insert({
+            teacher_id: ownerId,
+            quiz_id: quiz.id,
+            payload,
+            subject,
+            grade_span: gradeSpan
+          })
+
+        // Lightweight telemetry via console/gtag
+        if (typeof window !== 'undefined') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(window as any)?.gtag?.('event', 'ai_training.saved_row', { quiz_id: quiz.id, n_questions: 0 })
+        }
+      }
+    } catch {
+      // Non-blocking
+    }
 
     revalidatePath('/teacher/quiz')
     return {

@@ -25,6 +25,7 @@ import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
 import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
 import { toast } from '@/components/ui/Toast'
 import { AIQuotaDisplay } from '@/components/billing/AIQuotaDisplay'
+import { SyllabusPicker } from '@/components/quiz/SyllabusPicker'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -281,7 +282,7 @@ function CreateQuizPage() {
                 <div className="p-6 border-b">
                   <Heading level={3}>Får vi använda dina quiz anonymiserat?</Heading>
                   <Typography variant="body2" className="text-neutral-600 mt-2">
-                    Om du samtycker kan dina quizfrågor användas anonymt för att förbättra AI‑förslagen för alla lärare.
+                    Får vi använda dina quiz <strong>anonymiserat</strong> för att förbättra Skolapp?
                   </Typography>
                 </div>
                 <div className="p-6 flex gap-3 justify-end">
@@ -300,7 +301,7 @@ function CreateQuizPage() {
                       }
                     }}
                   >
-                    Nej, inte nu
+                    Nej
                   </Button>
                   <Button
                     onClick={async () => {
@@ -316,7 +317,7 @@ function CreateQuizPage() {
                       }
                     }}
                   >
-                    Ja, jag samtycker
+                    Ja
                   </Button>
                 </div>
               </div>
@@ -474,6 +475,12 @@ function CreateQuizPage() {
             {/* Sidebar */}
             <div className="space-y-4">
               <AIQuotaDisplay />
+              <SyllabusPicker
+                onChange={(code) => {
+                  setQuiz(prev => ({ ...prev, subjectCode: code }))
+                }}
+                className=""
+              />
               {/* AI Assistant */}
               {canUseAI ? (
                 <AIAssistantPanel
