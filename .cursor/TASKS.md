@@ -22,25 +22,25 @@
 ### I1. Org-modell & roller
  - [x] Tabeller: `organisations`, `organisation_members` (role: admin/teacher), koppling till `schools/classes`.
  - [x] RLS: isolera data per org; admin kan bjuda in lärare.
- **Acceptans**
+**Acceptans**
  - [x] Lärare ser bara data inom sin org; admin kan invitera/ta bort.
 
 ### I2. Org-invites
  - [x] Endpoint + e-postmall för org-inbjudan (svenska).
  - [x] Länk leder till join-sida; felhantering för ogiltig/utgången invite.
- **Acceptans**
+**Acceptans**
  - [x] Lärare kan gå med via e-postlänk; auditlogg skapas.
 
 ### I3. SSO (Google/Microsoft)
  - [x] Supabase OAuth för Google/Microsoft; mappa domän → org (konfig).
  - [x] “Föreslå org” på första login om domän matchar en befintlig org.
- **Acceptans**
+**Acceptans**
  - [x] Login funkar med båda IdP; org-mappning dokumenterad/testad.
 
 ### I4. Auditlogg
  - [x] Tabell `audit_logs` (actor, action, resource, org_id, ts).
  - [x] Logga nyckelhändelser: inbjudan, rolländring, export, radering.
- **Acceptans**
+**Acceptans**
  - [x] Admin kan se senaste händelser för sin org.
 
 ---
@@ -48,53 +48,53 @@
 ## Milestone J — Innehållsbibliotek & Delning
 
 ### J1. Bibliotek (mallar & versioner)
-- [ ] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
-- [ ] Importera quiz → biblioteks-mall; skapa ny version vid ändring.
-**Acceptans**
-- [ ] Lärare kan spara/återanvända mallar; versionshistorik visas.
+ - [x] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
+ - [x] Importera quiz → biblioteks-mall; skapa ny version vid ändring.
+ **Acceptans**
+ - [x] Lärare kan spara/återanvända mallar; versionshistorik visas.
 
 ### J2. Sök & taggar
-- [ ] Fulltextsök på titel/ämne/årskurs; taggar per item.
-- [ ] Snabbfilter: ämne, svårighetsgrad, typ.
+ - [x] Fulltextsök på titel/ämne/årskurs; taggar per item.
+ - [x] Snabbfilter: ämne, svårighetsgrad, typ.
 **Acceptans**
-- [ ] Hitta relevanta mallar < 2s; filtren fungerar.
+ - [x] Hitta relevanta mallar < 2s; filtren fungerar.
 
 ### J3. Delning
-- [ ] Delningslänk inom org; val för read-only/kopiera.
-- [ ] Cross-org delning via signerad länk (begränsad livslängd).
+ - [x] Delningslänk inom org; val för read-only/kopiera.
+ - [x] Cross-org delning via signerad länk (begränsad livslängd).
 **Acceptans**
-- [ ] Andra lärare kan importera/kopiera mall utan att se elevdata.
+ - [x] Andra lärare kan importera/kopiera mall utan att se elevdata.
 
 ---
 
 ## Milestone K — Live-undervisning 2.0
 
 ### K1. Live-sessioner
-- [ ] “Starta live” (lärare) → elevklient joinar session (presence).
-- [ ] Live-resultat/agg uppdateras i realtid (Ably/Supabase Realtime).
+ - [x] “Starta live” (lärare) → elevklient joinar session (presence).
+ - [x] Live-resultat/agg uppdateras i realtid (Ably/Supabase Realtime).
 **Acceptans**
-- [ ] 25+ samtidiga elever utan tapp; latens < 300ms LAN-nära.
+ - [x] 25+ samtidiga elever utan tapp; latens < 300ms LAN-nära.
 
 ### K2. Kontroller & anti-fusk (light)
-- [ ] Pausa/lås fråga, dölj/visa rätt svar, tidsgräns.
-- [ ] “Elev är off-tab” signal (heuristik) – endast indikation, ej block.
+ - [x] Pausa/lås fråga, dölj/visa rätt svar, tidsgräns.
+ - [x] “Elev är off-tab” signal (heuristik) – endast indikation, ej block.
 **Acceptans**
-- [ ] Kontroller påverkar klienter i realtid; off-tab markeras.
+ - [x] Kontroller påverkar klienter i realtid; off-tab markeras.
 
 ### K3. Snabbkommandon
-- [ ] Tangentbordsgenvägar för lärare (N nästa fråga, P paus, R visa rätt svar).
+ - [x] Tangentbordsgenvägar för lärare (N nästa fråga, P paus, R visa rätt svar).
 **Acceptans**
-- [ ] Genvägar fungerar och är dokumenterade i UI.
+ - [x] Genvägar fungerar och är dokumenterade i UI.
 
 ---
 
 ## Milestone L — PWA, Push & Mobilfinish
 
 ### L1. PWA & offline
-- [ ] Manifest, Workbox-strategier (quiz-genomförande fungerar offline).
-- [ ] Sync-queue för svar vid återkoppling.
+ - [x] Manifest, Workbox-strategier (quiz-genomförande fungerar offline).
+ - [x] Sync-queue för svar vid återkoppling.
 **Acceptans**
-- [ ] Offline-genomförande sparas och synkas korrekt.
+ - [x] Offline-genomförande sparas och synkas korrekt.
 
 ### L2. Push-notiser
 - [ ] Web Push (OneSignal/FCM): “quiz startar”, “resultat klara”.
@@ -103,7 +103,7 @@
 - [ ] Push levereras; opt-in/opt-out fungerar.
 
 ### L3. Mobil UI-polish
-- [ ] Sticky bottombar/FAB där relevant (AI, Live, Bibliotek).
+ - [x] Sticky bottombar/FAB där relevant (AI, Live, Bibliotek).
 - [ ] Touch-targets ≥44px, keyboard-safe areas, reducerad motion.
 **Acceptans**
 - [ ] Lighthouse PWA ≥ 90; inga layoutskift i kritiska vyer.
@@ -129,27 +129,27 @@
 ## Milestone N — Kvalitet, Observability & QA-grind
 
 ### N1. Observability
-- [ ] Sentry (webb + edge/server) med release & sourcemaps.
-- [ ] Correlation-id i API & log drain.
+ - [x] Sentry (webb + edge/server) med release & sourcemaps.
+ - [x] Correlation-id i API & log drain.
 **Acceptans**
-- [ ] Exceptions i Sentry m. versions-tagg; korrelerade loggar.
+ - [x] Exceptions i Sentry m. versions-tagg; korrelerade loggar.
 
 ### N2. Performance & stabilitet
 - [ ] `next/image` + `sizes` för stora medier.
-- [ ] Profilera live-sessioner; backoff/retry-strategier.
+ - [x] Profilera live-sessioner; backoff/retry-strategier.
 **Acceptans**
 - [ ] LCP/CLS stabila; live håller vid packet loss.
 
 ### N3. Testhårdning
-- [ ] Playwright: auth (inkl. mail), org-invite, live-session, bibliotek.
-- [ ] SQL/RLS-tester (pgTAP eller scriptade probes).
+ - [x] Playwright: auth (inkl. mail), org-invite, live-session, bibliotek.
+ - [x] SQL/RLS-tester (pgTAP eller scriptade probes).
 **Acceptans**
-- [ ] CI kör Chromium + minst WebKit/Firefox; RLS-suite grön.
+ - [x] CI kör Chromium + minst WebKit/Firefox; RLS-suite grön.
 
 ### N4. Release-gate
-- [ ] “Go/No-Go” pipeline: type-check, lint (0 varningar), build, e2e, RLS-probes, Lighthouse.
+ - [x] “Go/No-Go” pipeline: type-check, lint (0 varningar), build, e2e, RLS-probes, Lighthouse.
 **Acceptans**
-- [ ] Merge blockeras om något steg faller.
+ - [x] Merge blockeras om något steg faller.
 
 ---
 

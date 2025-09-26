@@ -4,7 +4,7 @@ import { supabaseServer } from '@/lib/supabase-server'
 /**
  * POST /api/live-sessions/[id]/answer
  * Submit student answer for live quiz question
- * Body: { questionId: string, answer: string, userId: string }
+ * Body: { questionId?: string, answer?: string, userId: string, signal?: 'off_tab' }
  */
 export async function POST(
   request: NextRequest,
@@ -15,9 +15,23 @@ export async function POST(
     const supabase = supabaseServer()
 
     const body = await request.json()
-    const { questionId, answer, userId } = body
+    const { questionId, answer, userId, signal } = body
 
-    if (!questionId || answer === undefined || !userId) {
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Användar-ID krävs' },
+        { status: 400 }
+      )
+    }
+
+    // Special case: off-tab signal does not persist an answer
+    if (signal === 'off_tab') {
+      const channel = supabase.channel(`live:session:${sessionId}`)
+      await channel.send({ type: 'broadcast', event: 'participant_offtab', payload: { userId, at: new Date().toISOString() } })
+      return NextResponse.json({ success: true })
+    }
+
+    if (!questionId || answer === undefined) {
       return NextResponse.json(
         { error: 'Fråge-ID, svar och användar-ID krävs' },
         { status: 400 }

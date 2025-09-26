@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai, isOpenAIAvailable } from "@/lib/ai/openai";
 import { env, assertOpenAIAvailable } from "@/lib/env.server";
 import { verifyQuota } from "@/lib/ai/quota";
+import { getCorrelationId } from '@/lib/correlation'
 import { createClient } from "@supabase/supabase-js";
 import { InputSchema, OutputSchema, type GenerateQuestionsInput, type GenerateQuestionsOutput, type QuestionType, type BloomLevel } from "@/lib/ai/schemas";
 import { fetchSkolverketObjectives } from "@/lib/ai/skolverket";
@@ -43,6 +44,7 @@ function normalizeOutput(raw: unknown, input: GenerateQuestionsInput): GenerateQ
 
 export async function POST(req: NextRequest) {
   try {
+    const corr = getCorrelationId()
     const requestId = crypto.randomUUID();
     const keyCheck = assertOpenAIAvailable();
     if ((env.nodeEnv === 'production' && !keyCheck.ok) || (typeof isOpenAIAvailable === 'boolean' && !isOpenAIAvailable)) {
@@ -214,18 +216,25 @@ export async function POST(req: NextRequest) {
     // Final validation
     const parsed = OutputSchema.safeParse(normalized);
     if (!parsed.success) {
-      console.warn(`[ai][${requestId}] validation_failed`, { normalized, issues: parsed.error.issues });
-      return NextResponse.json(
-        { error: "Validering av AI-svar misslyckades", details: parsed.error.flatten() },
+      console.warn(`[ai][${requestId}][${corr}] validation_failed`, { normalized, issues: parsed.error.issues });
+      const res = NextResponse.json(
+        { error: "Validering av AI-svar misslyckades", details: parsed.error.flatten(), correlationId: corr },
         { status: 500 }
-      );
+      )
+      res.headers.set('x-correlation-id', corr)
+      return res
     }
 
-    return NextResponse.json(parsed.data);
+    const res = NextResponse.json(parsed.data)
+    res.headers.set('x-correlation-id', corr)
+    return res
   } catch (err: unknown) {
     const requestId = crypto.randomUUID();
-    console.error(`[ai][${requestId}] error`, err);
+    const corr = getCorrelationId()
+    console.error(`[ai][${requestId}][${corr}] error`, err);
     const message = err instanceof Error ? err.message : "Okänt fel";
-    return NextResponse.json({ error: "Kunde inte generera frågor just nu.", details: message, requestId }, { status: 500 });
+    const res = NextResponse.json({ error: "Kunde inte generera frågor just nu.", details: message, requestId, correlationId: corr }, { status: 500 })
+    res.headers.set('x-correlation-id', corr)
+    return res
   }
 }

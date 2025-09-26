@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 
 // Initialize Stripe only when needed
 const getStripe = async () => {
@@ -14,6 +15,12 @@ const getStripe = async () => {
 }
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+
+// Service client for updating billing status/entitlements
+const supabaseService = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'local_service_key'
+)
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -54,11 +61,19 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object
         console.log('Subscription created:', subscription.id)
         
-        // Handle new subscription
-        // In a real app, you would:
-        // 1. Update user's subscription status in database
-        // 2. Send welcome email
-        // 3. Activate premium features
+        // Update entitlements based on subscription status
+        try {
+          const customerId = subscription.customer
+          const status = subscription.status
+          const subscriptionId = subscription.id
+          await supabaseService.rpc('update_user_billing_status', {
+            customer_id: customerId,
+            new_status: status,
+            subscription_id: subscriptionId
+          })
+        } catch (e) {
+          console.error('Failed to update billing status (created):', e)
+        }
         
         break
       }
@@ -67,11 +82,19 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object
         console.log('Subscription updated:', subscription.id)
         
-        // Handle subscription changes
-        // In a real app, you would:
-        // 1. Update subscription status in database
-        // 2. Handle plan changes
-        // 3. Send notification email
+        // Reflect status/plan changes in entitlements
+        try {
+          const customerId = subscription.customer
+          const status = subscription.status
+          const subscriptionId = subscription.id
+          await supabaseService.rpc('update_user_billing_status', {
+            customer_id: customerId,
+            new_status: status,
+            subscription_id: subscriptionId
+          })
+        } catch (e) {
+          console.error('Failed to update billing status (updated):', e)
+        }
         
         break
       }
@@ -80,11 +103,19 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object
         console.log('Subscription cancelled:', subscription.id)
         
-        // Handle subscription cancellation
-        // In a real app, you would:
-        // 1. Update subscription status in database
-        // 2. Revoke premium access
-        // 3. Send cancellation email
+        // Revoke premium by setting plan to free
+        try {
+          const customerId = subscription.customer
+          const status = subscription.status || 'canceled'
+          const subscriptionId = subscription.id
+          await supabaseService.rpc('update_user_billing_status', {
+            customer_id: customerId,
+            new_status: status,
+            subscription_id: subscriptionId
+          })
+        } catch (e) {
+          console.error('Failed to update billing status (deleted):', e)
+        }
         
         break
       }

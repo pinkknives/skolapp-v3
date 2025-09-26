@@ -39,6 +39,7 @@ export default function LiveSessionPage() {
   const [user, setUser] = useState<User | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string>('')
   // no channel state needed
+  const [_offTab, setOffTab] = useState(false)
 
   // Get current user
   useEffect(() => {
@@ -216,6 +217,21 @@ export default function LiveSessionPage() {
     }
   }, [user, sessionStateId, sessionId, supabase])
 
+  // Off-tab heuristic: visibility + blur/focus
+  useEffect(() => {
+    const onVisibility = () => setOffTab(document.visibilityState === 'hidden')
+    const onBlur = () => setOffTab(true)
+    const onFocus = () => setOffTab(false)
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('blur', onBlur)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('blur', onBlur)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [])
+
   // Timer effect
   useEffect(() => {
     if (!state?.timeRemaining || state.hasAnswered || state.session.status !== 'ACTIVE') return
@@ -248,7 +264,25 @@ export default function LiveSessionPage() {
     setError('')
 
     try {
-      const response = await fetch(`/api/live-sessions/${sessionId}/answer`, {
+      // Retry/backoff for flaky connections
+      const retryFetch = async (url: string, init: RequestInit, attempts = 3): Promise<Response> => {
+        let lastErr: unknown
+        for (let i = 0; i < attempts; i++) {
+          try {
+            const res = await fetch(url, init)
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            return res
+          } catch (err) {
+            lastErr = err
+            if (i === attempts - 1) break
+            const delayMs = 300 * Math.pow(2, i)
+            await new Promise((r) => setTimeout(r, delayMs))
+          }
+        }
+        throw lastErr instanceof Error ? lastErr : new Error('Network error')
+      }
+
+      const response = await retryFetch(`/api/live-sessions/${sessionId}/answer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

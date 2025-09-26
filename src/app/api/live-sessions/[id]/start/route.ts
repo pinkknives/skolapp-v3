@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
+import { sendPushToAll } from '@/lib/push'
 
 /**
  * POST /api/live-sessions/[id]/start
@@ -88,6 +89,13 @@ export async function POST(
         currentIndex: updatedSession.current_index,
         startedAt: updatedSession.started_at
       }
+    })
+
+    // Fire push notification (guarded by env)
+    await sendPushToAll({
+      headings: 'Quiz startar',
+      contents: 'Din lärare har startat ett live‑quiz – gå med nu!',
+      url: `${request.nextUrl.origin}/live/join`
     })
 
     return NextResponse.json({

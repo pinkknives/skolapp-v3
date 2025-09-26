@@ -6,6 +6,7 @@ import Providers from './providers'
 import { cookies } from 'next/headers'
 import { WelcomeToast } from '@/components/auth/WelcomeToast'
 import { ToastDebug } from '@/components/dev/ToastDebug'
+import { OneSignalInit } from '@/components/push/OneSignalInit'
 
 export const metadata: Metadata = {
   title: {
@@ -163,6 +164,7 @@ export default async function RootLayout({
           <Providers initialTheme={initialThemeClass === 'dark' ? 'dark' : 'light'}>
             <AuthProvider>
               <WelcomeToast />
+              <OneSignalInit />
               <main className="w-full min-h-svh">
                 {children}
               </main>

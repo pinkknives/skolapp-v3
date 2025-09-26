@@ -171,37 +171,67 @@ export default function ImprovedLiveControlPage() {
   }, [user, initializeSession])
 
   // Handle session actions
-  const handleSessionAction = async (action: string) => {
+  const handleSessionAction = useCallback(async (action: string) => {
     if (!state) return
 
     try {
       setIsActionLoading(action)
-      
-      const response = await fetch(`/api/live-sessions/${sessionId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          action
-        })
-      })
+      // Simple retry/backoff for transient network errors
+      const retryFetch = async (url: string, init: RequestInit, attempts = 3): Promise<Response> => {
+        let lastErr: unknown
+        for (let i = 0; i < attempts; i++) {
+          try {
+            const res = await fetch(url, init)
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            return res
+          } catch (err) {
+            lastErr = err
+            if (i === attempts - 1) break
+            const delayMs = 400 * Math.pow(2, i)
+            await new Promise((r) => setTimeout(r, delayMs))
+          }
+        }
+        throw lastErr instanceof Error ? lastErr : new Error('Network error')
+      }
 
+      const response = await retryFetch(`/api/live-sessions/${sessionId}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, action })
+      })
       if (!response.ok) {
         throw new Error('Action failed')
       }
-
-      // Refresh session data
       await initializeSession()
-
     } catch (error) {
       console.error(`Error ${action} session:`, error)
       setError(`Kunde inte ${action} sessionen`)
     } finally {
       setIsActionLoading(null)
     }
-  }
+  }, [state, sessionId, initializeSession])
+
+  // K3: Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
+      const comp = (e as unknown as { isComposing?: boolean } | null)
+      const isComposing = Boolean(comp && comp.isComposing)
+      if (tag === 'input' || tag === 'textarea' || isComposing) return
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault()
+        void handleSessionAction('next')
+      } else if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault()
+        void handleSessionAction('pause')
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        void handleSessionAction('reveal')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [handleSessionAction])
 
   // Copy functions
   const handleCopyPin = () => {
@@ -225,7 +255,7 @@ export default function ImprovedLiveControlPage() {
 
   return (
     <Layout>
-      <Section className="py-8">
+      <Section className="py-8 pb-24 lg:pb-8">
         <Container size="xl">
           {isLoading ? (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -302,6 +332,16 @@ export default function ImprovedLiveControlPage() {
             </div>
           ) : null}
         </Container>
+        {/* Mobile sticky bar for quick actions */}
+        {state && (
+          <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur border-t z-40 safe-area-inset-bottom:px-4">
+            <div className="flex gap-2 p-3">
+              <Button className="flex-1" onClick={() => handleSessionAction('next')}>Nästa</Button>
+              <Button variant="outline" className="flex-1" onClick={() => handleSessionAction('pause')}>Pausa</Button>
+              <Button variant="outline" className="flex-1" onClick={() => handleSessionAction('reveal')}>Visa svar</Button>
+            </div>
+          </div>
+        )}
       </Section>
     </Layout>
   )

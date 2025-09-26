@@ -1,3 +1,22 @@
+### Library (J1)
+
+- libraries(id, org_id → organisations.id, name, created_by → users.id, created_at)
+- library_items(id, library_id → libraries.id, item_type['quiz'|'question'], title, subject, grade, latest_version_id, created_by → users.id, created_at)
+- item_versions(id, item_id → library_items.id, version_no, content jsonb, created_by → users.id, created_at)
+
+RLS: medlemmar i org kan läsa/skriva; versioner endast inom samma org via library → org
+
+### Search & tags (J2)
+
+### Sharing (J3)
+
+- library_shares(id, item_id → library_items.id, token UNIQUE, can_copy, expires_at, created_by → users.id, created_at)
+RLS: medlemmar i käll‑org kan skapa/lista; import via API validerar token/expiry
+
+- tags(id, org_id → organisations.id, name UNIQUE per org)
+- item_tags(item_id → library_items.id, tag_id → tags.id)
+- library_items.search_tsv (tsvector, GIN)
+
 ### Organisations (I1)
 
 - organisations(id, name, slug, created_at)

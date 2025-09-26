@@ -1,3 +1,18 @@
+## J1 – Library RLS
+
+## J2 – Search & Tags RLS
+
+## J3 – Sharing RLS
+
+- library_shares: SELECT/ALL endast för medlemmar i käll‑org; token används vid import (servervalidering)
+
+- tags: SELECT/ALL endast för org‑medlemmar
+- item_tags: SELECT/ALL endast för items inom medlemmens org
+
+- libraries: SELECT/ALL endast medlemmar i org via org_id
+- library_items: SELECT/ALL endast via join till libraries → medlemmar
+- item_versions: SELECT/ALL endast via item → library → org medlemmar
+
 ## I1 – Organisations RLS
 
 Tabeller och policies:

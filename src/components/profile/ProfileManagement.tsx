@@ -25,6 +25,8 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
   const [role, setRole] = useState(user.profile?.role || 'teacher')
   const [consent, setConsent] = useState<boolean>(false)
   const [isUpdatingConsent, setIsUpdatingConsent] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState<boolean>(false)
+  const [isUpdatingPush, setIsUpdatingPush] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -33,6 +35,11 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         if (resp.ok) {
           const data = await resp.json()
           setConsent(!!data.consent)
+        }
+        const p = await fetch('/api/user/settings/push', { method: 'GET' })
+        if (p.ok) {
+          const data = await p.json()
+          setPushEnabled(!!data.push_enabled)
         }
       } catch {}
     }
@@ -264,6 +271,35 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         </CardHeader>
         <CardContent>
           <Stack gap="sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Typography variant="body2" className="text-neutral-600">Push‑notiser</Typography>
+                  <Typography variant="caption" className="text-neutral-500">Få påminnelser om live‑quiz och resultat</Typography>
+                </div>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={pushEnabled}
+                    onChange={async (e) => {
+                      const next = e.target.checked
+                      setIsUpdatingPush(true)
+                      try {
+                        const resp = await fetch('/api/user/settings/push', {
+                          method: 'PATCH',
+                          headers: { 'content-type': 'application/json' },
+                          body: JSON.stringify({ push_enabled: next })
+                        })
+                        if (resp.ok) setPushEnabled(next)
+                      } finally {
+                        setIsUpdatingPush(false)
+                      }
+                    }}
+                    disabled={isUpdatingPush}
+                    className="h-4 w-4 text-primary-600"
+                  />
+                  <span className="text-sm">{isUpdatingPush ? 'Uppdaterar...' : (pushEnabled ? 'På' : 'Av') }</span>
+                </label>
+              </div>
               <div className="flex justify-between items-center">
                 <div>
                   <Typography variant="body2" className="text-neutral-600">Bidra anonymt till AI‑träning</Typography>

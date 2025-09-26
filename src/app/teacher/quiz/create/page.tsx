@@ -24,6 +24,7 @@ import { AIFeatureBlock } from '@/components/billing/AIFeatureBlock'
 import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
 import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
 import { toast } from '@/components/ui/Toast'
+import { AIQuotaDisplay } from '@/components/billing/AIQuotaDisplay'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -472,6 +473,7 @@ function CreateQuizPage() {
 
             {/* Sidebar */}
             <div className="space-y-4">
+              <AIQuotaDisplay />
               {/* AI Assistant */}
               {canUseAI ? (
                 <AIAssistantPanel

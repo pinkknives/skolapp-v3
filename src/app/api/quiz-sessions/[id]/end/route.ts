@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
+import { sendPushToAll } from '@/lib/push'
 
 /**
  * POST /api/quiz-sessions/:id/end
@@ -95,6 +96,13 @@ export async function POST(
 
     // Trigger final aggregate refresh
     await supabase.rpc('refresh_session_aggregates', { p_session_id: sessionId })
+
+    // Push notification: results ready
+    await sendPushToAll({
+      headings: 'Resultat klara',
+      contents: 'Resultat för live‑quizet är nu tillgängliga.',
+      url: `${request.nextUrl.origin}/sessions/${sessionId}/results`
+    })
 
     return NextResponse.json({
       success: true,
