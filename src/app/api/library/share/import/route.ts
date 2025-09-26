@@ -19,22 +19,22 @@ export async function POST(req: NextRequest) {
   if (share.expires_at && new Date(share.expires_at) < new Date()) return NextResponse.json({ error: 'Expired' }, { status: 400 })
   if (!share.can_copy) return NextResponse.json({ error: 'Copy not allowed' }, { status: 403 })
 
-  const { data: srcItem } = await supabase.from('library_items').select('id, item_type, title, subject, grade').eq('id', share.item_id).maybeSingle()
+  const { data: srcItem } = await supabase.from('library_items').select('id, type, title, subject, grade_span').eq('id', share.item_id).maybeSingle()
   if (!srcItem) return NextResponse.json({ error: 'Item missing' }, { status: 404 })
 
-  const { data: srcVer } = await supabase.from('item_versions').select('content').eq('item_id', srcItem.id).order('version_no', { ascending: false }).limit(1).maybeSingle()
+  const { data: srcVer } = await supabase.from('item_versions').select('payload').eq('item_id', srcItem.id).order('version_no', { ascending: false }).limit(1).maybeSingle()
   if (!srcVer) return NextResponse.json({ error: 'Version missing' }, { status: 404 })
 
   const { data: newItem, error: insErr } = await supabase
     .from('library_items')
-    .insert({ library_id: body.target_library_id, item_type: srcItem.item_type, title: srcItem.title, subject: srcItem.subject, grade: srcItem.grade, created_by: user.id })
+    .insert({ library_id: body.target_library_id, type: srcItem.type, title: srcItem.title, subject: srcItem.subject, grade_span: srcItem.grade_span })
     .select('id')
     .single()
   if (insErr || !newItem) return NextResponse.json({ error: insErr?.message || 'insert_failed' }, { status: 500 })
 
   const { data: newVer, error: verErr } = await supabase
     .from('item_versions')
-    .insert({ item_id: newItem.id, version_no: 1, content: srcVer.content, created_by: user.id })
+    .insert({ item_id: newItem.id, version_no: 1, payload: srcVer.payload, created_by: user.id })
     .select('id')
     .single()
   if (verErr || !newVer) return NextResponse.json({ error: verErr?.message || 'version_failed' }, { status: 500 })

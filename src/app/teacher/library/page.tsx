@@ -25,6 +25,20 @@ export default function TeacherLibraryPage() {
     load()
   }, [q, tag])
 
+  const handleShare = async (itemId: string) => {
+    const resp = await fetch('/api/library/share', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ item_id: itemId, expires_in_hours: 24, can_copy: true }) })
+    if (resp.ok) {
+      const { token } = await resp.json()
+      const link = `${window.location.origin}/reports/${token}`
+      try {
+        await navigator.clipboard.writeText(link)
+        alert('Delningslänk kopierad till urklipp')
+      } catch {
+        prompt('Kopiera delningslänken:', link)
+      }
+    }
+  }
+
   return (
     <div className="container mx-auto p-4 pb-[env(safe-area-inset-bottom)] space-y-6">
       <Typography variant="h3">Bibliotek</Typography>
@@ -49,7 +63,9 @@ export default function TeacherLibraryPage() {
                     <Typography variant="body2" className="font-medium">{it.title}</Typography>
                     <Typography variant="caption" className="text-neutral-500">{it.item_type} · {it.subject || '—'} · {it.grade || '—'}</Typography>
                   </div>
-                  <Typography variant="caption" className="text-neutral-500">{new Date(it.created_at).toLocaleDateString()}</Typography>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleShare(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Dela</button>
+                  </div>
                 </li>
               ))}
             </ul>
