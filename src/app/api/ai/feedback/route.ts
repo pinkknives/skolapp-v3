@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 function getServerSupabase(req: NextRequest) {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
       provider: body.provider || 'ai'
     })
   if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 500 })
+  try {
+    logTelemetryEvent('ai_feedback.submit', { rating: body.rating, hasComment: Boolean(body.comment) })
+  } catch {}
   return NextResponse.json({ success: true })
 }
 
