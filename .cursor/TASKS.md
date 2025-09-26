@@ -101,20 +101,20 @@
  - [x] Push levereras och kan styras i inställningar.
 
 ### L3. Mobil UI-polish
-- [x] Sticky bottombar/FAB (AI, Live, Bibliotek).
-- [ ] Touch-targets ≥44 px, safe areas, reducerad motion.
+ - [x] Sticky bottombar/FAB (AI, Live, Bibliotek).
+ - [ ] Touch-targets ≥44 px, safe areas, reducerad motion.
 **Acceptans**
-- [ ] Lighthouse PWA ≥ 90; inga kritiska layoutskift.
+ - [ ] Lighthouse PWA ≥ 90; inga kritiska layoutskift.
 
 ---
 
 ## Milestone M — Planer, Kvoter & Billing
 
 ### M1. Planer & kvoter
-- [ ] Free/Pro/Skola: kvoter (klasser, AI-anrop/mån, delade mallar).
-- [ ] UI-indikatorer + graceful degrade vid tak.
+- [x] Free/Pro/Skola: kvoter (klasser, AI-anrop/mån, delade mallar).
+- [x] UI-indikatorer + graceful degrade vid tak.
 **Acceptans**
-- [ ] Serverkvoter hårda; tydlig UX när tak nås.
+- [x] Serverkvoter hårda; tydlig UX när tak nås.
 
 ### M2. Stripe Billing
 - [ ] Checkout + kundportal (org-admin).
