@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseBrowser } from '@/lib/supabase-browser'
+import { logAuditEvent } from '@/lib/audit'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -71,6 +72,18 @@ export async function GET(request: NextRequest) {
       .from('org_invites')
       .delete()
       .eq('id', invite.id)
+
+    // Audit: member joined via invite
+    try {
+      await logAuditEvent({
+        orgId: invite.org_id,
+        actorId: user.id,
+        action: 'invite.accept',
+        resourceType: 'org_invite',
+        resourceId: invite.id,
+        metadata: { role: invite.role }
+      })
+    } catch {}
 
     // Get organization details for response
     const { data: org } = await supabase

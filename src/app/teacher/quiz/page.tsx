@@ -180,6 +180,22 @@ export default function QuizManagementPage() {
     }
   }
 
+  const handleSaveToLibrary = async (quiz: DatabaseQuiz) => {
+    try {
+      const resp = await fetch('/api/library/items', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ orgId: selectedOrgId, quizId: quiz.id, title: quiz.title })
+      })
+      if (!resp.ok) {
+        setError('Kunde inte spara till biblioteket')
+        return
+      }
+    } catch (_e) {
+      setError('Ett oväntat fel inträffade vid sparande till bibliotek')
+    }
+  }
+
   if (showReviewMode && selectedQuiz) {
     // For now, we'll just close review mode since we don't have the component implemented for database quizzes
     return (
@@ -439,6 +455,15 @@ export default function QuizManagementPage() {
                           <span className="ml-1">Avpublicera</span>
                         </Button>
                       )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSaveToLibrary(quiz)}
+                        className="flex-1"
+                      >
+                        <span className="ml-1">Spara i bibliotek</span>
+                      </Button>
                       
                       <Button
                         variant="ghost"

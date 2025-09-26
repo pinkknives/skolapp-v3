@@ -1,6 +1,7 @@
 import { supabaseBrowser } from '@/lib/supabase-browser'
 import type { PostgrestError } from '@supabase/supabase-js'
 import type { BillingStatus, Entitlements } from '@/types/billing'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 export interface Organization {
   id: string
@@ -103,6 +104,7 @@ export async function getUserOrganizations(): Promise<{ data: Organization[] | n
 
     // Extract organizations from membership records
     const organizations = (data?.map(member => member.org).filter(Boolean) || []) as unknown as Organization[]
+    try { logTelemetryEvent('org_scope_resolved', { count: organizations.length }) } catch {}
     return { data: organizations, error: null }
   } catch (error) {
     return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
@@ -203,6 +205,7 @@ export async function getCurrentUserOrganization(): Promise<{ data: { org: Organ
       return { data: null, error: new Error('Ingen organisation hittad') }
     }
 
+    try { logTelemetryEvent('org_scope_resolved', { orgId: (membership.org as Organization).id }) } catch {}
     return { 
       data: { 
         org: membership.org as Organization, 
@@ -227,6 +230,7 @@ export async function updateMemberRole(memberId: string, newRole: 'admin' | 'tea
       .update({ role: newRole })
       .eq('id', memberId)
 
+    try { logTelemetryEvent('org_member_role_changed', { memberId, role: newRole }) } catch {}
     return { error }
   } catch (error) {
     return { error: error instanceof Error ? error : new Error('Unknown error') }
@@ -245,6 +249,7 @@ export async function removeMember(memberId: string): Promise<{ error: Postgrest
       .update({ status: 'inactive' })
       .eq('id', memberId)
 
+    try { logTelemetryEvent('org_member_removed', { memberId }) } catch {}
     return { error }
   } catch (error) {
     return { error: error instanceof Error ? error : new Error('Unknown error') }
@@ -279,6 +284,7 @@ export async function inviteToOrganization(orgId: string, email: string, role: '
       .select()
       .single()
 
+    try { logTelemetryEvent('org_member_invited', { orgId, email, role }) } catch {}
     return { data, error }
   } catch (error) {
     return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
@@ -374,6 +380,7 @@ export async function acceptInvitation(token: string): Promise<{ data: { org_id:
       return { data: null, error: memberError }
     }
 
+    try { logTelemetryEvent('org_member_added', { orgId: invite.org_id, role: invite.role }) } catch {}
     // Mark the invite as used by deleting it
     await supabase
       .from('org_invites')

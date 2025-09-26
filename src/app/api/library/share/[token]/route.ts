@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ token: 
   const { data: share } = await supabase.from('library_shares').select('item_id, expires_at, can_copy').eq('token', token).maybeSingle()
   if (!share) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
   if (share.expires_at && new Date(share.expires_at) < new Date()) return NextResponse.json({ error: 'Expired' }, { status: 400 })
-  const { data: item } = await supabase.from('library_items').select('id, title, item_type, subject, grade, created_at, latest_version_id').eq('id', share.item_id).maybeSingle()
+  const { data: item } = await supabase.from('library_items').select('id, title, type, subject, grade_span, created_at, latest_version_id').eq('id', share.item_id).maybeSingle()
   return NextResponse.json({ item, canCopy: share.can_copy })
 }
 
