@@ -1,3 +1,17 @@
+### Organisations (I1)
+
+- organisations(id, name, slug, created_at)
+- organisation_members(id, org_id → organisations.id, user_id → users.id, role enum: admin/teacher, created_at, UNIQUE(org_id,user_id))
+- schools(id, org_id → organisations.id, name, created_at)
+- classes(id, org_id → organisations.id, school_id → schools.id, teacher_id → users.id, name, created_at)
+ - organisation_invites(id, org_id → organisations.id, email, role, token UNIQUE, status, expires_at, created_by → users.id, accepted_by → users.id, created_at, accepted_at)
+ - org_domains(domain PK, org_id → organisations.id, created_at)
+ - audit_logs(id, org_id → organisations.id, actor_id → users.id, action, resource_type, resource_id, metadata, created_at)
+
+RLS (översikt):
+- Medlemmar kan SELECT på sin orgs rader; admin krävs för ändringar av org/medlemmar
+- schools/classes scoper SELECT/ALL till medlemmar i samma org via org_id
+
 ## ERD – public schema
 
 ### Tables

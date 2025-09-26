@@ -20,28 +20,28 @@
 ## Milestone I — Organisationer, Roller & SSO
 
 ### I1. Org-modell & roller
-- [ ] Tabeller: `organisations`, `organisation_members` (role: admin/teacher), koppling till `schools/classes`.
-- [ ] RLS: isolera data per org; admin kan bjuda in lärare.
-**Acceptans**
-- [ ] Lärare ser bara data inom sin org; admin kan invitera/ta bort.
+ - [x] Tabeller: `organisations`, `organisation_members` (role: admin/teacher), koppling till `schools/classes`.
+ - [x] RLS: isolera data per org; admin kan bjuda in lärare.
+ **Acceptans**
+ - [x] Lärare ser bara data inom sin org; admin kan invitera/ta bort.
 
 ### I2. Org-invites
-- [ ] Endpoint + e-postmall för org-inbjudan (svenska).
-- [ ] Länk leder till join-sida; felhantering för ogiltig/utgången invite.
-**Acceptans**
-- [ ] Lärare kan gå med via e-postlänk; auditlogg skapas.
+ - [x] Endpoint + e-postmall för org-inbjudan (svenska).
+ - [x] Länk leder till join-sida; felhantering för ogiltig/utgången invite.
+ **Acceptans**
+ - [x] Lärare kan gå med via e-postlänk; auditlogg skapas.
 
 ### I3. SSO (Google/Microsoft)
-- [ ] Supabase OAuth för Google/Microsoft; mappa domän → org (konfig).
-- [ ] “Föreslå org” på första login om domän matchar en befintlig org.
-**Acceptans**
-- [ ] Login funkar med båda IdP; org-mappning dokumenterad/testad.
+ - [x] Supabase OAuth för Google/Microsoft; mappa domän → org (konfig).
+ - [x] “Föreslå org” på första login om domän matchar en befintlig org.
+ **Acceptans**
+ - [x] Login funkar med båda IdP; org-mappning dokumenterad/testad.
 
 ### I4. Auditlogg
-- [ ] Tabell `audit_logs` (actor, action, resource, org_id, ts).
-- [ ] Logga nyckelhändelser: inbjudan, rolländring, export, radering.
-**Acceptans**
-- [ ] Admin kan se senaste händelser för sin org.
+ - [x] Tabell `audit_logs` (actor, action, resource, org_id, ts).
+ - [x] Logga nyckelhändelser: inbjudan, rolländring, export, radering.
+ **Acceptans**
+ - [x] Admin kan se senaste händelser för sin org.
 
 ---
 

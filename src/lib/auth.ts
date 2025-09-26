@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import AzureADProvider from 'next-auth/providers/azure-ad'
 import { SupabaseAdapter } from '@auth/supabase-adapter'
 
 const adapter = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXTAUTH_SECRET
@@ -23,12 +24,17 @@ export const authOptions: NextAuthOptions = {
           response_type: "code"
         }
       }
+    }),
+    AzureADProvider({
+      clientId: process.env.AZURE_AD_CLIENT_ID || 'dev-azure-client-id',
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET || 'dev-azure-client-secret',
+      tenantId: process.env.AZURE_AD_TENANT_ID || 'common'
     })
   ],
   callbacks: {
     async signIn({ user: _user, account, profile: _profile }) {
       // Allow Google sign-ins
-      if (account?.provider === 'google') {
+      if (account?.provider === 'google' || account?.provider === 'azure-ad') {
         return true
       }
       return false
