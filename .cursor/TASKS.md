@@ -19,10 +19,10 @@
 ## Milestone I — Organisationer, Roller & SSO
 
 ### I1. Org-modell & RLS
-- [ ] Migrationer: `organisations`, `organisation_members(role: admin|teacher)`, `org_id` på `schools/classes`.
-- [ ] RLS: lärare ser endast sin org; admin kan lägga till/ta bort medlemmar.
+- [x] Migrationer: `organisations`, `organisation_members(role: admin|teacher)`, `org_id` på `schools/classes`.
+- [x] RLS: lärare ser endast sin org; admin kan lägga till/ta bort medlemmar.
 **Acceptans**
-- [ ] Datat isoleras per org; queries scoper alltid på `org_id`.
+- [x] Datat isoleras per org; queries scoper alltid på `org_id`.
 
 ### I2. Inbjudningar
 - [ ] API + e-postmall (svenska) för org-invite.
