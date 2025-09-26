@@ -57,6 +57,24 @@ export default function SignInPage() {
     }
   }
 
+  const handleMicrosoftSignIn = async () => {
+    setIsLoading(true)
+    try {
+      const result = await signIn('azure-ad', { callbackUrl, redirect: false })
+      if (result?.error) {
+        toast.error('Inloggning misslyckades. Försök igen.')
+      } else if (result?.ok) {
+        toast.success('Välkommen tillbaka!')
+        router.push(callbackUrl)
+      }
+    } catch (error) {
+      console.error('Microsoft sign in error:', error)
+      toast.error('Ett fel uppstod vid inloggning.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -143,6 +161,19 @@ export default function SignInPage() {
                   >
                     <Chrome className="w-5 h-5" />
                     Fortsätt med Google
+                  </Button>
+
+                  <Button
+                    fullWidth
+                    size="lg"
+                    variant="outline"
+                    onClick={handleMicrosoftSignIn}
+                    disabled={isLoading}
+                    className="flex items-center gap-3 h-12 text-base font-medium border-2 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    {/* Fallback icon */}
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" fill="currentColor"/><rect x="13" y="3" width="8" height="8" fill="currentColor"/><rect x="3" y="13" width="8" height="8" fill="currentColor"/><rect x="13" y="13" width="8" height="8" fill="currentColor"/></svg>
+                    Fortsätt med Microsoft
                   </Button>
 
                   {/* Divider */}

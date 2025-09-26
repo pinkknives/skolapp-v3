@@ -1,0 +1,49 @@
+name: Release Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci
+      - name: Type check
+        run: npm run type-check
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+      - name: Build
+        run: npm run build
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      - name: Start app
+        run: |
+          npx next start -p 3000 &
+          npx wait-on http://localhost:3000
+      - name: E2E (Chromium)
+        run: npx playwright test --project=chromium
+      - name: E2E (Firefox)
+        run: npx playwright test --project=firefox
+      - name: E2E (WebKit)
+        run: npx playwright test --project=webkit
+      - name: RLS probe
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: node scripts/run-rls-tests.js
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: 'http://localhost:3000/,http://localhost:3000/teacher/quiz/create'
+          budgetPath: ./.lighthouse/budgets.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+

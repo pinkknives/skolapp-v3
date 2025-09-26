@@ -38,11 +38,12 @@ export async function GET(request: NextRequest) {
     since.setDate(since.getDate() - weeks * 7)
     const sinceISO = since.toISOString()
 
+    // Fetch teacher's quiz sessions
     const { data: sessions, error: sessionsError } = await supabaseAdmin
-      .from('sessions')
-      .select('id, started_at')
-      .eq('teacher_id', teacherId)
-      .gte('started_at', sinceISO)
+      .from('quiz_sessions')
+      .select('id, created_at')
+      .eq('owner_id', teacherId)
+      .gte('created_at', sinceISO)
 
     if (sessionsError) {
       return NextResponse.json({ error: 'Kunde inte hämta sessioner' }, { status: 500 })
@@ -54,10 +55,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: answers, error: answersError } = await supabaseAdmin
-      .from('session_answers')
-      .select('is_correct, submitted_at, session_id')
+      .from('attempt_items')
+      .select('is_correct, answered_at, session_id')
       .in('session_id', sessionIds)
-      .gte('submitted_at', sinceISO)
+      .gte('answered_at', sinceISO)
 
     if (answersError) {
       return NextResponse.json({ error: 'Kunde inte hämta svar' }, { status: 500 })
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
     let total = 0
 
     for (const a of answers || []) {
-      const date = new Date(a.submitted_at as string)
+      const date = new Date(a.answered_at as string)
       const { year, week } = getISOWeek(date)
       const key = `${year}-W${String(week).padStart(2, '0')}`
       if (!buckets.has(key)) {

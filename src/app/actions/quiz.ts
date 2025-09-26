@@ -108,6 +108,16 @@ export async function createQuizAction(formData: FormData): Promise<CreateQuizRe
       }
     }
 
+    // Fire-and-forget async AI training data collection via Edge Function
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ''
+      fetch(`${baseUrl}/functions/v1/ai-training-collector`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ teacher_id: ownerId, quiz_id: quiz.id, title })
+      }).catch(() => {})
+    } catch {}
+
     revalidatePath('/teacher/quiz')
     return {
       success: true,

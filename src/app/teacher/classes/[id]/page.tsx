@@ -24,6 +24,8 @@ export default function ClassPage() {
   const [loading, setLoading] = React.useState(true)
   const [insights, setInsights] = React.useState<InsightsData | null>(null)
   const [insightsLoading, setInsightsLoading] = React.useState(false)
+  const [pushEnabled, setPushEnabled] = React.useState<boolean>(false)
+  const [updatingPush, setUpdatingPush] = React.useState<boolean>(false)
 
   React.useEffect(() => {
     const params = new URLSearchParams(Array.from(searchParams.entries()))
@@ -47,6 +49,7 @@ export default function ClassPage() {
         const stats = await statsRes.json()
         if (aborted) return
         setName(cls?.name || 'Klass')
+        setPushEnabled(!!cls?.push_notifications_enabled)
         // Subject aggregation
         const bySub = new Map<string, { sum: number; n: number }>()
         ;(stats?.class?.data || []).forEach((r: { subject?: string | null; correct_rate: number }) => {
@@ -107,6 +110,27 @@ export default function ClassPage() {
             <option value="year">år</option>
           </select>
           <Button variant="outline" onClick={() => location.reload()}>Uppdatera</Button>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={pushEnabled}
+              onChange={async (e) => {
+                const next = e.target.checked
+                setUpdatingPush(true)
+                try {
+                  const resp = await fetch(`/api/classes/${classId}/push`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: next })
+                  })
+                  if (resp.ok) setPushEnabled(next)
+                } finally {
+                  setUpdatingPush(false)
+                }
+              }}
+              className="h-4 w-4 text-primary-600"
+            />
+            <span className="text-sm">{updatingPush ? 'Uppdaterar…' : (pushEnabled ? 'Push på' : 'Push av')}</span>
+          </label>
           <Button
             onClick={async () => {
               const source = prompt('Källa elev-ID (uuid) att slå ihop?')

@@ -13,8 +13,14 @@ export default function QuizTakePage() {
   const [student, setStudent] = useState<Student | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
+  const [online, setOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true)
 
   useEffect(() => {
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    
     // Get quiz data from session storage or URL params
     const quizData = sessionStorage.getItem('current_quiz')
     const sessionData = sessionStorage.getItem('current_session')
@@ -37,6 +43,11 @@ export default function QuizTakePage() {
     }
     
     setLoading(false)
+
+    return () => {
+      window.removeEventListener('online', on)
+      window.removeEventListener('offline', off)
+    }
   }, [])
 
   const handleQuizComplete = (result: { answers: StudentAnswer[], timeSpent: number }) => {
@@ -103,12 +114,19 @@ export default function QuizTakePage() {
   }
 
   return (
-    <QuizTaking
-      quiz={quiz}
-      session={session}
-      student={student}
-      onComplete={handleQuizComplete}
-      onExit={handleExit}
-    />
+    <>
+      {!online && (
+        <div className="w-full bg-warning-100 text-warning-900 px-4 py-2 text-sm text-center">
+          Du är offline. Dina svar köas och skickas när anslutningen är tillbaka.
+        </div>
+      )}
+      <QuizTaking
+        quiz={quiz}
+        session={session}
+        student={student}
+        onComplete={handleQuizComplete}
+        onExit={handleExit}
+      />
+    </>
   )
 }

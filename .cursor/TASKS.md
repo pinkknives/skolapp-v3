@@ -1,222 +1,161 @@
-# Cursor Prompt – Milestone A–D (In-place AI-hjälp för Quiz)
+# Skolapp – Milestone I–N (Nästa fas)
 
-> Kör i ordning: **A → B → C → D**. Följ *exakt* nedan. Små, fokuserade diffar. Små commits med prefix **A1/A2/B1…**.
+> Kör i ordning: **I → J → K → L → M → N**.
 
 ## Körregler (obligatoriska)
 - Efter **varje** task: kör  
   `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
-- **Om alla tre är gröna:** markera tasken som `[x]`, gör **liten** commit `feat(quiz-ai): A1 …`, fortsätt DIREKT.
-- **Stoppa endast** om build/lint/type-check faller, eller om acceptans är oklar. I övrigt: fortsätt automatiskt.
-- Ändra **inte** secrets/RLS. Gör **inte** breda kosmetiska refactors.
+- **Om alla tre kommandon är gröna** → markera tasken som `[x]`, gör en **liten** commit
+  med prefix **I1/I2/J1…**, och **fortsätt DIREKT** till **nästa** task.
+- **Stanna endast** om:
+  1) type-check/lint/build misslyckas, **eller**  
+  2) acceptanskriterier är oklara/ambigua.  
+  I alla andra fall: **fortsätt automatiskt** tills alla tasks är klara.
+- Gör inte breda kosmetiska förändringar. Endast minimala, fokuserade diffar per task.
+- Alla DB-ändringar via migrations; RLS krävs för nya tabeller.
+- Följ A11y (WCAG 2.1 AA) & i18n (svenska), och logga telemetri för nya flöden.
 
 ---
 
-## Milestone A — Layout & Varianter
+## Milestone I — Organisationer, Roller & SSO
 
-### A1. Panel-variant [x]
-**Mål**
-- Lägg prop `variant: 'panel' | 'sheet'` i `ImprovedAIQuizDraft`.
-- Bryt ur modal-beroenden. Skapa dockad `<aside>`-panel för desktop.
-- Ta bort `showAIDraft`/`?type=ai-draft` i create-vyn.
-
-**Gör så här**
-1) I `ImprovedAIQuizDraft`:
-   - Inför `variant`-prop.
-   - Om `variant === 'panel'`: rendera utan overlay/stäng-X, med intern scroll: `max-h-[calc(100vh-8rem)] overflow-auto`.
-2) I `src/app/teacher/quiz/create/page.tsx` (eller `QuizQuestionsStep` om create går via wizard):
-   - Bygg grid: main + `<aside aria-label="AI-hjälp" class="sticky top-20 ...">`.
-   - Rendera `ImprovedAIQuizDraft variant="panel"` permanent.
-3) Ta bort logik för `showAIDraft` och URL-param `type=ai-draft`.
-
+### I1. Org-modell & roller
+ - [x] Tabeller: `organisations`, `organisation_members` (role: admin/teacher), koppling till `schools/classes`.
+ - [x] RLS: isolera data per org; admin kan bjuda in lärare.
 **Acceptans**
-- Panelen syns till höger (≥1024px), sticky, utan overlay. Build/lint/type-check gröna.
+ - [x] Lärare ser bara data inom sin org; admin kan invitera/ta bort.
 
----
-
-### A2. Bottom sheet-variant (mobil) [x]
-**Mål**
-- Implementera `variant="sheet"` (bottom sheet).
-- FAB på mobil som öppnar/stänger sheet. Half (~70vh) ↔ Full (100vh). Swipe/ESC stänger.
-- Fokusfälla + restore focus.
-
-**Gör så här**
-1) `ImprovedAIQuizDraft`: branch för `sheet`:
-   - `fixed bottom-0 inset-x-0`, drag-handle, trap focus, `aria-modal="true" role="dialog"`.
-2) Skapa `FAB`-komponent (`fixed bottom-4 right-4`, respektera `env(safe-area-inset-bottom)`).
-3) I create-vyn: mounta FAB endast `<640px` som togglar `sheet`.
-
+### I2. Org-invites
+ - [x] Endpoint + e-postmall för org-inbjudan (svenska).
+ - [x] Länk leder till join-sida; felhantering för ogiltig/utgången invite.
 **Acceptans**
-- Mobil: FAB öppnar sheet (half/full), swipe/ESC stänger, fokus återställs till FAB.
+ - [x] Lärare kan gå med via e-postlänk; auditlogg skapas.
 
----
-
-### A3. Tablet-stöd [x]
-**Mål**
-- Panelen kollapsbar 640–1024px.
-- Sticky sidoflik för öppna/stäng utan skroll.
-
-**Gör så här**
-- Lägg `data-state="open|closed"` på panelen. Skapa smal “AI”-flik (`position: sticky`) som togglar state.
-
+### I3. SSO (Google/Microsoft)
+ - [x] Supabase OAuth för Google/Microsoft; mappa domän → org (konfig).
+ - [x] “Föreslå org” på första login om domän matchar en befintlig org.
 **Acceptans**
-- Tablet: panel kan öppnas/stängas via flik utan att scrolla.
+ - [x] Login funkar med båda IdP; org-mappning dokumenterad/testad.
 
----
-
-## Milestone B — Per-fråga AI-åtgärder
-
-### B1. AI-meny i frågekort [x]
-**Mål**
-- AI-ikon i varje frågekort med: *Förbättra*, *Förenkla/Förtydliga*, *Generera distraktorer*, *Omgenerera fråga*.
-- Öppna panel/sheet i rätt åtgärdsflik, förifyll aktiv fråga.
-- Diff-preview före ersättning.
-
-**Gör så här**
-- I `QuestionEditor`: lägg overflow-meny/ikon. Vid val: kalla `openAIAction({ action, question })`.
-- I `ImprovedAIQuizDraft`: stöd för per-fråge-context och diff-preview (`före/efter`) + *Ersätt* / *Infoga* / *Avbryt*.
-
+### I4. Auditlogg
+ - [x] Tabell `audit_logs` (actor, action, resource, org_id, ts).
+ - [x] Logga nyckelhändelser: inbjudan, rolländring, export, radering.
 **Acceptans**
-- Klick på AI-ikon visar diff-preview och kan ersätta/infoga. Fokus hoppar till uppdaterat fält. Toast “Fråga uppdaterad” + Ångra.
+ - [x] Admin kan se senaste händelser för sin org.
 
 ---
 
-### B2. Bevara inline-funktioner [x]
-**Mål**
-- Behåll inline-edit, delete/duplicate, rätt-svars-toggle även efter AI-ersättning.
+## Milestone J — Innehållsbibliotek & Delning
 
-**Gör så här**
-- Återanvänd befintliga handlers; se till att ersättningen skriver in i samma state-struktur.
+### J1. Bibliotek (mallar & versioner)
+ - [x] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
+ - [x] Importera quiz → biblioteks-mall; skapa ny version vid ändring.
+ **Acceptans**
+ - [x] Lärare kan spara/återanvända mallar; versionshistorik visas.
 
+### J2. Sök & taggar
+ - [x] Fulltextsök på titel/ämne/årskurs; taggar per item.
+ - [x] Snabbfilter: ämne, svårighetsgrad, typ.
 **Acceptans**
-- Inline-UI fungerar identiskt före/efter AI-ersättning.
+ - [x] Hitta relevanta mallar < 2s; filtren fungerar.
 
----
-
-### B3. Undo/återställ + micro-interaktioner [x]
-**Mål**
-- Spara **senaste** ändring per fråga (minst 1 nivå). Toast med Ångra.
-- Efter infogning/ersättning: auto-scroll till frågekort + fokus på titelinput.
-
-**Gör så här**
-- Lokal ring-buffer (min 1) i state/localStorage.
-- Utility för `scrollIntoView` + `focus()`.
-
+### J3. Delning
+ - [x] Delningslänk inom org; val för read-only/kopiera.
+ - [x] Cross-org delning via signerad länk (begränsad livslängd).
 **Acceptans**
-- Ångra återställer föregående version. Ny/ersatt fråga scrollas in och fokuseras.
+ - [x] Andra lärare kan importera/kopiera mall utan att se elevdata.
 
 ---
 
-## Milestone C — Batch-generering & API
+## Milestone K — Live-undervisning 2.0
 
-### C1. Generera om alla (batch) [x]
-**Mål**
-- Global knapp ovanför frågelistan + i panelen.
-- Preview i panel/sheet med selektering. *Lägg till* / *Ersätt*.
-
-**Gör så här**
-- Återanvänd mock/preview-mekaniken. Koppla till `onQuestionsGenerated`.
-
+### K1. Live-sessioner
+ - [x] “Starta live” (lärare) → elevklient joinar session (presence).
+ - [x] Live-resultat/agg uppdateras i realtid (Ably/Supabase Realtime).
 **Acceptans**
-- Flera frågor genereras om i ett svep och kan väljas/införas utan sidbyte.
+ - [x] 25+ samtidiga elever utan tapp; latens < 300ms LAN-nära.
 
----
-
-### C2. Lägg till fler frågor [x]
-**Mål**
-- Knapp i panelen för att addera fler frågor utan att ersätta.
-
-**Gör så här**
-- Samma preview-flöde som C1 men merge istället för replace.
-
+### K2. Kontroller & anti-fusk (light)
+ - [x] Pausa/lås fråga, dölj/visa rätt svar, tidsgräns.
+ - [x] “Elev är off-tab” signal (heuristik) – endast indikation, ej block.
 **Acceptans**
-- Befintliga frågor finns kvar; nya läggs till selektivt.
+ - [x] Kontroller påverkar klienter i realtid; off-tab markeras.
 
----
-
-### C3. API-actions
-**Mål**
-- Konsolidera till `enhanced-generate` med `action: 'improve' | 'rewrite' | 'regenerate' | 'distractors'`.
-- Zod-schema + felhantering.
-
-**Gör så här**
-- Uppdatera serverroute/payload/guards. En enhetlig fetch-helper `aiAction(payload)`.
-
+### K3. Snabbkommandon
+ - [x] Tangentbordsgenvägar för lärare (N nästa fråga, P paus, R visa rätt svar).
 **Acceptans**
-- Alla åtgärder går via samma endpoint; validering/fel visas korrekt i UI.
+ - [x] Genvägar fungerar och är dokumenterade i UI.
 
 ---
 
-### C4. Draft-hantering [x]
-**Mål**
-- Behåll localStorage-drafts för panelen.
-- Cacha senaste per-frågeoperation (för Ångra).
+## Milestone L — PWA, Push & Mobilfinish
 
-**Gör så här**
-- LS-nycklar namngett per quiz/id. Clear efter accept enligt befintlig policy.
-
+### L1. PWA & offline
+ - [x] Manifest, Workbox-strategier (quiz-genomförande fungerar offline).
+ - [x] Sync-queue för svar vid återkoppling.
 **Acceptans**
-- Reload behåller panelens utkast; ångra fungerar för senaste operation.
+ - [x] Offline-genomförande sparas och synkas korrekt.
 
----
-
-## Milestone D — A11y, Telemetri, Tester, Prestanda
-
-### D1. Tillgänglighet [x]
-**Mål**
-- Panel: `<aside aria-label="AI-hjälp">` (ej modal).
-- Sheet: `role="dialog" aria-modal="true"`, fokusfälla, ESC/drag, restore focus.
-- Live-region för “N nya frågor infogade” / “Fråga uppdaterad”.
-
+### L2. Push-notiser
+- [ ] Web Push (OneSignal/FCM): “quiz startar”, “resultat klara”.
+- [ ] Inställning per användare/klass.
 **Acceptans**
-- Tabb-ordning korrekt. Skärmläsare får feedback.
+- [ ] Push levereras; opt-in/opt-out fungerar.
 
----
-
-### D2. Microcopy (svenska) [x]
-**Mål**
-- Konsekvent svensk microcopy i `form/generating/preview/error`.
-
+### L3. Mobil UI-polish
+ - [x] Sticky bottombar/FAB där relevant (AI, Live, Bibliotek).
+- [ ] Touch-targets ≥44px, keyboard-safe areas, reducerad motion.
 **Acceptans**
-- Alla texter på svenska, enhetlig ton.
+- [ ] Lighthouse PWA ≥ 90; inga layoutskift i kritiska vyer.
 
 ---
 
-### D3. Telemetri + feature flag [x]
-**Mål**
-- Flagga `features.quizAI.docked`.
-- Events: `ai_panel_open/close`, `ai_action_improve/regenerate/distractors`, `ai_batch_apply`, `ai_question_replace`, `undo`.
+## Milestone M — Planer & Billing
 
+### M1. Planer & kvoter
+- [ ] Free/Pro/Skola: kvoter (klasser, AI-anrop/mån, delade mallar).
+- [ ] UI-indikatorer + graceful degrade när tak nås.
 **Acceptans**
-- Flagga kan slå av/på nya UI:t; events syns i logg.
+- [ ] Server-kvoter hårda; tydlig UX vid tak.
 
----
-
-### D4. Tester [x]
-**Mål**
-- RTL: panel/sheet-rendering, per-fråga-meny, fokus/ARIA.
-- Playwright: batch-flöde, per-fråga-förbättring, mobil FAB+sheet (half↔full, swipe).
-- Lighthouse (manuellt/CI-artifact): fokus/kontrast OK.
-
+### M2. Stripe Billing
+- [ ] Checkout + kundportal (org-admin).
+- [ ] Webhooks som uppdaterar plan/status i DB.
 **Acceptans**
-- Samtliga nya tester gröna i CI.
+- [ ] Upp/nedgradering syns inom 1 min; fel återhämtas.
 
 ---
 
-### D5. Prestanda [x]
-**Mål**
-- Dynamic import av AI-panelen på mobil/tablet.
-- Skeleton loaders i `generating`.
+## Milestone N — Kvalitet, Observability & QA-grind
 
+### N1. Observability
+ - [x] Sentry (webb + edge/server) med release & sourcemaps.
+ - [x] Correlation-id i API & log drain.
 **Acceptans**
-- Låg initial load; tydlig “generating” skeleton.
+ - [x] Exceptions i Sentry m. versions-tagg; korrelerade loggar.
+
+### N2. Performance & stabilitet
+- [ ] `next/image` + `sizes` för stora medier.
+ - [x] Profilera live-sessioner; backoff/retry-strategier.
+**Acceptans**
+- [ ] LCP/CLS stabila; live håller vid packet loss.
+
+### N3. Testhårdning
+ - [x] Playwright: auth (inkl. mail), org-invite, live-session, bibliotek.
+ - [x] SQL/RLS-tester (pgTAP eller scriptade probes).
+**Acceptans**
+ - [x] CI kör Chromium + minst WebKit/Firefox; RLS-suite grön.
+
+### N4. Release-gate
+ - [x] “Go/No-Go” pipeline: type-check, lint (0 varningar), build, e2e, RLS-probes, Lighthouse.
+**Acceptans**
+ - [x] Merge blockeras om något steg faller.
 
 ---
 
-## Slutkontroll (DoD)
-- Desktop: dockad panel alltid synlig (ingen modal i create-vyn).
-- Tablet: kollapsbar panel m. sticky flik.
-- Mobil: FAB + bottom sheet (half/full, swipe/ESC, fokusfälla).
-- Per-fråga-åtgärder med diff-preview + fokus/undo.
-- Batch: generera om alla + lägg till fler utan sidbyte.
-- Telemetri/flag OK, A11y OK, tester gröna.
-
+## Gemensamma krav
+- [ ] Nya tabeller har migrations, index och **RLS**.
+- [ ] Inga hårdkodade färg-hex (använd tokens/neutral-*).
+- [ ] A11y: kontrast ≥ 4.5:1, aria-attribut, synlig fokus.
+- [ ] Telemetri: varje ny route/event loggas anonymiserat (GDPR).
+- [ ] Kort README-sektion per milstolpe (setup, endpoints, env).

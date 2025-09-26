@@ -24,6 +24,7 @@ import { AIFeatureBlock } from '@/components/billing/AIFeatureBlock'
 import { QuizOnboarding } from '@/components/quiz/QuizOnboarding'
 import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
 import { toast } from '@/components/ui/Toast'
+import { AIQuotaDisplay } from '@/components/billing/AIQuotaDisplay'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -47,6 +48,30 @@ function CreateQuizPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { canUseAI } = useEntitlements()
+  const [showConsentPrompt, setShowConsentPrompt] = useState(false)
+  const [consentLoading, setConsentLoading] = useState(true)
+
+  useEffect(() => {
+    const checkConsent = async () => {
+      try {
+        // only prompt once per browser unless explicitly reset
+        const key = 'sk_consent_prompt_shown_v1'
+        const shown = typeof window !== 'undefined' ? localStorage.getItem(key) : '1'
+        if (shown === '1') {
+          setConsentLoading(false)
+          return
+        }
+        const resp = await fetch('/api/user/settings/consent', { method: 'GET' })
+        if (resp.ok) {
+          const data = await resp.json()
+          if (!data.consent) setShowConsentPrompt(true)
+        }
+      } finally {
+        setConsentLoading(false)
+      }
+    }
+    checkConsent()
+  }, [])
   const dockedEnabled = process.env.NEXT_PUBLIC_FEATURE_QUIZ_AI_DOCKED !== 'false'
 
   // Check for ai-draft URL parameter
@@ -249,6 +274,54 @@ function CreateQuizPage() {
     <Layout>
       <Section spacing="lg">
         <Container>
+          {/* Consent prompt modal */}
+          {showConsentPrompt && !consentLoading && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+                <div className="p-6 border-b">
+                  <Heading level={3}>Får vi använda dina quiz anonymiserat?</Heading>
+                  <Typography variant="body2" className="text-neutral-600 mt-2">
+                    Om du samtycker kan dina quizfrågor användas anonymt för att förbättra AI‑förslagen för alla lärare.
+                  </Typography>
+                </div>
+                <div className="p-6 flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/user/settings/consent', {
+                          method: 'PATCH',
+                          headers: { 'content-type': 'application/json' },
+                          body: JSON.stringify({ consent: false })
+                        })
+                      } finally {
+                        try { localStorage.setItem('sk_consent_prompt_shown_v1', '1') } catch {}
+                        setShowConsentPrompt(false)
+                      }
+                    }}
+                  >
+                    Nej, inte nu
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/user/settings/consent', {
+                          method: 'PATCH',
+                          headers: { 'content-type': 'application/json' },
+                          body: JSON.stringify({ consent: true })
+                        })
+                      } finally {
+                        try { localStorage.setItem('sk_consent_prompt_shown_v1', '1') } catch {}
+                        setShowConsentPrompt(false)
+                      }
+                    }}
+                  >
+                    Ja, jag samtycker
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="mb-12 space-y-4">
             <Heading level={1}>
               Skapa nytt quiz
@@ -400,6 +473,7 @@ function CreateQuizPage() {
 
             {/* Sidebar */}
             <div className="space-y-4">
+              <AIQuotaDisplay />
               {/* AI Assistant */}
               {canUseAI ? (
                 <AIAssistantPanel

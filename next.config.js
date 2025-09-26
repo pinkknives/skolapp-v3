@@ -3,6 +3,9 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  fallbacks: {
+    document: '/offline'
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -12,6 +15,40 @@ const withPWA = require('next-pwa')({
         expiration: {
           maxEntries: 4,
           maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
+        }
+      }
+    },
+    // Queue quiz answer submissions when offline (L1)
+    {
+      urlPattern: /\/api\/live-sessions\/.+\/answer$/i,
+      handler: 'NetworkOnly',
+      method: 'POST',
+      options: {
+        backgroundSync: {
+          name: 'answers-queue',
+          options: { maxRetentionTime: 24 * 60 }
+        }
+      }
+    },
+    {
+      urlPattern: /\/api\/sessions\/.+\/attempts\/save$/i,
+      handler: 'NetworkOnly',
+      method: 'POST',
+      options: {
+        backgroundSync: {
+          name: 'attempts-save-queue',
+          options: { maxRetentionTime: 24 * 60 }
+        }
+      }
+    },
+    {
+      urlPattern: /\/api\/sessions\/.+\/attempts\/submit$/i,
+      handler: 'NetworkOnly',
+      method: 'POST',
+      options: {
+        backgroundSync: {
+          name: 'attempts-submit-queue',
+          options: { maxRetentionTime: 24 * 60 }
         }
       }
     },
