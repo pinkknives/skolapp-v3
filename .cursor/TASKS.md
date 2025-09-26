@@ -25,10 +25,10 @@
 - [x] Datat isoleras per org; queries scoper alltid på `org_id`.
 
 ### I2. Inbjudningar
-- [ ] API + e-postmall (svenska) för org-invite.
-- [ ] Join-sida: ogiltig/utgången länk hanteras korrekt.
+- [x] API + e-postmall (svenska) för org-invite.
+- [x] Join-sida: ogiltig/utgången länk hanteras korrekt.
 **Acceptans**
-- [ ] Lärare kan bli inbjudna och gå med i org; auditlogg skapas.
+- [x] Lärare kan bli inbjudna och gå med i org; auditlogg skapas.
 
 ### I3. SSO (Google/Microsoft)
 - [ ] Supabase OAuth (Google/Microsoft). Domän→org-mappning.
