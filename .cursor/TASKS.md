@@ -1,125 +1,161 @@
-# Skolapp – Milestone E–H (Data, Supabase, Consent, Feedback)
+# Skolapp – Milestone I–N (Nästa fas)
 
-> Kör i ordning: **E → F → G → H**.  
-> **Milestone E börjar med en fullständig datagranskning + fix av Supabase & Auth-flöden** via MCP.
+> Kör i ordning: **I → J → K → L → M → N**.
 
 ## Körregler (obligatoriska)
 - Efter **varje** task: kör  
   `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
-- **Om alla tre är gröna** → markera tasken `[x]`, gör **liten** commit med prefix **E0/E1…**, och **fortsätt direkt**.
+- **Om alla tre kommandon är gröna** → markera tasken som `[x]`, gör en **liten** commit
+  med prefix **I1/I2/J1…**, och **fortsätt DIREKT** till **nästa** task.
 - **Stanna endast** om:
-  1) type-check/lint/build faller, **eller**
-  2) acceptanskriterier är oklara/ambigua.
-- Cursor får använda **MCP/Supabase** fullt ut: både read och write (`execute_sql`, `apply_migration`, `deploy_edge_function`).
-- Alla schemaändringar görs via migrations (`supabase db migration new` + `apply_migration`), inte ad-hoc SQL.
-- Telemetri/A11y ska alltid uppdateras vid nya UI-flöden.
+  1) type-check/lint/build misslyckas, **eller**  
+  2) acceptanskriterier är oklara/ambigua.  
+  I alla andra fall: **fortsätt automatiskt** tills alla tasks är klara.
+- Gör inte breda kosmetiska förändringar. Endast minimala, fokuserade diffar per task.
+- Alla DB-ändringar via migrations; RLS krävs för nya tabeller.
+- Följ A11y (WCAG 2.1 AA) & i18n (svenska), och logga telemetri för nya flöden.
 
 ---
 
-## Milestone E — Data, Supabase & Consent
+## Milestone I — Organisationer, Roller & SSO
 
-### E0. Data Audit & Fix
- - [x] Kör MCP: `list_tables`, `list_extensions`, `list_migrations`, `generate_typescript_types`, `execute_sql` (queries för `pg_indexes`, `pg_policies`, `information_schema`).
- - [x] Skapa/uppdatera docs:  
-  - `docs/data/ERD.md` (tabeller, relationer, index, vyer)  
-  - `docs/data/rls-review.md` (RLS policies, roll-matris)  
-  - `docs/data/types.generated.ts` (Supabase TS-typer)  
-  - `docs/data/types.diff.md` (skillnader mot lokala typer)  
-  - `docs/data/gaps-and-migrations.md` (gap + planerade migrations)
- - [x] Om gap hittas → skapa migrationer och kör `apply_migration`.
+### I1. Org-modell & roller
+- [ ] Tabeller: `organisations`, `organisation_members` (role: admin/teacher), koppling till `schools/classes`.
+- [ ] RLS: isolera data per org; admin kan bjuda in lärare.
 **Acceptans**
-- [x] `docs/data/*` skapade/uppdaterade.
-- [x] Gap åtgärdade via migrationer eller listade i `gaps-and-migrations.md`.
+- [ ] Lärare ser bara data inom sin org; admin kan invitera/ta bort.
 
-### E0a. Auth-flöden (konto, login, reset, mail)
-- [x] Inspektera Supabase `auth.*`-tabeller (users, sessions, identities, mfa, verifications).  
-- [x] Skanna projektets auth-kod (`src/app/(auth)/**/*.{ts,tsx}`) för signup, login, reset password.  
-- [x] Dokumentera flöden i `docs/data/auth-review.md`.  
-- [ ] Verifiera mailmallar (signup, reset, magic links) – på svenska, rätt tonalitet.  ← kontroll i Supabase Studio kvar  
- - [x] Lägg E2E-tester (Playwright) för signup/login/reset flows.  
-**Acceptans**  
-- [x] `auth-review.md` beskriver alla flöden.  
-- [ ] Mailmallar fungerar i dev + prod.  ← provskicka & validera  
-- [x] Auth-flöden körbara i Playwright (signup, login, reset).
-
-### E1. RLS & Åtkomstflöden
- - [x] Verifiera att alla quiz-/resultattabeller har korrekt RLS:  
-  - Lärare → sina klasser  
-  - Elever → sina egna resultat  
- - [x] Uppdatera policies om nödvändigt.  
- - [x] Lägg saknade index (klass_id, quiz_id, elev_id).  
+### I2. Org-invites
+- [ ] Endpoint + e-postmall för org-inbjudan (svenska).
+- [ ] Länk leder till join-sida; felhantering för ogiltig/utgången invite.
 **Acceptans**
- - [x] RLS testad med queries.  
- - [x] Index skapade, validerade.
+- [ ] Lärare kan gå med via e-postlänk; auditlogg skapas.
 
-### E2. Consent – Samtyckesdialog + inställning
- - [x] UI: Modal vid första quizskapande: “Får vi använda dina quiz anonymiserat…”.  
- - [x] DB: `user_settings.consent_to_ai_training boolean NOT NULL DEFAULT false`.  
- - [x] Inställningsvy: toggle.  
+### I3. SSO (Google/Microsoft)
+- [ ] Supabase OAuth för Google/Microsoft; mappa domän → org (konfig).
+- [ ] “Föreslå org” på första login om domän matchar en befintlig org.
 **Acceptans**
- - [x] Beslut sparas i DB och kan ändras när som helst.
+- [ ] Login funkar med båda IdP; org-mappning dokumenterad/testad.
 
-### E3. Insamling till träningsdata (opt-in)
- - [x] Ny tabell `ai_training_data` (quiz, frågor, metadata) utan PII.  
- - [x] Hook vid quiz-save: om `consent_to_ai_training === true` → skriv anonym rad.  
- - [x] Telemetri: logga consent accept/decline + saved rows.  
+### I4. Auditlogg
+- [ ] Tabell `audit_logs` (actor, action, resource, org_id, ts).
+- [ ] Logga nyckelhändelser: inbjudan, rolländring, export, radering.
 **Acceptans**
- - [x] Endast samtyckta lärare bidrar data.  
- - [x] Ingen PII sparas.
+- [ ] Admin kan se senaste händelser för sin org.
 
 ---
 
-## Milestone F — AI-träning & Feedbackloop
+## Milestone J — Innehållsbibliotek & Delning
 
-### F1. Export-pipeline (JSONL)
- - [x] CLI/cron som exporterar `ai_training_data` → JSONL batch.  
+### J1. Bibliotek (mallar & versioner)
+- [ ] Tabeller: `libraries`, `library_items` (quiz/question), `item_versions`.
+- [ ] Importera quiz → biblioteks-mall; skapa ny version vid ändring.
 **Acceptans**
- - [x] Artefakt `exports/ai_training_YYYYMMDD.jsonl` skapas.
+- [ ] Lärare kan spara/återanvända mallar; versionshistorik visas.
 
-### F2. Lärar-feedback
- - [x] UI: “Var dessa frågor hjälpsamma?” (👍/👎 + ev. kommentar).  
- - [x] Tabell `ai_feedback` kopplad till genereringstillfälle.  
+### J2. Sök & taggar
+- [ ] Fulltextsök på titel/ämne/årskurs; taggar per item.
+- [ ] Snabbfilter: ämne, svårighetsgrad, typ.
 **Acceptans**
- - [x] Feedback sparas, joinbar med `ai_training_data`.
+- [ ] Hitta relevanta mallar < 2s; filtren fungerar.
+
+### J3. Delning
+- [ ] Delningslänk inom org; val för read-only/kopiera.
+- [ ] Cross-org delning via signerad länk (begränsad livslängd).
+**Acceptans**
+- [ ] Andra lärare kan importera/kopiera mall utan att se elevdata.
 
 ---
 
-## Milestone G — Analys, Diagram & Transparens
+## Milestone K — Live-undervisning 2.0
 
-### G1. Dashboard (lärare)
-- [x] Diagram för klass/elev över tid: resultat, trender, svårighetsgrad.  
-- [x] Index/vyer för prestanda.  
+### K1. Live-sessioner
+- [ ] “Starta live” (lärare) → elevklient joinar session (presence).
+- [ ] Live-resultat/agg uppdateras i realtid (Ably/Supabase Realtime).
 **Acceptans**
-- [x] Diagram visar korrekta aggregat.  
+- [ ] 25+ samtidiga elever utan tapp; latens < 300ms LAN-nära.
 
-### G2. Transparens
-- [x] Info-sektion: “Så används datan/anonymisering”.  
-- [x] Länk till policy.  
+### K2. Kontroller & anti-fusk (light)
+- [ ] Pausa/lås fråga, dölj/visa rätt svar, tidsgräns.
+- [ ] “Elev är off-tab” signal (heuristik) – endast indikation, ej block.
 **Acceptans**
-- [x] Text begriplig, på svenska.
+- [ ] Kontroller påverkar klienter i realtid; off-tab markeras.
+
+### K3. Snabbkommandon
+- [ ] Tangentbordsgenvägar för lärare (N nästa fråga, P paus, R visa rätt svar).
+**Acceptans**
+- [ ] Genvägar fungerar och är dokumenterade i UI.
 
 ---
 
-## Milestone H — Skalning & Robusthet
+## Milestone L — PWA, Push & Mobilfinish
 
-### H1. Köer & async-insamling
- - [x] Flytta insamling till queue/async (Edge Function + Supabase Queue).  
+### L1. PWA & offline
+- [ ] Manifest, Workbox-strategier (quiz-genomförande fungerar offline).
+- [ ] Sync-queue för svar vid återkoppling.
 **Acceptans**
- - [x] Quiz-save blockar ej, testad med ≥25 samtidiga.
+- [ ] Offline-genomförande sparas och synkas korrekt.
 
-### H2. Metrics/Observability
- - [x] Logga consent-rate, träningsrader/dag, feedback-ratio.  
- - [x] Dashboard + alerts.  
+### L2. Push-notiser
+- [ ] Web Push (OneSignal/FCM): “quiz startar”, “resultat klara”.
+- [ ] Inställning per användare/klass.
 **Acceptans**
- - [x] Metrics synliga, larm triggas vid avvikelser.
+- [ ] Push levereras; opt-in/opt-out fungerar.
+
+### L3. Mobil UI-polish
+- [ ] Sticky bottombar/FAB där relevant (AI, Live, Bibliotek).
+- [ ] Touch-targets ≥44px, keyboard-safe areas, reducerad motion.
+**Acceptans**
+- [ ] Lighthouse PWA ≥ 90; inga layoutskift i kritiska vyer.
+
+---
+
+## Milestone M — Planer & Billing
+
+### M1. Planer & kvoter
+- [ ] Free/Pro/Skola: kvoter (klasser, AI-anrop/mån, delade mallar).
+- [ ] UI-indikatorer + graceful degrade när tak nås.
+**Acceptans**
+- [ ] Server-kvoter hårda; tydlig UX vid tak.
+
+### M2. Stripe Billing
+- [ ] Checkout + kundportal (org-admin).
+- [ ] Webhooks som uppdaterar plan/status i DB.
+**Acceptans**
+- [ ] Upp/nedgradering syns inom 1 min; fel återhämtas.
+
+---
+
+## Milestone N — Kvalitet, Observability & QA-grind
+
+### N1. Observability
+- [ ] Sentry (webb + edge/server) med release & sourcemaps.
+- [ ] Correlation-id i API & log drain.
+**Acceptans**
+- [ ] Exceptions i Sentry m. versions-tagg; korrelerade loggar.
+
+### N2. Performance & stabilitet
+- [ ] `next/image` + `sizes` för stora medier.
+- [ ] Profilera live-sessioner; backoff/retry-strategier.
+**Acceptans**
+- [ ] LCP/CLS stabila; live håller vid packet loss.
+
+### N3. Testhårdning
+- [ ] Playwright: auth (inkl. mail), org-invite, live-session, bibliotek.
+- [ ] SQL/RLS-tester (pgTAP eller scriptade probes).
+**Acceptans**
+- [ ] CI kör Chromium + minst WebKit/Firefox; RLS-suite grön.
+
+### N4. Release-gate
+- [ ] “Go/No-Go” pipeline: type-check, lint (0 varningar), build, e2e, RLS-probes, Lighthouse.
+**Acceptans**
+- [ ] Merge blockeras om något steg faller.
 
 ---
 
 ## Gemensamma krav
-- [ ] Alla schemaändringar via migrations.  ← majoriteten via migrations; dubbelkolla äldre tabeller
-- [ ] RLS på alla nya tabeller.  ← bekräfta `ai_feedback`, `ai_training_data` policies i Studio
-- [ ] Inga PII i träningsdata.  ← granskat; håll koll vid framtida fält
-- [ ] UI följer A11y + i18n (svenska).  ← genomgått för nya vyer
-- [ ] CI kör tester på dataflöden och nya policies.  ← lägg CI‑steg för RLS‑prov
-- [ ] Mailmallar testas i dev + prod.  ← återstår att provskicka
-- [ ] Auth-, quiz- och consentflöden täckta i Playwright E2E.  ← utöka från smoke till full E2E
+- [ ] Nya tabeller har migrations, index och **RLS**.
+- [ ] Inga hårdkodade färg-hex (använd tokens/neutral-*).
+- [ ] A11y: kontrast ≥ 4.5:1, aria-attribut, synlig fokus.
+- [ ] Telemetri: varje ny route/event loggas anonymiserat (GDPR).
+- [ ] Kort README-sektion per milstolpe (setup, endpoints, env).
