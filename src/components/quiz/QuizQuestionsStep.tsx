@@ -10,6 +10,7 @@ import { Quiz, Question, QuestionType, MultipleChoiceQuestion } from '@/types/qu
 import { QuestionEditor } from './QuestionEditor'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
 import { questionTypes } from '@/locales/sv/quiz'
+import { Modal } from '@heroui/react'
 
 // Dynamically import AI components for better performance
 const AIQuestionGenerator = dynamic(() => import('./AIQuestionGenerator').then(mod => ({ default: mod.AIQuestionGenerator })), {
@@ -54,6 +55,8 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
   const [file, setFile] = useState<File | null>(null)
   const [extractPreview, setExtractPreview] = useState('')
   const [isExtracting, setIsExtracting] = useState(false)
+  const [showReview, setShowReview] = useState(false)
+  const [reviewItems, setReviewItems] = useState<{ text: string; level: 'ok'|'warn'|'block'; reasons: string[] }[]>([])
 
   // Validate on changes
   useEffect(() => {
@@ -142,6 +145,24 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
     } as MultipleChoiceQuestion))
     onChange({ questions })
     onValidationChange(questions.length > 0)
+  }
+
+  const reviewExtract = async () => {
+    const lines = extractPreview.split(/\n|\r/)
+    const headings = lines.filter(l => /^\s*(#{1,6}|\d+\.|\-\s|\•\s)/.test(l) || l.trim().length > 40).slice(0, 10)
+    const resp = await fetch('/api/moderation/screen', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: headings })
+    })
+    const data = await resp.json()
+    const results = (data.results || []).map((r: { level: 'ok'|'warn'|'block'; reasons: string[] }, i: number) => ({
+      text: headings[i],
+      level: r.level,
+      reasons: r.reasons
+    }))
+    setReviewItems(results)
+    setShowReview(true)
   }
 
   return (
@@ -245,14 +266,43 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
             <div className="mt-4">
               <Typography variant="subtitle2" className="mb-2">Förhandsvisning</Typography>
               <textarea className="w-full h-40 border rounded p-2" readOnly value={extractPreview} />
-              <div className="mt-2 flex justify-end">
-                <Button variant="outline" onClick={importHeadings}>Importera rubriker som frågor</Button>
+              <div className="mt-2 flex gap-2 justify-end">
+                <Button variant="outline" onClick={reviewExtract}>Granska & flagga</Button>
+                <Button onClick={importHeadings}>Importera utan granskning</Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
+      <Modal isOpen={showReview} onClose={() => setShowReview(false)}>
+        <div className="p-4 space-y-3">
+          <Typography variant="h6">Granskning av innehåll</Typography>
+          <div className="max-h-80 overflow-auto space-y-2">
+            {reviewItems.map((item, idx) => (
+              <div key={idx} className={`p-2 rounded border ${item.level==='block' ? 'border-error-300 bg-error-50' : item.level==='warn' ? 'border-warning-300 bg-warning-50' : 'border-neutral-200 bg-white'}`}>
+                <Typography variant="body2" className="font-medium">{item.text.slice(0,160)}</Typography>
+                {item.reasons.length > 0 && (
+                  <ul className="list-disc pl-5 text-sm text-neutral-700">
+                    {item.reasons.map((r, i) => (<li key={i}>{r}</li>))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setShowReview(false)}>Stäng</Button>
+            <Button
+              onClick={() => {
+                if (reviewItems.some(i => i.level==='block')) return
+                importHeadings();
+                setShowReview(false)
+              }}
+              disabled={reviewItems.some(i => i.level==='block')}
+            >Infoga godkända</Button>
+          </div>
+        </div>
+      </Modal>
       {/* Questions List */}
       {quiz.questions && quiz.questions.length > 0 ? (
         <div className="space-y-4">
