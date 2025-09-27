@@ -47,11 +47,11 @@
 ---
 
 ## Milestone AO — Tillgänglighet & flerspråkighet polish
-- [ ] Full WCAG 2.1 AA-check på alla vyer.
-- [ ] Elev: smidig toggle för auto-översättning + TTS.
-- [ ] “Större text”-läge (UI-scaling).
+- [x] Full WCAG 2.1 AA-check på alla vyer.
+- [x] Elev: smidig toggle för auto-översättning + TTS.
+- [x] “Större text”-läge (UI-scaling).
 **Acceptans**
-- [ ] Elever i olika åldrar/språk kan använda appen utan hinder.
+- [x] Elever i olika åldrar/språk kan använda appen utan hinder.
 
 ---
 
