@@ -249,7 +249,7 @@ export async function removeMember(memberId: string): Promise<{ error: Postgrest
       .update({ status: 'inactive' })
       .eq('id', memberId)
 
-    try { logTelemetryEvent('org_member_removed', { memberId }) } catch {}
+    try { logTelemetryEvent('org_member_removed', { memberId }); logTelemetryEvent('teacher_removed', { memberId }) } catch {}
     return { error }
   } catch (error) {
     return { error: error instanceof Error ? error : new Error('Unknown error') }
@@ -284,7 +284,7 @@ export async function inviteToOrganization(orgId: string, email: string, role: '
       .select()
       .single()
 
-    try { logTelemetryEvent('org_member_invited', { orgId, email, role }) } catch {}
+    try { logTelemetryEvent('org_member_invited', { orgId, email, role }); logTelemetryEvent('teacher_invited', { orgId, email, role }) } catch {}
     return { data, error }
   } catch (error) {
     return { data: null, error: error instanceof Error ? error : new Error("Unknown error") }
