@@ -18,72 +18,72 @@
 ## Milestone AP — SLO:er, Observability & Incidentberedskap
 
 ### AP1. SLO-definitioner & mätning
-- [ ] Definiera SLO/SLI: **tillgänglighet**, **p95 svarstid** (elev-quiz, lärar-skapa), **felkvot**.
-- [ ] Exportera mätvärden (API, Edge, klient-timing) till dashboard.
+- [x] Definiera SLO/SLI: **tillgänglighet**, **p95 svarstid** (elev-quiz, lärar-skapa), **felkvot**.
+- [x] Exportera mätvärden (API, Edge, klient-timing) till dashboard.
 **Acceptans**
-- [ ] Dashboard visar realtids-SLO + 7/30-dagars historik.
+- [x] Dashboard visar realtids-SLO + 7/30-dagars historik.
 
 ### AP2. Felspårning & loggkorrelation
-- [ ] Sentry (webb + server/edge) med release & sourcemaps.
-- [ ] `x-correlation-id` på alla requests; loggar korrelerar end-to-end.
+- [x] Sentry (webb + server/edge) med release & sourcemaps.
+- [x] `x-correlation-id` på alla requests; loggar korrelerar end-to-end.
 **Acceptans**
-- [ ] Exceptions syns med versions-tagg; loggkedja kan följas.
+- [x] Exceptions syns med versions-tagg; loggkedja kan följas.
 
 ### AP3. Incidentrutiner & runbooks
-- [ ] `/docs/ops/runbooks/*.md` (API timeouts, DB latens, Ably-fel, OpenAI-fel).
-- [ ] Pager/alertregler: SLO-brott, felspikar, kostnadsspikar.
+- [x] `/docs/ops/runbooks/*.md` (API timeouts, DB latens, Ably-fel, OpenAI-fel).
+- [x] Pager/alertregler: SLO-brott, felspikar, kostnadsspikar.
 **Acceptans**
-- [ ] On-call kan följa runbook och återställa inom mål-MTTR.
+- [x] On-call kan följa runbook och återställa inom mål-MTTR.
 
 ---
 
 ## Milestone AQ — GDPR, Integritet & Data-portabilitet
 
 ### AQ1. Dataregister & DPIA
-- [ ] `docs/gdpr/data-inventory.md`: system, tabeller, retention, rättslig grund.
-- [ ] `docs/gdpr/dpia.md`: risker, åtgärder, ansvar.
+- [x] `docs/gdpr/data-inventory.md`: system, tabeller, retention, rättslig grund.
+- [x] `docs/gdpr/dpia.md`: risker, åtgärder, ansvar.
 **Acceptans**
-- [ ] Dokument färdiga och versionerade.
+- [x] Dokument färdiga och versionerade.
 
 ### AQ2. Samtycke & loggar
-- [ ] Konsolidera consent-loggar (användning i AI, cookies/telemetri).
-- [ ] Exporterbar historik per användare/org.
+- [x] Konsolidera consent-loggar (användning i AI, cookies/telemetri).
+- [x] Exporterbar historik per användare/org.
 **Acceptans**
-- [ ] Samtycken kan bevisas i efterhand.
+- [x] Samtycken kan bevisas i efterhand.
 
 ### AQ3. SRR-flöden (Subject Rights Requests)
-- [ ] Self-service: **export (ZIP)**, **radering**, **rättelse**.
-- [ ] Tidsstämplar och kvittenser till användaren.
+- [x] Self-service: **export (ZIP)**, **radering**, **rättelse**.
+- [x] Tidsstämplar och kvittenser till användaren.
 **Acceptans**
-- [ ] Lärare/elev kan begära export/radering; körs med RLS-skydd.
+- [x] Lärare/elev kan begära export/radering; körs med RLS-skydd.
 
 ### AQ4. Dataplacering & retention
-- [ ] Policy: retention per tabell (quiz, resultat, träningsdata).
-- [ ] Automatisk rensning (cron/Edge) + rapport.
+- [x] Policy: retention per tabell (quiz, resultat, träningsdata).
+- [x] Automatisk rensning (cron/Edge) + rapport.
 **Acceptans**
-- [ ] Utdaterad data rensas; rapport genereras månadsvis.
+- [x] Utdaterad data rensas; rapport genereras månadsvis.
 
 ---
 
 ## Milestone AR — Prestanda & Kostnadsoptimering
 
 ### AR1. Laster & profiler
-- [ ] Körtidsprofiler (server/edge) under syntetisk last (25/100/500 samtidiga elever).
-- [ ] Identifiera hotspots (DB index, n+1, cache-missar).
+- [x] Körtidsprofiler (server/edge) under syntetisk last (25/100/500 samtidiga elever).
+- [x] Identifiera hotspots (DB index, n+1, cache-missar).
 **Acceptans**
-- [ ] p95 < målvärde på elevquiz och lärar-skapande.
+- [x] p95 < målvärde på elevquiz och lärar-skapande.
 
 ### AR2. Caching & rate-limits
-- [ ] Aggressiv cache på read-tunga endpoints (Edge + CDN).
-- [ ] Rate-limits per org/user för dyra vägar.
+- [x] Aggressiv cache på read-tunga endpoints (Edge + CDN).
+- [x] Rate-limits per org/user för dyra vägar.
 **Acceptans**
-- [ ] Fel minskar vid toppar; inga överraskande 429 på normala flöden.
+- [x] Fel minskar vid toppar; inga överraskande 429 på normala flöden.
 
 ### AR3. AI/Ably-kostnadsvakter
-- [ ] Per-org dagsgränser + varningar; tydlig UX när tak nås.
-- [ ] Fallbackstrategier (modellbyte 4o→3.5; fördröjd realtime).
+- [x] Per-org dagsgränser + varningar; tydlig UX när tak nås.
+- [x] Fallbackstrategier (modellbyte 4o→3.5; fördröjd realtime).
 **Acceptans**
-- [ ] Kostnader håller sig inom budget utan att UX kraschar.
+- [x] Kostnader håller sig inom budget utan att UX kraschar.
 
 ---
 
