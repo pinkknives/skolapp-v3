@@ -30,7 +30,7 @@
 
 ## Milestone AM — Guided onboarding
 - [x] “Kom igång”-guide (coachmarks + checklista).
-- [ ] Demoquiz att testa direkt.
+- [x] Demoquiz att testa direkt.
 - [ ] Contextual help: hjälp-ikon öppnar rätt docs/FAQ.
 **Acceptans**
 - [ ] >80% nya lärare klarar första quiz + delning utan support.

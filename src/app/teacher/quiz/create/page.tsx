@@ -97,6 +97,52 @@ function CreateQuizPage() {
     }))
   }
 
+  const loadDemoQuiz = () => {
+    const now = new Date()
+    const demo: Quiz = {
+      id: generateQuizId(),
+      title: 'Demoquiz: Sverige – Geografi',
+      description: 'Ett kort exempelquiz för att visa hur det fungerar.',
+      tags: ['demo'],
+      createdAt: now,
+      updatedAt: now,
+      createdBy: 'demo-teacher',
+      status: 'draft',
+      settings: {
+        allowRetakes: true,
+        shuffleQuestions: false,
+        shuffleAnswers: true,
+        showCorrectAnswers: false,
+        executionMode: 'self-paced'
+      },
+      questions: [
+        {
+          id: `q_${Date.now()}_1`,
+          type: 'multiple-choice',
+          title: 'Vad heter Sveriges huvudstad?',
+          points: 1,
+          options: [
+            { id: 'a', text: 'Stockholm', isCorrect: true },
+            { id: 'b', text: 'Göteborg', isCorrect: false },
+            { id: 'c', text: 'Malmö', isCorrect: false }
+          ]
+        },
+        {
+          id: `q_${Date.now()}_2`,
+          type: 'free-text',
+          title: 'Nämn en stor svensk sjö.',
+          points: 1,
+          expectedAnswer: 'Vänern',
+          acceptedAnswers: ['Vänern', 'Vättern', 'Mälaren']
+        }
+      ]
+    }
+    setQuiz(demo)
+    setValidationErrors([])
+    try { track('demo_quiz_loaded') } catch {}
+    toast.success('Demoquiz laddat', { description: 'Du kan nu publicera eller redigera.' })
+  }
+
   const updateQuestion = (index: number, updatedQuestion: Question) => {
     setQuiz(prev => ({
       ...prev,
@@ -333,6 +379,11 @@ function CreateQuizPage() {
             <Typography variant="subtitle1" className="text-neutral-600">
               Skapa engagerande quiz för dina elever med hjälp av AI eller manuellt.
             </Typography>
+            <div>
+              <Button variant="secondary" size="sm" onClick={loadDemoQuiz} title="Ladda ett exempelquiz för att testa">
+                Ladda demoquiz
+              </Button>
+            </div>
           </div>
 
           {/* Validation Errors */}
