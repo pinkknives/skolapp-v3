@@ -55,6 +55,24 @@ export async function PATCH(req: NextRequest) {
       }
     }
   } catch {}
+
+  // Append to consent_logs (RLS allows self insert)
+  try {
+    await supabase
+      .from('consent_logs')
+      .insert({
+        user_id: user.id,
+        org_id: null,
+        scope: 'ai_training',
+        event: (prevRow?.consent_to_ai_training === body.consent) ? 'changed' : (body.consent ? 'accepted' : 'declined'),
+        previous: !!prevRow?.consent_to_ai_training,
+        current: body.consent,
+        actor_user_id: user.id,
+        ip: req.headers.get('x-forwarded-for') || null,
+        user_agent: req.headers.get('user-agent') || null,
+      })
+  } catch {}
+
   return NextResponse.json({ success: true })
 }
 
