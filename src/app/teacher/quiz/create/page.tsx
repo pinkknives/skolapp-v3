@@ -26,6 +26,7 @@ import { AIAssistantPanel } from '@/components/quiz/AIAssistantPanel'
 import { toast } from '@/components/ui/Toast'
 import { AIQuotaDisplay } from '@/components/billing/AIQuotaDisplay'
 import { SyllabusPicker } from '@/components/quiz/SyllabusPicker'
+import { track } from '@/lib/telemetry'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -201,6 +202,7 @@ function CreateQuizPage() {
 
   const saveDraft = async () => {
     setIsSaving(true)
+    try { track('quiz_save_draft_click', { hasQuestions: (quiz.questions || []).length }) } catch {}
     try {
       const draftQuiz = {
         ...quiz,
@@ -227,6 +229,7 @@ function CreateQuizPage() {
   }
 
   const publishQuiz = async () => {
+    try { track('quiz_publish_from_create_click', { hasTitle: !!quiz.title, questionCount: (quiz.questions || []).length }) } catch {}
     const validation = validateQuiz(quiz)
     
     if (!validation.isValid) {
@@ -509,6 +512,7 @@ function CreateQuizPage() {
                     onClick={saveDraft}
                     loading={isSaving && quiz.status === 'draft'}
                     variant="outline"
+                    title="Spara ett utkast för att fortsätta senare"
                   >
                     Spara utkast
                   </Button>
@@ -518,6 +522,7 @@ function CreateQuizPage() {
                     onClick={publishQuiz}
                     loading={isSaving && quiz.status !== 'draft'}
                     disabled={!quiz.title || !quiz.questions?.length}
+                    title={!quiz.title || !quiz.questions?.length ? 'Lägg till titel och minst 1 fråga' : 'Publicera och få delningskod'}
                   >
                     Publicera quiz
                   </Button>

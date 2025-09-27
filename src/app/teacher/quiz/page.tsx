@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { Plus, Share2, Play, HelpCircle, Edit, Archive } from 'lucide-react'
 import { SessionManager } from '@/components/quiz/SessionManager'
 import { Quiz } from '@/types/quiz'
+import { track } from '@/lib/telemetry'
 
 // Database quiz interface (simplified from Supabase)
 interface DatabaseQuiz {
@@ -131,6 +132,7 @@ export default function QuizManagementPage() {
   const handleShareQuiz = (quiz: DatabaseQuiz) => {
     setSelectedQuiz(quiz)
     setShowSharing(true)
+    try { track('quiz_session_open_click', { quizId: quiz.id }) } catch {}
   }
 
   const _handleReviewMode = (quiz: DatabaseQuiz) => {
@@ -140,6 +142,7 @@ export default function QuizManagementPage() {
 
   const handlePublishQuiz = async (quiz: DatabaseQuiz) => {
     try {
+      try { track('quiz_publish_click', { quizId: quiz.id }) } catch {}
       const { error } = await updateQuizWithOrganization(quiz.id, { status: 'published' })
       if (error) {
         setError('Kunde inte publicera quiz: ' + error.message)
@@ -153,6 +156,7 @@ export default function QuizManagementPage() {
 
   const handleUnpublishQuiz = async (quiz: DatabaseQuiz) => {
     try {
+      try { track('quiz_unpublish_click', { quizId: quiz.id }) } catch {}
       const { error } = await updateQuizWithOrganization(quiz.id, { status: 'draft' })
       if (error) {
         setError('Kunde inte avpublicera quiz: ' + error.message)
@@ -182,6 +186,7 @@ export default function QuizManagementPage() {
 
   const handleSaveToLibrary = async (quiz: DatabaseQuiz) => {
     try {
+      try { track('quiz_save_to_library_click', { quizId: quiz.id }) } catch {}
       const resp = await fetch('/api/library/items', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -431,7 +436,7 @@ export default function QuizManagementPage() {
                           className="flex-1"
                         >
                           <Share2 size={14} />
-                          <span className="ml-1">Starta Session</span>
+                          <span className="ml-1">Starta session</span>
                         </Button>
                       )}
                       

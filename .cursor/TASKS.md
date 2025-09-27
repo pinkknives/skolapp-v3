@@ -20,11 +20,11 @@
 ---
 
 ## Milestone AL — UX-granskning & UI-polish
-- [ ] Full UX-review: identifiera friktion (för många klick, otydliga knappar).
-- [ ] Harmonisering: knappar, ikoner, flöden → konsekvent placering.
-- [ ] Lägg till microcopy/tooltips vid osäkra moment (“Vad händer nu?”).
+- [x] Full UX-review: identifiera friktion (för många klick, otydliga knappar).
+- [x] Harmonisering: knappar, ikoner, flöden → konsekvent placering.
+- [x] Lägg till microcopy/tooltips vid osäkra moment (“Vad händer nu?”).
 **Acceptans**
-- [ ] En ny lärare kan skapa och dela ett quiz på <2 min utan manual.
+- [x] En ny lärare kan skapa och dela ett quiz på <2 min utan manual.
 
 ---
 
