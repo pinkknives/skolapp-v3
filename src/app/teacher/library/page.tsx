@@ -39,6 +39,22 @@ export default function TeacherLibraryPage() {
     }
   }
 
+  const handleReport = async (itemId: string) => {
+    const reason = prompt('Varför rapporterar du denna mall?')
+    if (!reason) return
+    await fetch('/api/library/report', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ item_id: itemId, reason }) })
+    alert('Tack! Din rapport har skickats.')
+  }
+
+  const handleFeedback = async (itemId: string) => {
+    const ratingStr = prompt('Betyg (1-5):')
+    if (!ratingStr) return
+    const rating = Math.max(1, Math.min(5, parseInt(ratingStr)))
+    const comment = prompt('Kort kommentar (valfritt):') || undefined
+    await fetch('/api/library/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ item_id: itemId, rating, comment }) })
+    alert('Tack för din feedback!')
+  }
+
   return (
     <div className="container mx-auto p-4 pb-[env(safe-area-inset-bottom)] space-y-6">
       <Typography variant="h3">Bibliotek</Typography>
@@ -65,6 +81,8 @@ export default function TeacherLibraryPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => handleShare(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Dela</button>
+                    <button onClick={() => handleReport(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Rapportera</button>
+                    <button onClick={() => handleFeedback(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Betygsätt</button>
                   </div>
                 </li>
               ))}
