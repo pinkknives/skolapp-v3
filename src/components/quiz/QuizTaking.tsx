@@ -184,6 +184,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
 
   // Timer for tracking time spent
   useEffect(() => {
+    if (quiz.settings.gameMode === 'study') return
     const interval = setInterval(() => {
       setQuizState(prev => ({
         ...prev,
@@ -195,7 +196,7 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [quiz.settings.gameMode])
 
   // Start the quiz
   useEffect(() => {
@@ -516,7 +517,9 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
                     size="lg"
                     showConfetti={ageGroup === 'adult' ? false : isAnswerValid()}
                   >
-                    {getAgeBasedText('submit', {
+                    {quiz.settings.gameMode === 'accuracy' ? (
+                      'Spara svar'
+                    ) : getAgeBasedText('submit', {
                       young: isTeacherControlled 
                         ? 'Skicka svar 📤' 
                         : isLastQuestion 

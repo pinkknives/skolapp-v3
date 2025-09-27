@@ -400,6 +400,33 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
             </RadioGroup>
           </div>
 
+          {/* Game mode and anti-cheat basics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select
+              label="Spelläge"
+              placeholder="Välj läge"
+              selectedKeys={[quiz.settings?.gameMode || 'standard']}
+              onSelectionChange={(keys) => onChange({ settings: { allowRetakes: true, shuffleQuestions: !!quiz.settings?.shuffleQuestions, shuffleAnswers: !!quiz.settings?.shuffleAnswers, showCorrectAnswers: !!quiz.settings?.showCorrectAnswers, executionMode: quiz.settings?.executionMode || 'self-paced', gameMode: Array.from(keys)[0] as 'standard' | 'accuracy' | 'study', timeLimit: quiz.settings?.timeLimit } })}
+              description="Påverkar poäng och presentation"
+            >
+              <SelectItem key="standard">Standard (tid + poäng)</SelectItem>
+              <SelectItem key="accuracy">Accuracy mode (poäng för korrekthet)</SelectItem>
+              <SelectItem key="study">Study mode (utan tid)</SelectItem>
+            </Select>
+            <div className="flex items-end gap-2">
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" checked={!!quiz.settings?.shuffleQuestions} onChange={(e) => onChange({ settings: { allowRetakes: true, shuffleQuestions: e.target.checked, shuffleAnswers: !!quiz.settings?.shuffleAnswers, showCorrectAnswers: !!quiz.settings?.showCorrectAnswers, executionMode: quiz.settings?.executionMode || 'self-paced', gameMode: quiz.settings?.gameMode || 'standard', timeLimit: quiz.settings?.timeLimit } })} />
+                Blanda frågor
+              </label>
+            </div>
+            <div className="flex items-end gap-2">
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" checked={!!quiz.settings?.shuffleAnswers} onChange={(e) => onChange({ settings: { allowRetakes: true, shuffleQuestions: !!quiz.settings?.shuffleQuestions, shuffleAnswers: e.target.checked, showCorrectAnswers: !!quiz.settings?.showCorrectAnswers, executionMode: quiz.settings?.executionMode || 'self-paced', gameMode: quiz.settings?.gameMode || 'standard', timeLimit: quiz.settings?.timeLimit } })} />
+                Blanda svarsalternativ
+              </label>
+            </div>
+          </div>
+
           {/* AI Actions */}
           <div className="border-t pt-6">
             <Typography variant="body2" className="font-medium text-neutral-700 mb-3">

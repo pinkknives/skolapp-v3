@@ -19,6 +19,7 @@ export type ParticipantStatus = 'joined' | 'active' | 'finished' | 'disconnected
 export type ProgressStatus = 'not_started' | 'in_progress' | 'submitted' | 'late'
 
 export type RevealPolicy = 'immediate' | 'after_deadline' | 'never'
+export type GameMode = 'standard' | 'accuracy' | 'study'
 
 export type NotificationType = 'deadline_24h' | 'deadline_1h' | 'deadline_passed' | 'assignment_published'
 
@@ -195,6 +196,7 @@ export interface QuizSettings {
   shuffleAnswers: boolean
   showCorrectAnswers: boolean
   executionMode: ExecutionMode
+  gameMode?: GameMode
 }
 
 export interface Quiz {
