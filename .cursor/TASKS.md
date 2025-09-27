@@ -1,61 +1,139 @@
-# Skolapp – Milestone AL–AO (UX, Enkelhet & Pedagogik)
+# Skolapp – Milestone AP–AT (Robusthet, Efterlevnad, Prestanda, Kostnad, Drift)
 
-> Kör i ordning: **AL → AM → AN → AO**.  
-> Fokus: Enkel användning, självklar navigering, minsta möjliga friktion.
-
----
+> Kör i ordning: **AP → AQ → AR → AS → AT**.
 
 ## Körregler (obligatoriska)
 - Efter **varje** task: kör  
   `npm run type-check && npm run lint -- --max-warnings=0 && npm run build`
-- **Om alla tre kommandon är gröna** → markera tasken `[x]`, gör en **liten** commit
-  med prefix **AL1/AM1/…**, och **fortsätt DIREKT** till **nästa** task.
+- **Om alla tre är gröna** → markera tasken som `[x]`, gör en **liten** commit
+  med prefix **AP1/AQ1/…**, och **fortsätt DIREKT** till **nästa** task.
 - **Stanna endast** om:
   1) type-check/lint/build misslyckas, **eller**
-  2) acceptanskriterier är oklara/ambigua.  
+  2) acceptanskriterier är oklara/ambigua.
 - Alla DB-ändringar via migrationer; **RLS krävs** för nya tabeller.
 - UI på **svenska**, A11y (WCAG 2.1 AA), telemetri för nya flöden.
-- **Inget får ligga gömt bakom mer än 2 klick.**
 
 ---
 
-## Milestone AL — UX-granskning & UI-polish
-- [x] Full UX-review: identifiera friktion (för många klick, otydliga knappar).
-- [x] Harmonisering: knappar, ikoner, flöden → konsekvent placering.
-- [x] Lägg till microcopy/tooltips vid osäkra moment (“Vad händer nu?”).
+## Milestone AP — SLO:er, Observability & Incidentberedskap
+
+### AP1. SLO-definitioner & mätning
+- [ ] Definiera SLO/SLI: **tillgänglighet**, **p95 svarstid** (elev-quiz, lärar-skapa), **felkvot**.
+- [ ] Exportera mätvärden (API, Edge, klient-timing) till dashboard.
 **Acceptans**
-- [x] En ny lärare kan skapa och dela ett quiz på <2 min utan manual.
+- [ ] Dashboard visar realtids-SLO + 7/30-dagars historik.
+
+### AP2. Felspårning & loggkorrelation
+- [ ] Sentry (webb + server/edge) med release & sourcemaps.
+- [ ] `x-correlation-id` på alla requests; loggar korrelerar end-to-end.
+**Acceptans**
+- [ ] Exceptions syns med versions-tagg; loggkedja kan följas.
+
+### AP3. Incidentrutiner & runbooks
+- [ ] `/docs/ops/runbooks/*.md` (API timeouts, DB latens, Ably-fel, OpenAI-fel).
+- [ ] Pager/alertregler: SLO-brott, felspikar, kostnadsspikar.
+**Acceptans**
+- [ ] On-call kan följa runbook och återställa inom mål-MTTR.
 
 ---
 
-## Milestone AM — Guided onboarding
-- [x] “Kom igång”-guide (coachmarks + checklista).
-- [x] Demoquiz att testa direkt.
-- [x] Contextual help: hjälp-ikon öppnar rätt docs/FAQ.
+## Milestone AQ — GDPR, Integritet & Data-portabilitet
+
+### AQ1. Dataregister & DPIA
+- [ ] `docs/gdpr/data-inventory.md`: system, tabeller, retention, rättslig grund.
+- [ ] `docs/gdpr/dpia.md`: risker, åtgärder, ansvar.
 **Acceptans**
-- [ ] >80% nya lärare klarar första quiz + delning utan support.
+- [ ] Dokument färdiga och versionerade.
+
+### AQ2. Samtycke & loggar
+- [ ] Konsolidera consent-loggar (användning i AI, cookies/telemetri).
+- [ ] Exporterbar historik per användare/org.
+**Acceptans**
+- [ ] Samtycken kan bevisas i efterhand.
+
+### AQ3. SRR-flöden (Subject Rights Requests)
+- [ ] Self-service: **export (ZIP)**, **radering**, **rättelse**.
+- [ ] Tidsstämplar och kvittenser till användaren.
+**Acceptans**
+- [ ] Lärare/elev kan begära export/radering; körs med RLS-skydd.
+
+### AQ4. Dataplacering & retention
+- [ ] Policy: retention per tabell (quiz, resultat, träningsdata).
+- [ ] Automatisk rensning (cron/Edge) + rapport.
+**Acceptans**
+- [ ] Utdaterad data rensas; rapport genereras månadsvis.
 
 ---
 
-## Milestone AN — Pedagogiska funktioner
-- [x] Läxor: välj antal försök (1 / obegränsat / X).
-- [x] Test-läge: slumpa frågor/svar, tidsgräns, fullscreen-läge.
-- [x] Feedback: förklaringar, tips efter quiz.
+## Milestone AR — Prestanda & Kostnadsoptimering
+
+### AR1. Laster & profiler
+- [ ] Körtidsprofiler (server/edge) under syntetisk last (25/100/500 samtidiga elever).
+- [ ] Identifiera hotspots (DB index, n+1, cache-missar).
 **Acceptans**
-- [ ] Lärare kan skapa träningsquiz, läxa och prov – tydligt skilda.
+- [ ] p95 < målvärde på elevquiz och lärar-skapande.
+
+### AR2. Caching & rate-limits
+- [ ] Aggressiv cache på read-tunga endpoints (Edge + CDN).
+- [ ] Rate-limits per org/user för dyra vägar.
+**Acceptans**
+- [ ] Fel minskar vid toppar; inga överraskande 429 på normala flöden.
+
+### AR3. AI/Ably-kostnadsvakter
+- [ ] Per-org dagsgränser + varningar; tydlig UX när tak nås.
+- [ ] Fallbackstrategier (modellbyte 4o→3.5; fördröjd realtime).
+**Acceptans**
+- [ ] Kostnader håller sig inom budget utan att UX kraschar.
 
 ---
 
-## Milestone AO — Tillgänglighet & flerspråkighet polish
-- [x] Full WCAG 2.1 AA-check på alla vyer.
-- [x] Elev: smidig toggle för auto-översättning + TTS.
-- [x] “Större text”-läge (UI-scaling).
+## Milestone AS — Kvalitetssäkring, Testhårdning & CI
+
+### AS1. E2E-svit
+- [ ] Playwright: lärar-flöden (skapa, läxa/test, delning), elevflöden (offline/online), guardian.
+- [ ] Mobil-viewport tester; a11y-kontroller (axe).
 **Acceptans**
-- [x] Elever i olika åldrar/språk kan använda appen utan hinder.
+- [ ] Kritiska flöden gröna; rapporter som CI-artifact.
+
+### AS2. DB/RLS-tester
+- [ ] pgTAP/SQL: policies för lärare/elev/guardian/org-admin.
+- [ ] Fuzz mot förbjudna tabeller/operationer.
+**Acceptans**
+- [ ] Inga otillåtna läs/skriv; fuzz-svit grön.
+
+### AS3. Prompt-evals (AI)
+- [ ] Regressionstester av promptar (svenska ämnen; nivåer).
+- [ ] Tox/olämpligt-filter och läsbarhetsmätning i CI.
+**Acceptans**
+- [ ] Inga regressions i AI-kvalitet över huvudfall.
+
+---
+
+## Milestone AT — Säkerhet, Backup/DR & Support
+
+### AT1. Säkerhetsgranskning
+- [ ] Headers, CSP, CSRF, SSRF-skydd, auth-härdning.
+- [ ] Beroendegranskning + uppdateringar.
+**Acceptans**
+- [ ] Sårbarhetsskanning utan blockerande findings.
+
+### AT2. Backup & Disaster Recovery
+- [ ] Schemalagda backupper, krypterade; restore-övning i staging.
+- [ ] RTO/RPO-mål dokumenterade.
+**Acceptans**
+- [ ] Återställning lyckas inom mål; rapport sparas.
+
+### AT3. Support & Hjälpcenter
+- [ ] In-app support (enkelt formulär), status-sida, FAQ.
+- [ ] Mallar för svar (svenska), prioriteringsmatris.
+**Acceptans**
+- [ ] Lärare hittar hjälp i appen; ärenden triageras korrekt.
 
 ---
 
 ## Gemensamma krav
-- [ ] UI på svenska för lärare, elevinnehåll översätts efter preferens.
-- [ ] Telemetri: logga var användare fastnar i UX-flödet.
-- [ ] README/docs: UX-principer och a11y-checklista.
+- [ ] Nya tabeller har migrationer, index och **RLS**.
+- [ ] Inga hårdkodade färg-hex (använd tokens/neutral-*).
+- [ ] A11y: kontrast ≥ 4.5:1, aria-attribut, synlig fokus.
+- [ ] Telemetri: varje ny route/event loggas anonymiserat (GDPR).
+- [ ] README-sektion per milstolpe (setup, endpoints, env).

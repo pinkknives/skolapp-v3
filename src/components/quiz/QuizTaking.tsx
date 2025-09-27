@@ -118,6 +118,19 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
   const currentQuestionIndex = quizState.progress.currentQuestionIndex
   const currentQuestion = quiz.questions[currentQuestionIndex]
 
+  // Telemetry: detect long dwell on a question (e.g., >90s)
+  const longDwellLoggedRef = React.useRef<Record<string, boolean>>({})
+  useEffect(() => {
+    const thresholdSeconds = 90
+    const qid = currentQuestion.id
+    if (longDwellLoggedRef.current[qid]) return
+    const timer = setTimeout(() => {
+      longDwellLoggedRef.current[qid] = true
+      logTelemetryEvent('quiz_question_long_dwell', { questionId: qid, thresholdSeconds })
+    }, thresholdSeconds * 1000)
+    return () => clearTimeout(timer)
+  }, [currentQuestion.id])
+
   const speakQuestion = useCallback(() => {
     try {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
