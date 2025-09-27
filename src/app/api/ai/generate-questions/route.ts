@@ -9,6 +9,7 @@ import { InputSchema, OutputSchema, type GenerateQuestionsInput, type GenerateQu
 import { fetchSkolverketObjectives } from "@/lib/ai/skolverket";
 import { buildMessages } from "@/lib/ai/prompt";
 import { checkRateLimit } from '@/lib/rate-limit'
+import { checkOrgBudget, incrementOrgUsage } from '@/lib/cost-guard'
 
 function mapDifficultyToTemperature(difficulty: number): number {
   const t = 0.15 + 0.1 * (difficulty - 1);
@@ -92,6 +93,24 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Du måste vara inloggad för att använda AI-funktioner" }, { status: 401 });
+    }
+
+    // Resolve org (best effort)
+    let orgId: string | null = null
+    try {
+      const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+      const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+      const supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+      const { data } = await supa.from('org_members').select('org_id').eq('user_id', user.id).eq('status','active').limit(1).maybeSingle()
+      orgId = (data?.org_id as string) || null
+    } catch {}
+
+    // Cost guard: per-org day budget for AI
+    if (orgId) {
+      const guard = await checkOrgBudget(orgId, 'ai_generate')
+      if (!guard.allowed) {
+        return NextResponse.json({ code: 'ORG_BUDGET_EXCEEDED', message: 'Dagens AI-budget är förbrukad.' }, { status: 429 })
+      }
     }
 
     // Quota check (resilient)
@@ -248,6 +267,11 @@ export async function POST(req: NextRequest) {
       )
       res.headers.set('x-correlation-id', corr)
       return res
+    }
+
+    // Increment org usage if applicable
+    if (orgId) {
+      await incrementOrgUsage(orgId, 'ai_generate', 1)
     }
 
     const res = NextResponse.json(parsed.data)
