@@ -1,32 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function serverClient(req: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-  return createClient(url, key, { global: { headers: { Authorization: req.headers.get('authorization') || '' } }, auth: { persistSession: false } })
-}
+import { supabaseServer } from '@/lib/supabase-server'
+import { requireTeacher } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
-  const supabase = serverClient(req)
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  // List latest items in user's orgs (first org for now)
-  const { data: orgs } = await supabase.from('org_members').select('org_id').eq('user_id', user.id).eq('status', 'active')
-  const firstOrgId = orgs && orgs[0]?.org_id
-  if (!firstOrgId) return NextResponse.json({ items: [] })
+  try {
+    const user = await requireTeacher()
+    const supabase = supabaseServer()
+    const url = new URL(req.url)
+    const scope = url.searchParams.get('scope') || 'mine'
 
-  const { data } = await supabase
-    .from('library_items')
-    .select('id, title, type, subject, grade_span, created_at')
-    .in('library_id', (await supabase.from('libraries').select('id').eq('org_id', firstOrgId)).data?.map(r => r.id) || [])
-    .order('created_at', { ascending: false })
-    .limit(50)
-  return NextResponse.json({ items: data || [] })
+    let query = supabase
+      .from('library_items')
+      .select('id, title, item_type, subject, grade, created_at')
+      .order('created_at', { ascending: false })
+
+    if (scope === 'public') {
+      query = query.eq('published', true)
+    } else {
+      // default: items created by user
+      query = query.eq('created_by', user.id)
+    }
+
+    const { data, error } = await query
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ items: data })
+  } catch {
+    return NextResponse.json({ items: [] })
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = serverClient(req)
+  const supabase = supabaseServer()
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
