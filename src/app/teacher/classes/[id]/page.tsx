@@ -9,6 +9,7 @@ import { Distribution } from '@/components/charts/Distribution'
 import { BarBySubject } from '@/components/charts/BarBySubject'
 import type { TimeRange } from '@/lib/api/stats'
 import { AIInsightsPanel, type InsightsData } from '@/components/analytics/AIInsightsPanel'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 export default function ClassPage() {
   const params = useParams<{ id: string }>()
@@ -28,10 +29,11 @@ export default function ClassPage() {
   const [updatingPush, setUpdatingPush] = React.useState<boolean>(false)
 
   React.useEffect(() => {
+    logTelemetryEvent('weekly_view_opened', { classId })
     const params = new URLSearchParams(Array.from(searchParams.entries()))
     params.set('range', range)
     router.replace(`?${params.toString()}`, { scroll: false })
-  }, [range, router, searchParams])
+  }, [range, router, searchParams, classId])
 
   React.useEffect(() => {
     let aborted = false
@@ -186,6 +188,24 @@ export default function ClassPage() {
         </CardHeader>
         <CardContent>
           <Distribution data={distribution} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Veckovy & rekommendationer</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-7 gap-2 text-center text-xs text-neutral-600">
+            {['Må','Ti','On','To','Fr','Lö','Sö'].map(d => (<div key={d} className="p-2 border rounded">{d}</div>))}
+          </div>
+          <div className="flex items-center justify-between p-3 border rounded">
+            <div>
+              <Typography variant="body2" className="font-medium">Föreslå nästa: Repetition i svaga områden</Typography>
+              <Typography variant="caption" className="text-neutral-600">Baserat på senaste 7 dagar</Typography>
+            </div>
+            <Button onClick={() => logTelemetryEvent('recommendation_clicked', { classId, kind: 'review_weak_areas' })}>Visa förslag</Button>
+          </div>
         </CardContent>
       </Card>
 
