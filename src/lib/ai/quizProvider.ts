@@ -521,6 +521,8 @@ export class ApiQuizProvider implements QuizAIProvider {
 
     // legacy body (no longer used)
 
+    const modelChoice = (typeof window !== 'undefined' ? (window.localStorage.getItem('sk_ai_model_v1') as 'gpt-3.5' | 'gpt-4o' | null) : null) || undefined
+
     const resp = await fetch('/api/ai/enhanced-generate', {
       method: 'POST',
       headers: {
@@ -534,7 +536,8 @@ export class ApiQuizProvider implements QuizAIProvider {
         count: Math.max(1, Math.min(20, params.count)),
         type: type === 'mcq' ? 'multiple-choice' : 'free-text',
         topics: params.topics,
-        extraContext: params.context
+        extraContext: params.context,
+        model: modelChoice,
       })
     });
 

@@ -58,12 +58,12 @@ Pedagogiska principer du följer:
 
 Svara alltid på svenska och använd pedagogiskt språk som är lämpligt för målgruppen.`
 
-  async generateAdaptiveQuestions(params: EnhancedAIParams): Promise<AdaptiveQuestion[]> {
+  async generateAdaptiveQuestions(params: EnhancedAIParams, opts?: { model?: 'gpt-3.5' | 'gpt-4o' }): Promise<AdaptiveQuestion[]> {
     const prompt = this.buildAdaptivePrompt(params)
-    
+    const model = opts?.model ?? 'gpt-4o'
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model,
         messages: [
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: prompt }
@@ -87,10 +87,11 @@ Svara alltid på svenska och använd pedagogiskt språk som är lämpligt för m
   async performAction(
     action: 'improve' | 'rewrite' | 'regenerate' | 'distractors',
     params: EnhancedAIParams,
-    question?: { type?: 'multiple-choice' | 'free-text'; title?: string; options?: Array<{ id: string; text: string; isCorrect?: boolean }>; expectedAnswer?: string }
+    question?: { type?: 'multiple-choice' | 'free-text'; title?: string; options?: Array<{ id: string; text: string; isCorrect?: boolean }>; expectedAnswer?: string },
+    opts?: { model?: 'gpt-3.5' | 'gpt-4o' }
   ): Promise<{ questions?: AdaptiveQuestion[]; transformed?: Question; distractors?: string[] }>{
     if (action === 'regenerate') {
-      const qs = await this.generateAdaptiveQuestions({ ...params, count: Math.max(1, params.count || 1) })
+      const qs = await this.generateAdaptiveQuestions({ ...params, count: Math.max(1, params.count || 1) }, opts)
       return { questions: qs }
     }
 
@@ -107,10 +108,11 @@ Svara alltid på svenska och använd pedagogiskt språk som är lämpligt för m
     }
 
     const prompt = `${baseContext}\n\n${userInstruction}`
+    const model = opts?.model ?? 'gpt-4o'
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model,
         messages: [
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: prompt }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { enhancedAIService } from '@/lib/ai/enhanced-ai-service'
+import { resolveEffectiveSubscriptionForUser, getUsage, computeRemaining, incrementUsage } from '@/lib/billing/subscriptions'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 const enhancedGenerateSchema = z.object({
   subject: z.string().min(1),
@@ -18,7 +20,8 @@ const enhancedGenerateSchema = z.object({
     commonMistakes: z.array(z.string()),
     strengths: z.array(z.string())
   }).optional(),
-  studentLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional()
+  studentLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  model: z.enum(['gpt-3.5', 'gpt-4o']).optional()
 })
 
 const actionSchema = z.object({
@@ -64,7 +67,38 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check quota
+    const body = await req.json()
+
+    // Determine desired model with plan-aware defaults
+    const requestedModel: 'gpt-3.5' | 'gpt-4o' | undefined = body?.model
+    const quotas = await resolveEffectiveSubscriptionForUser(user.id)
+    const usage = quotas.subscriptionId ? await getUsage(quotas.subscriptionId) : { quizzesCreated: 0, ai4oUsed: 0, ai35Used: 0 }
+    const remaining = computeRemaining(quotas, usage)
+
+    // Default per plan
+    let model: 'gpt-3.5' | 'gpt-4o' = (() => {
+      if (quotas.plan === 'free') return 'gpt-3.5'
+      if (quotas.plan === 'teacher_bas') return 'gpt-3.5'
+      return 'gpt-4o'
+    })()
+
+    if (requestedModel) {
+      model = requestedModel
+    }
+
+    // Enforce quotas with fallback behavior
+    if (model === 'gpt-4o') {
+      if (remaining.ai4oRemaining !== null && remaining.ai4oRemaining <= 0) {
+        // Fallback to 3.5 silently
+        model = 'gpt-3.5'
+        try { logTelemetryEvent('ai_model_fallback', { from: 'gpt-4o', to: 'gpt-3.5', userId: user.id, plan: quotas.plan }) } catch {}
+      }
+    }
+
+    // Track choice
+    try { logTelemetryEvent('ai_model_selected', { model, userId: user.id, plan: quotas.plan }) } catch {}
+
+    // Check overall AI usage rate limit endpoint (existing)
     const quotaResponse = await fetch(`${req.nextUrl.origin}/api/ai/usage`, {
       method: 'POST',
       headers: { 
@@ -85,13 +119,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const body = await req.json()
-
-    // Check if this is a personalized request
+    // Personalized
     if (body.studentProfile) {
-      const { studentProfile, params } = personalizedGenerateSchema.parse(body)
+      const { studentProfile, params } = personalizedGenerateSchema.parse({ studentProfile: body.studentProfile, params: { ...body.params, model } })
       const questions = await enhancedAIService.generatePersonalizedQuestions(studentProfile, params)
-      
+      if (quotas.subscriptionId) {
+        // Count an AI usage unit: count questions as 1 unit
+        await incrementUsage({ subscriptionId: quotas.subscriptionId, kind: model === 'gpt-4o' ? 'ai_4o' : 'ai_3_5' })
+      }
       return NextResponse.json({
         success: true,
         questions: questions.map(aq => ({
@@ -107,16 +142,21 @@ export async function POST(req: NextRequest) {
 
     // Unified actions endpoint
     if (body.action) {
-      const { action, params, question } = actionSchema.parse(body)
-      const result = await enhancedAIService.performAction(action, params, question)
+      const { action, params, question } = actionSchema.parse({ action: body.action, params: { ...body.params, model }, question: body.question })
+      const result = await enhancedAIService.performAction(action, params, question, { model })
+      if (quotas.subscriptionId) {
+        await incrementUsage({ subscriptionId: quotas.subscriptionId, kind: model === 'gpt-4o' ? 'ai_4o' : 'ai_3_5' })
+      }
       return NextResponse.json({ success: true, ...result })
     }
 
     // Default adaptive generation
     {
-      const params = enhancedGenerateSchema.parse(body)
-      const questions = await enhancedAIService.generateAdaptiveQuestions(params)
-      
+      const params = enhancedGenerateSchema.parse({ ...body, model })
+      const questions = await enhancedAIService.generateAdaptiveQuestions(params, { model })
+      if (quotas.subscriptionId) {
+        await incrementUsage({ subscriptionId: quotas.subscriptionId, kind: model === 'gpt-4o' ? 'ai_4o' : 'ai_3_5' })
+      }
       return NextResponse.json({
         success: true,
         questions: questions.map(aq => ({
