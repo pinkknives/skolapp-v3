@@ -83,6 +83,14 @@ export default function TeacherLibraryPage() {
                     <button onClick={() => handleShare(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Dela</button>
                     <button onClick={() => handleReport(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Rapportera</button>
                     <button onClick={() => handleFeedback(it.id)} className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">Betygsätt</button>
+                    <button
+                      onClick={async () => {
+                        const resp = await fetch('/api/library/remix', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ parent_item_id: it.id }) })
+                        const json = await resp.json()
+                        if (json.child_item_id) alert('Kopia skapad. Du kan nu anpassa din version.')
+                      }}
+                      className="px-3 py-1 text-sm rounded border hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                    >Kopiera & anpassa</button>
                   </div>
                 </li>
               ))}
