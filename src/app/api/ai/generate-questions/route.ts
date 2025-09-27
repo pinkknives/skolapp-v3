@@ -8,6 +8,7 @@ import { supabaseBrowser } from '@/lib/supabase-browser'
 import { InputSchema, OutputSchema, type GenerateQuestionsInput, type GenerateQuestionsOutput, type QuestionType, type BloomLevel } from "@/lib/ai/schemas";
 import { fetchSkolverketObjectives } from "@/lib/ai/skolverket";
 import { buildMessages } from "@/lib/ai/prompt";
+import { checkRateLimit } from '@/lib/rate-limit'
 
 function mapDifficultyToTemperature(difficulty: number): number {
   const t = 0.15 + 0.1 * (difficulty - 1);
@@ -52,8 +53,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI-funktioner är inte konfigurerade på denna server." }, { status: 503 });
     }
 
-    // Authenticate current user
+    // Basic rate limit: 20 req / 60s per user or IP
+    const ip = req.headers.get('x-forwarded-for') || 'ip:unknown'
     const authHeader = req.headers.get("authorization") || "";
+    const userKey = authHeader ? `user:${authHeader.slice(-24)}` : null
+    const key = userKey || `ip:${ip}`
+    const rl = checkRateLimit(key, 20, 60_000)
+    if (!rl.ok) {
+      const res = NextResponse.json({ error: 'För många förfrågningar. Försök igen senare.' }, { status: 429 })
+      if (typeof rl.retryAfterMs === 'number') res.headers.set('Retry-After', Math.ceil(rl.retryAfterMs / 1000).toString())
+      return res
+    }
+
+    // Authenticate current user
     let user: { id: string } | null = null
 
     if (process.env.NODE_ENV === 'test') {

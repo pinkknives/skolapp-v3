@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       byRoute[key].p95 = percentile(routeDurations[key] || [], 95)
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       windowHours: hours,
       total,
       availability,
@@ -70,6 +70,8 @@ export async function GET(request: NextRequest) {
       p95,
       byRoute
     })
+    res.headers.set('Cache-Control', 'public, max-age=30, s-maxage=30, stale-while-revalidate=60')
+    return res
   } catch (error) {
     console.error('slo api error', error)
     return NextResponse.json({ error: 'Ett fel uppstod' }, { status: 500 })
