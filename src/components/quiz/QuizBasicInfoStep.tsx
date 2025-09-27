@@ -11,6 +11,8 @@ import { TitleSuggestionHint } from './TitleSuggestionHint'
 import { ActionMenu } from '@/components/ui/ActionMenu'
 import { aiAssistant } from '@/locales/sv/quiz'
 import { GRADE_LEVELS } from '@/lib/ai/quizProvider'
+import { PROMPT_LIBRARY, PromptDifficulty } from '@/lib/prompts/library'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 interface QuizBasicInfoStepProps {
   quiz: Partial<Quiz>
@@ -29,6 +31,8 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
   // Track current subject/grade for AI hints
   const [currentSubject, setCurrentSubject] = useState('')
   const [currentGrade, setCurrentGrade] = useState('')
+  const [difficulty, setDifficulty] = useState<PromptDifficulty>('medium')
+  const [selectedPromptId, setSelectedPromptId] = useState<string>('')
 
   // Load user's organizations
   useEffect(() => {
@@ -185,7 +189,7 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
           )}
 
           {/* Subject and Grade for AI hints */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Select
                 label="Ämne (för AI-hjälp)"
@@ -225,6 +229,46 @@ export function QuizBasicInfoStep({ quiz, onChange, onValidationChange, onAiCont
                 ))}
               </Select>
             </div>
+            <div>
+              <Select
+                label="Svårighetsgrad"
+                placeholder="Välj nivå"
+                selectedKeys={[difficulty]}
+                onSelectionChange={(keys) => {
+                  const d = Array.from(keys)[0] as PromptDifficulty
+                  setDifficulty(d)
+                  logTelemetryEvent('prompt_difficulty_selected', { difficulty: d })
+                }}
+              >
+                <SelectItem key="easy">Grund</SelectItem>
+                <SelectItem key="medium">Medel</SelectItem>
+                <SelectItem key="hard">Avancerad</SelectItem>
+              </Select>
+            </div>
+          </div>
+
+          {/* Prompt library */}
+          <div>
+            <Select
+              label="Promptbibliotek"
+              placeholder="Välj en mall (valfritt)"
+              selectedKeys={selectedPromptId ? [selectedPromptId] : []}
+              onSelectionChange={(keys) => {
+                const id = Array.from(keys)[0] as string
+                setSelectedPromptId(id)
+                const meta = PROMPT_LIBRARY.find(p => p.id === id)
+                if (meta) {
+                  const desc = meta.variants[difficulty]
+                  onChange({ title: meta.title, description: desc })
+                  logTelemetryEvent('prompt_variant_selected', { id, difficulty })
+                }
+              }}
+              description="Välj en färdig mall för snabbstart"
+            >
+              {PROMPT_LIBRARY.map((p) => (
+                <SelectItem key={p.id}>{p.subject} • {p.grade} — {p.title}</SelectItem>
+              ))}
+            </Select>
           </div>
 
           {/* Title - Required */}
