@@ -13,7 +13,9 @@ function generateCorrelationId(): string {
 export function middleware(request: NextRequest) {
   const existing = request.headers.get('x-correlation-id')
   const id = existing || generateCorrelationId()
-  const response = NextResponse.next({ request: { headers: request.headers } })
+  const headers = new Headers(request.headers)
+  headers.set('x-correlation-id', id)
+  const response = NextResponse.next({ request: { headers } })
   response.headers.set('x-correlation-id', id)
   return response
 }

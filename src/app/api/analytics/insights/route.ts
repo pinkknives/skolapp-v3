@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const weeks = Math.max(1, Math.min(26, Number(body.weeks || 10)))
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ''
-    const headers = { cookie: request.headers.get('cookie') || '' }
+    const headers = { cookie: request.headers.get('cookie') || '', 'x-correlation-id': request.headers.get('x-correlation-id') || '' }
     const [overviewRes, skillsRes] = await Promise.all([
       fetch(`${baseUrl}/api/analytics/teacher/overview?weeks=${weeks}`, { headers }),
       fetch(`${baseUrl}/api/analytics/teacher/skills?weeks=${weeks}`, { headers }),

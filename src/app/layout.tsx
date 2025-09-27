@@ -98,6 +98,7 @@ export default async function RootLayout({
   return (
     <html lang="sv" className={initialThemeClass} suppressHydrationWarning>{/* Changed to Swedish */}
       <head>
+        <meta name="x-correlation-id" content="" />
         {/* Pre-render theme application via inline script to avoid FOUC */}
         <script
           suppressHydrationWarning
@@ -113,6 +114,10 @@ export default async function RootLayout({
                   var meta = document.querySelector('meta#theme-color');
                   if (!meta) { meta = document.createElement('meta'); meta.id = 'theme-color'; meta.name = 'theme-color'; document.head.appendChild(meta); }
                   meta.setAttribute('content', theme === 'dark' ? '#2f6767' : '#377b7b');
+                  var corr = document.querySelector('meta[name=\'x-correlation-id\']');
+                  if (!corr) { corr = document.createElement('meta'); corr.setAttribute('name','x-correlation-id'); document.head.appendChild(corr); }
+                  try { var header = document?.cookie?.match(/(^|;)\s*x-correlation-id=([^;]+)/); if (header && header[2]) corr.setAttribute('content', header[2]); } catch (e) {}
+                  
                 } catch (e) {}
               })();
             `,
