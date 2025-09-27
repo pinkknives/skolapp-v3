@@ -38,8 +38,8 @@
 ---
 
 ## Milestone AN — Pedagogiska funktioner
-- [ ] Läxor: välj antal försök (1 / obegränsat / X).
-- [ ] Test-läge: slumpa frågor/svar, tidsgräns, fullscreen-läge.
+- [x] Läxor: välj antal försök (1 / obegränsat / X).
+- [x] Test-läge: slumpa frågor/svar, tidsgräns, fullscreen-läge.
 - [x] Feedback: förklaringar, tips efter quiz.
 **Acceptans**
 - [ ] Lärare kan skapa träningsquiz, läxa och prov – tydligt skilda.

@@ -56,6 +56,8 @@ function CreateQuizPage() {
   const [showConsentPrompt, setShowConsentPrompt] = useState(false)
   const [consentLoading, setConsentLoading] = useState(true)
   const [maxAttempts, setMaxAttempts] = useState<number>(1)
+  const [mode, setMode] = useState<'training' | 'homework' | 'exam'>('training')
+  const [requireFullscreen, setRequireFullscreen] = useState<boolean>(false)
 
   useEffect(() => {
     const checkConsent = async () => {
@@ -104,6 +106,23 @@ function CreateQuizPage() {
       gameMode: quiz.settings?.gameMode,
     }
     return { ...base, ...patch }
+  }
+
+  const changeMode = (next: 'training' | 'homework' | 'exam') => {
+    setMode(next)
+    try { track('quiz_mode_change', { mode: next }) } catch {}
+    if (next === 'exam') {
+      updateQuiz({ settings: mergeSettings({ shuffleQuestions: true, shuffleAnswers: true }) })
+      setRequireFullscreen(true)
+      // Ensure tag labeling
+      updateQuiz({ tags: Array.from(new Set([...(quiz.tags || [] ).filter(t => t !== 'läxa' && t !== 'prov'), 'prov'])) as string[] })
+    } else if (next === 'homework') {
+      setRequireFullscreen(false)
+      updateQuiz({ tags: Array.from(new Set([...(quiz.tags || [] ).filter(t => t !== 'läxa' && t !== 'prov'), 'läxa'])) as string[] })
+    } else {
+      setRequireFullscreen(false)
+      updateQuiz({ tags: (quiz.tags || []).filter(t => t !== 'läxa' && t !== 'prov') })
+    }
   }
 
   const addQuestion = (type: QuestionType) => {
@@ -583,6 +602,35 @@ function CreateQuizPage() {
                   {/* AN — Quiz Settings */}
                   <div className="space-y-2">
                     <Typography variant="body2" className="font-medium">Inställningar</Typography>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Läge:</span>
+                      <div className="inline-flex rounded-md border overflow-hidden">
+                        <button
+                          className={`px-3 py-1 text-sm ${mode === 'training' ? 'bg-primary-600 text-white' : 'bg-white'}`}
+                          onClick={() => changeMode('training')}
+                          type="button"
+                          title="Träning – inga begränsningar"
+                        >
+                          Träning
+                        </button>
+                        <button
+                          className={`px-3 py-1 text-sm border-l ${mode === 'homework' ? 'bg-primary-600 text-white' : 'bg-white'}`}
+                          onClick={() => changeMode('homework')}
+                          type="button"
+                          title="Läxa – välj antal försök"
+                        >
+                          Läxa
+                        </button>
+                        <button
+                          className={`px-3 py-1 text-sm border-l ${mode === 'exam' ? 'bg-primary-600 text-white' : 'bg-white'}`}
+                          onClick={() => changeMode('exam')}
+                          type="button"
+                          title="Prov – rekommenderat: slumpa + tidsgräns + fullscreen"
+                        >
+                          Prov
+                        </button>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <label className="flex items-center gap-2 text-sm">
                         <input
@@ -601,19 +649,21 @@ function CreateQuizPage() {
                         Slumpa svar
                       </label>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="text-sm">Max försök</label>
-                      <select
-                        value={maxAttempts}
-                        onChange={(e) => setMaxAttempts(Number(e.target.value))}
-                        className="px-2 py-1 border rounded-md text-sm"
-                      >
-                        <option value={1}>1</option>
-                        <option value={2}>2</option>
-                        <option value={3}>3</option>
-                        <option value={99}>Obegränsat</option>
-                      </select>
-                    </div>
+                    {mode === 'homework' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-sm">Max försök</label>
+                        <select
+                          value={maxAttempts}
+                          onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                          className="px-2 py-1 border rounded-md text-sm"
+                        >
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                          <option value={3}>3</option>
+                          <option value={99}>Obegränsat</option>
+                        </select>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                       <label className="text-sm">Tidsgräns (min)</label>
                       <input
@@ -625,8 +675,17 @@ function CreateQuizPage() {
                         placeholder="Valfri"
                       />
                     </div>
+                    {mode === 'exam' && (
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={requireFullscreen}
+                          onChange={(e) => setRequireFullscreen(e.target.checked)}
+                        />
+                        Fullscreen-läge (rekommenderat för prov)
+                      </label>
+                    )}
                   </div>
-
                   <Button
                     fullWidth
                     onClick={saveDraft}
