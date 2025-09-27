@@ -25,6 +25,8 @@ interface QuestionEditorProps {
 
 export function QuestionEditor({ question, questionIndex, onChange, onDelete, onDuplicate, gradeLevel, onAIActionRequested }: QuestionEditorProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string>('')
+  const [audioUrl, setAudioUrl] = useState<string>('')
 
   const handleBasicChange = (updates: Partial<Question>) => {
     onChange({ ...question, ...updates } as Question)
@@ -222,11 +224,11 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
                 <Image
                   src={imagePreview || (question as ImageQuestion).imageUrl!}
                   alt={(question as ImageQuestion).imageAlt || 'Preview'}
-                  width={400}
-                  height={256}
-                  sizes="(max-width: 768px) 100vw, 400px"
-                  className="max-w-full h-auto max-h-64 rounded-md border object-contain"
-                  priority={false}
+                  width={800}
+                  height={450}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px"
+                  className="max-w-full h-auto max-h-96 rounded-md border object-contain"
+                  loading="lazy"
                 />
               </div>
             )}
@@ -238,6 +240,37 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
               onChange={(e) => handleImageChange({ imageAlt: e.target.value })}
               helperText="Viktigt för tillgänglighet"
             />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Video URL (valfritt)"
+                placeholder="https://… (MP4/YouTube inbäddad)"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                helperText="Ange en säker källa. Filstorlek och bandbredd beaktas."
+              />
+              <Input
+                label="Ljud URL (valfritt)"
+                placeholder="https://… (MP3/OGG)"
+                value={audioUrl}
+                onChange={(e) => setAudioUrl(e.target.value)}
+              />
+            </div>
+
+            {(videoUrl || audioUrl) && (
+              <div className="space-y-3">
+                {videoUrl && (
+                  <video className="w-full rounded border" controls preload="metadata">
+                    <source src={videoUrl} />
+                  </video>
+                )}
+                {audioUrl && (
+                  <audio className="w-full" controls preload="metadata">
+                    <source src={audioUrl} />
+                  </audio>
+                )}
+              </div>
+            )}
           </div>
         )}
 
