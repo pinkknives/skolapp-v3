@@ -29,6 +29,7 @@ import { SyllabusPicker } from '@/components/quiz/SyllabusPicker'
 import { track } from '@/lib/telemetry'
 import Link from 'next/link'
 import { HelpCircle } from 'lucide-react'
+import type { QuizSettings } from '@/types/quiz'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -54,6 +55,7 @@ function CreateQuizPage() {
   const { canUseAI } = useEntitlements()
   const [showConsentPrompt, setShowConsentPrompt] = useState(false)
   const [consentLoading, setConsentLoading] = useState(true)
+  const [maxAttempts, setMaxAttempts] = useState<number>(1)
 
   useEffect(() => {
     const checkConsent = async () => {
@@ -89,6 +91,19 @@ function CreateQuizPage() {
     if (validationErrors.length > 0) {
       setValidationErrors([])
     }
+  }
+
+  const mergeSettings = (patch: Partial<QuizSettings>): QuizSettings => {
+    const base: QuizSettings = {
+      allowRetakes: quiz.settings?.allowRetakes ?? true,
+      shuffleQuestions: quiz.settings?.shuffleQuestions ?? false,
+      shuffleAnswers: quiz.settings?.shuffleAnswers ?? false,
+      showCorrectAnswers: quiz.settings?.showCorrectAnswers ?? false,
+      executionMode: quiz.settings?.executionMode ?? 'self-paced',
+      timeLimit: quiz.settings?.timeLimit,
+      gameMode: quiz.settings?.gameMode,
+    }
+    return { ...base, ...patch }
   }
 
   const addQuestion = (type: QuestionType) => {
@@ -565,6 +580,53 @@ function CreateQuizPage() {
               {/* Action Buttons */}
               <Card>
                 <CardContent className="space-y-3">
+                  {/* AN — Quiz Settings */}
+                  <div className="space-y-2">
+                    <Typography variant="body2" className="font-medium">Inställningar</Typography>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={!!quiz.settings?.shuffleQuestions}
+                          onChange={(e) => updateQuiz({ settings: mergeSettings({ shuffleQuestions: e.target.checked }) })}
+                        />
+                        Slumpa frågor
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={!!quiz.settings?.shuffleAnswers}
+                          onChange={(e) => updateQuiz({ settings: mergeSettings({ shuffleAnswers: e.target.checked }) })}
+                        />
+                        Slumpa svar
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-sm">Max försök</label>
+                      <select
+                        value={maxAttempts}
+                        onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                        className="px-2 py-1 border rounded-md text-sm"
+                      >
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={3}>3</option>
+                        <option value={99}>Obegränsat</option>
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-sm">Tidsgräns (min)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="px-2 py-1 border rounded-md text-sm"
+                        value={quiz.settings?.timeLimit || ''}
+                        onChange={(e) => updateQuiz({ settings: mergeSettings({ timeLimit: e.target.value ? Number(e.target.value) : undefined }) })}
+                        placeholder="Valfri"
+                      />
+                    </div>
+                  </div>
+
                   <Button
                     fullWidth
                     onClick={saveDraft}

@@ -366,6 +366,19 @@ export function QuestionEditor({ question, questionIndex, onChange, onDelete, on
           </div>
         )}
 
+        {/* Explanation/Feedback for students */}
+        <div>
+          <Typography variant="body2" className="font-medium text-neutral-700 mb-1">
+            Förklaring (visas efter quiz)
+          </Typography>
+          <textarea
+            className="w-full min-h-[80px] p-3 border rounded-md text-sm"
+            placeholder="Skriv en kort förklaring eller tips som eleven ser efter quizet"
+            value={question.explanation || ''}
+            onChange={(e) => handleBasicChange({ explanation: e.target.value })}
+          />
+        </div>
+
         {/* Rubric Editor - Show for free-text and image questions */}
         {(question.type === 'free-text' || question.type === 'image') && (
           <RubricEditor
