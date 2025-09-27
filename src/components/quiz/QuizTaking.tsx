@@ -16,6 +16,7 @@ import {
   StudentAnswer
 } from '@/types/quiz'
 import { motion, AnimatePresence } from 'framer-motion'
+import { logTelemetryEvent } from '@/lib/telemetry'
 
 interface QuizTakingProps {
   quiz: Quiz
@@ -95,15 +96,90 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
   const [selectedAnswer, setSelectedAnswer] = useState<string | string[]>('')
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const [showFeedback, setShowFeedback] = useState(false)
+  const [preferredLang, setPreferredLang] = useState<'sv'|'en'|'ar'|'uk'>('sv')
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [speechRate, setSpeechRate] = useState(1)
+
+  useEffect(() => {
+    const loadLang = async () => {
+      try {
+        const resp = await fetch('/api/user/settings/lang')
+        if (resp.ok) {
+          const data = await resp.json()
+          const lang = (data?.preferred_language || 'sv') as 'sv'|'en'|'ar'|'uk'
+          setPreferredLang(lang)
+        }
+      } catch {}
+    }
+    loadLang()
+  }, [])
+
+  // Define current question before TTS hooks to avoid temporal ordering issues
+  const currentQuestionIndex = quizState.progress.currentQuestionIndex
+  const currentQuestion = quiz.questions[currentQuestionIndex]
+
+  const speakQuestion = useCallback(() => {
+    try {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+      const synth = window.speechSynthesis
+      synth.cancel()
+      const parts: string[] = []
+      parts.push(currentQuestion.title)
+      if (currentQuestion.type === 'multiple-choice') {
+        const mc = currentQuestion as MultipleChoiceQuestion
+        mc.options.forEach((opt, idx) => parts.push(`${String.fromCharCode(65+idx)}. ${opt.text}`))
+      }
+      if (currentQuestion.explanation) parts.push(currentQuestion.explanation)
+      const utter = new SpeechSynthesisUtterance(parts.join('. '))
+      const voices = synth.getVoices()
+      const langPref = preferredLang === 'sv' ? ['sv-SE','sv']
+        : preferredLang === 'en' ? ['en-GB','en-US','en']
+        : preferredLang === 'ar' ? ['ar','ar-SA','ar-EG']
+        : ['uk-UA','uk']
+      utter.lang = langPref[0]
+      const voice = voices.find(v => langPref.includes(v.lang)) || voices.find(v => v.lang.startsWith(langPref[0].split('-')[0])) || voices[0]
+      if (voice) utter.voice = voice
+      utter.rate = speechRate
+      utter.onend = () => setIsSpeaking(false)
+      utter.onerror = () => setIsSpeaking(false)
+      synth.speak(utter)
+      setIsSpeaking(true)
+      logTelemetryEvent('tts_play', { lang: preferredLang, questionId: currentQuestion.id })
+    } catch {}
+  }, [currentQuestion, preferredLang, speechRate])
+
+  const pauseTTS = useCallback(() => {
+    try {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+      window.speechSynthesis.pause()
+      setIsSpeaking(false)
+      logTelemetryEvent('tts_pause', { questionId: currentQuestion.id })
+    } catch {}
+  }, [currentQuestion.id])
+
+  const resumeTTS = useCallback(() => {
+    try {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+      window.speechSynthesis.resume()
+      setIsSpeaking(true)
+      logTelemetryEvent('tts_resume', { questionId: currentQuestion.id })
+    } catch {}
+  }, [currentQuestion.id])
+
+  const stopTTS = useCallback(() => {
+    try {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+      logTelemetryEvent('tts_stop', { questionId: currentQuestion.id })
+    } catch {}
+  }, [currentQuestion.id])
 
   // Handle different execution modes
   const isTeacherControlled = quiz.settings.executionMode === 'teacher-controlled'
 
   // For now, all modes use self-paced progression
   // TODO: Add teacher-controlled progression in future update
-  const currentQuestionIndex = quizState.progress.currentQuestionIndex
-
-  const currentQuestion = quiz.questions[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
 
   // Timer for tracking time spent
@@ -391,6 +467,17 @@ export function QuizTaking({ quiz, session, student, onComplete, onExit }: QuizT
                 <CardTitle className={`text-center mb-4 ${getAgeBasedStyles('questionTitle')}`}>
                   {ageGroup === 'adult' ? currentQuestion.title : `🤔 ${currentQuestion.title} 🤔`}
                 </CardTitle>
+                <div className="flex items-center justify-center gap-3 mt-2" aria-label="Uppläsning">
+                  <button type="button" onClick={isSpeaking ? stopTTS : speakQuestion} className="px-3 py-1 rounded border text-sm">
+                    {isSpeaking ? 'Stoppa uppläsning' : 'Läs upp frågan'}
+                  </button>
+                  <button type="button" onClick={resumeTTS} className="px-3 py-1 rounded border text-sm" disabled={isSpeaking}>Fortsätt</button>
+                  <button type="button" onClick={pauseTTS} className="px-3 py-1 rounded border text-sm">Pausa</button>
+                  <label className="flex items-center gap-2 text-sm">
+                    Hastighet
+                    <input type="range" min={0.6} max={1.4} step={0.1} value={speechRate} onChange={(e) => setSpeechRate(Number(e.target.value))} aria-label="Läshastighet" />
+                  </label>
+                </div>
                 <div className={`flex justify-center space-x-4 text-sm ${getAgeBasedStyles('mutedText')}`}>
                   <span>
                     {ageGroup === 'adult' ? `${currentQuestion.points} poäng` : `⭐ ${currentQuestion.points} poäng`}
