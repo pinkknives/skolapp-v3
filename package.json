@@ -43,6 +43,7 @@
     "health:skolverket": "tsx scripts/health/skolverket.ts",
     "health:all": "npm run health:openai && npm run health:ably && npm run health:supabase && npm run health:stripe && npm run health:skolverket",
     "health:skolverket:synthetic": "tsx scripts/health/skolverket-synthetic.ts",
+    "perf:load": "tsx scripts/health/perf-load.ts" ,
     "validate:env": "node scripts/validate-env.js",
     "verify:emails": "tsx scripts/verify-emails.ts",
     "rls:probe": "tsx scripts/rls-probe.ts",
