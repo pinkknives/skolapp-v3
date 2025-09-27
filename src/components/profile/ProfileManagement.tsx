@@ -27,6 +27,8 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
   const [isUpdatingConsent, setIsUpdatingConsent] = useState(false)
   const [pushEnabled, setPushEnabled] = useState<boolean>(false)
   const [isUpdatingPush, setIsUpdatingPush] = useState(false)
+  const [preferredLanguage, setPreferredLanguage] = useState<string>('sv')
+  const [isUpdatingLanguage, setIsUpdatingLanguage] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -40,6 +42,11 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         if (p.ok) {
           const data = await p.json()
           setPushEnabled(!!data.push_enabled)
+        }
+        const lang = await fetch('/api/user/settings/lang', { method: 'GET' })
+        if (lang.ok) {
+          const data = await lang.json()
+          setPreferredLanguage(data.preferred_language || 'sv')
         }
       } catch {}
     }
@@ -271,64 +278,95 @@ export function ProfileManagement({ user }: ProfileManagementProps) {
         </CardHeader>
         <CardContent>
           <Stack gap="sm">
-              <div className="flex justify-between items-center">
-                <div>
-                  <Typography variant="body2" className="text-neutral-600">Push‑notiser</Typography>
-                  <Typography variant="caption" className="text-neutral-500">Få påminnelser om live‑quiz och resultat</Typography>
-                </div>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={pushEnabled}
-                    onChange={async (e) => {
-                      const next = e.target.checked
-                      setIsUpdatingPush(true)
-                      try {
-                        const resp = await fetch('/api/user/settings/push', {
-                          method: 'PATCH',
-                          headers: { 'content-type': 'application/json' },
-                          body: JSON.stringify({ push_enabled: next })
-                        })
-                        if (resp.ok) setPushEnabled(next)
-                      } finally {
-                        setIsUpdatingPush(false)
-                      }
-                    }}
-                    disabled={isUpdatingPush}
-                    className="h-4 w-4 text-primary-600"
-                  />
-                  <span className="text-sm">{isUpdatingPush ? 'Uppdaterar...' : (pushEnabled ? 'På' : 'Av') }</span>
-                </label>
+            <div className="flex justify-between items-center">
+              <div>
+                <Typography variant="body2" className="text-neutral-600">Språk</Typography>
+                <Typography variant="caption" className="text-neutral-500">Välj språk för elevupplevelsen</Typography>
               </div>
-              <div className="flex justify-between items-center">
-                <div>
-                  <Typography variant="body2" className="text-neutral-600">Bidra anonymt till AI‑träning</Typography>
-                  <Typography variant="caption" className="text-neutral-500">Dina quiz kan användas anonymt för att förbättra frågeförslag</Typography>
-                </div>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={consent}
-                    onChange={async (e) => {
-                      const next = e.target.checked
-                      setIsUpdatingConsent(true)
-                      try {
-                        const resp = await fetch('/api/user/settings/consent', {
-                          method: 'PATCH',
-                          headers: { 'content-type': 'application/json' },
-                          body: JSON.stringify({ consent: next })
-                        })
-                        if (resp.ok) setConsent(next)
-                      } finally {
-                        setIsUpdatingConsent(false)
-                      }
-                    }}
-                    disabled={isUpdatingConsent}
-                    className="h-4 w-4 text-primary-600"
-                  />
-                  <span className="text-sm">{isUpdatingConsent ? 'Uppdaterar...' : (consent ? 'Aktivt' : 'Av') }</span>
-                </label>
+              <select
+                value={preferredLanguage}
+                onChange={async (e) => {
+                  const next = e.target.value
+                  setIsUpdatingLanguage(true)
+                  try {
+                    const resp = await fetch('/api/user/settings/lang', {
+                      method: 'PATCH',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ preferred_language: next })
+                    })
+                    if (resp.ok) setPreferredLanguage(next)
+                  } finally {
+                    setIsUpdatingLanguage(false)
+                  }
+                }}
+                disabled={isUpdatingLanguage}
+                className="flex w-44 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm transition-all duration-200 hover:border-neutral-400 focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-label="Välj språk"
+              >
+                <option value="sv">Svenska</option>
+                <option value="en">Engelska</option>
+                <option value="ar">Arabiska</option>
+                <option value="uk">Ukrainska</option>
+              </select>
+            </div>
+            <div className="flex justify-between items-center">
+              <div>
+                <Typography variant="body2" className="text-neutral-600">Push‑notiser</Typography>
+                <Typography variant="caption" className="text-neutral-500">Få påminnelser om live‑quiz och resultat</Typography>
               </div>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={pushEnabled}
+                  onChange={async (e) => {
+                    const next = e.target.checked
+                    setIsUpdatingPush(true)
+                    try {
+                      const resp = await fetch('/api/user/settings/push', {
+                        method: 'PATCH',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({ push_enabled: next })
+                      })
+                      if (resp.ok) setPushEnabled(next)
+                    } finally {
+                      setIsUpdatingPush(false)
+                    }
+                  }}
+                  disabled={isUpdatingPush}
+                  className="h-4 w-4 text-primary-600"
+                />
+                <span className="text-sm">{isUpdatingPush ? 'Uppdaterar...' : (pushEnabled ? 'På' : 'Av') }</span>
+              </label>
+            </div>
+            <div className="flex justify-between items-center">
+              <div>
+                <Typography variant="body2" className="text-neutral-600">Bidra anonymt till AI‑träning</Typography>
+                <Typography variant="caption" className="text-neutral-500">Dina quiz kan användas anonymt för att förbättra frågeförslag</Typography>
+              </div>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={async (e) => {
+                    const next = e.target.checked
+                    setIsUpdatingConsent(true)
+                    try {
+                      const resp = await fetch('/api/user/settings/consent', {
+                        method: 'PATCH',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({ consent: next })
+                      })
+                      if (resp.ok) setConsent(next)
+                    } finally {
+                      setIsUpdatingConsent(false)
+                    }
+                  }}
+                  disabled={isUpdatingConsent}
+                  className="h-4 w-4 text-primary-600"
+                />
+                <span className="text-sm">{isUpdatingConsent ? 'Uppdaterar...' : (consent ? 'Aktivt' : 'Av') }</span>
+              </label>
+            </div>
             <div className="flex justify-between">
             <Typography variant="body2" className="text-neutral-600">
               Medlem sedan
