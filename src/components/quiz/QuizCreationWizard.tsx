@@ -35,6 +35,8 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
     subject?: string
     gradeLevel?: string
   }>({})
+  const [slideSuggestions, setSlideSuggestions] = useState<string[]>([])
+  const [isImportingSlides, setIsImportingSlides] = useState(false)
 
   const updateQuiz = (updates: Partial<Quiz>) => {
     const updatedQuiz = { ...quiz, ...updates }
@@ -127,6 +129,53 @@ export function QuizCreationWizard({ initialQuiz, onComplete }: QuizCreationWiza
           />
         </CardContent>
       </Card>
+
+      {/* Slides import (AE2) */}
+      {currentStep === 'questions' && (
+        <Card className="mb-6">
+          <CardContent className="p-4 space-y-3">
+            <Typography variant="h6">Importera slides (MVP)</Typography>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const input = (e.currentTarget.elements.namedItem('slides') as HTMLInputElement)
+                const file = input?.files?.[0]
+                if (!file) return
+                setIsImportingSlides(true)
+                try {
+                  const fd = new FormData()
+                  fd.append('file', file)
+                  const resp = await fetch('/api/import/slides', { method: 'POST', body: fd })
+                  const data = await resp.json()
+                  setSlideSuggestions(data.suggestions || [])
+                } finally {
+                  setIsImportingSlides(false)
+                }
+              }}
+              className="flex items-center gap-3"
+            >
+              <input name="slides" type="file" accept="application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+              <Button type="submit" disabled={isImportingSlides}>{isImportingSlides ? 'Importerar…' : 'Importera'}</Button>
+            </form>
+            {slideSuggestions.length > 0 && (
+              <div>
+                <Typography variant="subtitle2" className="mb-2">Förslag</Typography>
+                <ul className="list-disc pl-5 text-sm space-y-1">
+                  {slideSuggestions.map((s, i) => (<li key={i}>{s}</li>))}
+                </ul>
+                <div className="mt-2">
+                  <Button
+                    onClick={() => {
+                      const qs = slideSuggestions.slice(0, 8).map((t, idx) => ({ id: `q-${Date.now()}-${idx}`, type: 'multiple-choice', title: t, points: 1, options: [ { id: 'a', text: 'A', isCorrect: true }, { id: 'b', text: 'B', isCorrect: false }, { id: 'c', text: 'C', isCorrect: false }, { id: 'd', text: 'D', isCorrect: false } ] }))
+                      updateQuiz({ questions: qs as unknown as Quiz['questions'] })
+                    }}
+                  >Lägg till som frågor</Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main content */}
       <div className="relative min-h-[600px]">
