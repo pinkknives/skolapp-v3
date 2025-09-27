@@ -46,6 +46,8 @@ export default function ImprovedLiveControlPage() {
   const [error, setError] = useState('')
   // const [copySuccess, setCopySuccess] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [lockLanguage, setLockLanguage] = useState<boolean>(false)
+  const [isUpdatingLock, setIsUpdatingLock] = useState<boolean>(false)
 
   // Get current user
   useEffect(() => {
@@ -154,6 +156,7 @@ export default function ImprovedLiveControlPage() {
         },
         qrCodeUrl
       })
+      setLockLanguage(Boolean(sessionData.settings?.lockLanguage))
 
     } catch (error) {
       console.error('Error initializing session:', error)
@@ -328,6 +331,37 @@ export default function ImprovedLiveControlPage() {
                   onCopyPin={handleCopyPin}
                   onCopyUrl={handleCopyUrl}
                 />
+                <div className="mt-6 p-4 border rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="body2" className="text-neutral-700">Lås översättning</Typography>
+                      <Typography variant="caption" className="text-neutral-500">Tvinga originalspråk i test‑läge</Typography>
+                    </div>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={lockLanguage}
+                        onChange={async (e) => {
+                          const next = e.target.checked
+                          setIsUpdatingLock(true)
+                          try {
+                            const resp = await fetch(`/api/live-sessions/${sessionId}/language-lock`, {
+                              method: 'PATCH',
+                              headers: { 'content-type': 'application/json' },
+                              body: JSON.stringify({ lock: next })
+                            })
+                            if (resp.ok) setLockLanguage(next)
+                          } finally {
+                            setIsUpdatingLock(false)
+                          }
+                        }}
+                        disabled={isUpdatingLock}
+                        className="h-4 w-4 text-primary-600"
+                      />
+                      <span className="text-sm">{isUpdatingLock ? 'Uppdaterar...' : (lockLanguage ? 'Låst' : 'Olåst')}</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           ) : null}
