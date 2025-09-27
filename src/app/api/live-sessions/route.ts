@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
+import { resolveEffectiveSubscriptionForUser } from '@/lib/billing/subscriptions'
+import { getRealtimeLimits } from '@/lib/realtime/limits'
 
 /**
  * POST /api/live-sessions
@@ -36,6 +38,25 @@ export async function POST(request: NextRequest) {
         { error: 'Du har inte behörighet att skapa sessioner för denna organisation' },
         { status: 403 }
       )
+    }
+
+    // Realtime guardrails: enforce concurrent session limits per plan
+    const quotas = await resolveEffectiveSubscriptionForUser(user.id)
+    const limits = getRealtimeLimits(quotas.plan)
+
+    if (limits.maxConcurrentSessions != null) {
+      const { count: activeCount } = await supabase
+        .from('quiz_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .in('status', ['CREATED', 'ACTIVE'])
+
+      if ((activeCount || 0) >= limits.maxConcurrentSessions) {
+        return NextResponse.json(
+          { error: 'Gräns för samtidiga livesessioner uppnådd. Uppgradera för fler.' },
+          { status: 429 }
+        )
+      }
     }
 
     // If classId is provided, verify access to class

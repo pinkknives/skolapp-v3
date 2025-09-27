@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
+import { resolveEffectiveSubscriptionForUser } from '@/lib/billing/subscriptions'
+import { getRealtimeLimits } from '@/lib/realtime/limits'
 
 /**
  * POST /api/live-sessions/[id]/join
@@ -27,7 +29,7 @@ export async function POST(
     // Get session details
     const { data: session, error: sessionError } = await supabase
       .from('quiz_sessions')
-      .select('id, pin, status, org_id, class_id, quiz_id, current_index')
+      .select('id, pin, status, org_id, class_id, quiz_id, current_index, created_by')
       .eq('id', sessionId)
       .single()
 
@@ -36,6 +38,21 @@ export async function POST(
         { error: 'Session hittades inte' },
         { status: 404 }
       )
+    }
+
+    // Enforce participant caps per plan (based on session creator's plan)
+    const quotas = await resolveEffectiveSubscriptionForUser(session.created_by)
+    const limits = getRealtimeLimits(quotas.plan)
+
+    // Get current participant count
+    const { count: participantCount } = await supabase
+      .from('quiz_session_participants')
+      .select('*', { count: 'exact', head: true })
+      .eq('session_id', sessionId)
+      .eq('role', 'student')
+
+    if (limits.maxParticipantsPerSession != null && (participantCount || 0) >= limits.maxParticipantsPerSession) {
+      return NextResponse.json({ error: 'Max antal deltagare uppnått för denna plan. Uppgradera för fler deltagare.' }, { status: 429 })
     }
 
     // Get quiz details separately
@@ -115,13 +132,6 @@ export async function POST(
       )
     }
 
-    // Get current participant count
-    const { count: participantCount } = await supabase
-      .from('quiz_session_participants')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
-      .eq('role', 'student')
-
     // Broadcast join event to other participants
     const channel = supabase.channel(`live:session:${sessionId}`)
     await channel.send({
@@ -130,7 +140,7 @@ export async function POST(
       payload: {
         sessionId,
         displayName,
-        participantCount: participantCount || 0
+        participantCount: (participantCount || 0) + 1
       }
     })
 
