@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
 import { requireTeacher } from '@/lib/auth'
+import { withApiMetric } from '@/lib/observability'
 
 /**
  * POST /api/quiz-sessions
@@ -8,6 +9,8 @@ import { requireTeacher } from '@/lib/auth'
  * Body: { classId: string, quizId: string, mode?: 'sync' | 'async' }
  */
 export async function POST(request: NextRequest) {
+  const correlationId = request.headers.get('x-correlation-id')
+  return (await withApiMetric('quiz-sessions.create', 'POST', correlationId, async () => {
   try {
     // Verify teacher authentication
     const user = await requireTeacher()
@@ -17,10 +20,11 @@ export async function POST(request: NextRequest) {
     const { classId, quizId, mode = 'sync' } = body
 
     if (!classId || !quizId) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Klass-ID och Quiz-ID krävs' },
         { status: 400 }
       )
+      return { result: res, status: 400 }
     }
 
     // Verify teacher has access to the class
@@ -31,10 +35,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (classError || !classData) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Klass hittades inte eller du har inte behörighet' },
         { status: 404 }
       )
+      return { result: res, status: 404 }
     }
 
     // Check if user owns the class or is in the same org
@@ -50,10 +55,11 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (!orgMember) {
-        return NextResponse.json(
+        const res = NextResponse.json(
           { error: 'Du har inte behörighet att skapa sessioner för denna klass' },
           { status: 403 }
         )
+        return { result: res, status: 403 }
       }
     }
 
@@ -65,10 +71,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (quizError || !quizData) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Quiz hittades inte eller du har inte behörighet' },
         { status: 404 }
       )
+      return { result: res, status: 404 }
     }
 
     // Check quiz access
@@ -84,10 +91,11 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (!orgMember) {
-        return NextResponse.json(
+        const res = NextResponse.json(
           { error: 'Du har inte behörighet att använda detta quiz' },
           { status: 403 }
         )
+        return { result: res, status: 403 }
       }
     }
 
@@ -110,17 +118,18 @@ export async function POST(request: NextRequest) {
 
     if (sessionError) {
       console.error('Error creating session:', sessionError)
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Kunde inte skapa session' },
         { status: 500 }
       )
+      return { result: res, status: 500 }
     }
 
     // Generate join URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const joinUrl = `${baseUrl}/join/session/${session.code}`
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       session: {
         id: session.id,
@@ -132,12 +141,15 @@ export async function POST(request: NextRequest) {
       },
       joinUrl
     })
+    return { result: res, status: 200 }
 
   } catch (error) {
     console.error('Error creating quiz session:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Ett oväntat fel uppstod' },
       { status: 500 }
     )
+    return { result: res, status: 500 }
   }
+  })).result
 }

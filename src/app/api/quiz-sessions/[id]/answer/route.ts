@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
+import { withApiMetric } from '@/lib/observability'
 
 // Rate limiting map - in production this should use Redis or similar
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -32,6 +33,8 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const correlationId = request.headers.get('x-correlation-id')
+  return (await withApiMetric('quiz-sessions.answer', 'POST', correlationId, async () => {
   try {
     const { id: sessionId } = await context.params
     const supabase = supabaseServer()
@@ -40,10 +43,11 @@ export async function POST(
     const { questionId, answer, userId } = body
 
     if (!questionId || answer === undefined) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Fråge-ID och svar krävs' },
         { status: 400 }
       )
+      return { result: res, status: 400 }
     }
 
     // Rate limiting check
@@ -51,10 +55,11 @@ export async function POST(
     const rateLimitKey = userId ? `user:${userId}` : `ip:${clientIp}`
     
     if (!checkRateLimit(rateLimitKey)) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Du svarar för snabbt. Vänta ett ögonblick.' },
         { status: 429 }
       )
+      return { result: res, status: 429 }
     }
 
     // Get session and verify it's active and accepting responses
@@ -68,24 +73,27 @@ export async function POST(
       .single()
 
     if (sessionError || !session) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Session hittades inte' },
         { status: 404 }
       )
+      return { result: res, status: 404 }
     }
 
     if (session.status !== 'live') {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Sessionen är inte aktiv' },
         { status: 400 }
       )
+      return { result: res, status: 400 }
     }
 
     if (!session.allow_responses) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Svar är för närvarande låsta' },
         { status: 400 }
       )
+      return { result: res, status: 400 }
     }
 
     // For sync sessions, verify the question is the current active question
@@ -94,10 +102,11 @@ export async function POST(
       const currentQuestion = questions?.[session.current_index]
       
       if (!currentQuestion || currentQuestion.id !== questionId) {
-        return NextResponse.json(
+        const res = NextResponse.json(
           { error: 'Detta är inte den aktiva frågan' },
           { status: 400 }
         )
+        return { result: res, status: 400 }
       }
     }
 
@@ -111,10 +120,11 @@ export async function POST(
         .single()
 
       if (!participant) {
-        return NextResponse.json(
+        const res = NextResponse.json(
           { error: 'Du är inte registrerad som deltagare i denna session' },
           { status: 403 }
         )
+        return { result: res, status: 403 }
       }
     }
 
@@ -128,10 +138,11 @@ export async function POST(
       .single()
 
     if (existingAnswer) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Du har redan svarat på denna fråga' },
         { status: 400 }
       )
+      return { result: res, status: 400 }
     }
 
     // Determine if answer is correct (for auto-grading)
@@ -170,10 +181,11 @@ export async function POST(
 
     if (answerError) {
       console.error('Error saving answer:', answerError)
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: 'Kunde inte spara svar' },
         { status: 500 }
       )
+      return { result: res, status: 500 }
     }
 
     // Also store detailed attempt item for analytics (long-term)
@@ -225,7 +237,7 @@ export async function POST(
         // This would trigger the materialized view refresh
       })
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       answer: {
         id: sessionAnswer.id,
@@ -233,12 +245,15 @@ export async function POST(
         submittedAt: sessionAnswer.submitted_at
       }
     })
+    return { result: res, status: 200 }
 
   } catch (error) {
     console.error('Error submitting answer:', error)
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: 'Ett oväntat fel uppstod' },
       { status: 500 }
     )
+    return { result: res, status: 500 }
   }
+  })).result
 }
