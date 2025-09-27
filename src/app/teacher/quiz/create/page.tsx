@@ -27,6 +27,8 @@ import { toast } from '@/components/ui/Toast'
 import { AIQuotaDisplay } from '@/components/billing/AIQuotaDisplay'
 import { SyllabusPicker } from '@/components/quiz/SyllabusPicker'
 import { track } from '@/lib/telemetry'
+import Link from 'next/link'
+import { HelpCircle } from 'lucide-react'
 
 // Dynamically import AI components for better performance
 const ImprovedAIQuizDraft = dynamic(() => import('@/components/quiz/ImprovedAIQuizDraft'), {
@@ -379,9 +381,14 @@ function CreateQuizPage() {
             <Typography variant="subtitle1" className="text-neutral-600">
               Skapa engagerande quiz för dina elever med hjälp av AI eller manuellt.
             </Typography>
-            <div>
+            <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={loadDemoQuiz} title="Ladda ett exempelquiz för att testa">
                 Ladda demoquiz
+              </Button>
+              <Button asChild variant="outline" size="sm" title="Öppna hjälp – Så skapar du ett quiz">
+                <Link href="/docs/README" onClick={() => { try { track('contextual_help_click', { area: 'quiz_create' }) } catch {} }}>
+                  <HelpCircle className="w-4 h-4 mr-1" /> Hjälp
+                </Link>
               </Button>
             </div>
           </div>
