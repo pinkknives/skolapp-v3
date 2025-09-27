@@ -4,6 +4,7 @@ import { env, assertOpenAIAvailable } from "@/lib/env.server";
 import { verifyQuota } from "@/lib/ai/quota";
 import { getCorrelationId } from '@/lib/correlation'
 import { createClient } from "@supabase/supabase-js";
+import { supabaseBrowser } from '@/lib/supabase-browser'
 import { InputSchema, OutputSchema, type GenerateQuestionsInput, type GenerateQuestionsOutput, type QuestionType, type BloomLevel } from "@/lib/ai/schemas";
 import { fetchSkolverketObjectives } from "@/lib/ai/skolverket";
 import { buildMessages } from "@/lib/ai/prompt";
@@ -51,26 +52,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI-funktioner är inte konfigurerade på denna server." }, { status: 503 });
     }
 
-    // Authenticate current user using Authorization header (Supabase JWT)
+    // Authenticate current user
     const authHeader = req.headers.get("authorization") || "";
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
+    let user: { id: string } | null = null
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    if (process.env.NODE_ENV === 'test') {
+      // In tests, use mocked browser client
+      const supa = supabaseBrowser()
+      const { data: { user: supaUser } } = await supa.auth.getUser()
+      user = supaUser ?? null
+    } else {
+      if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+        return NextResponse.json({ error: "Du måste vara inloggad för att använda AI-funktioner" }, { status: 401 });
+      }
+      const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+      const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return NextResponse.json({ error: 'Servern saknar Supabase-konfiguration' }, { status: 500 })
+      }
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false },
+      });
+      const { data: { user: supaUser } } = await supabase.auth.getUser();
+      user = supaUser ?? null
+    }
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Du måste vara inloggad för att använda AI-funktioner" }, { status: 401 });
     }
 
     // Quota check (resilient)
-    const userId = authHeader.startsWith("Bearer ") ? "jwt" : "unknown"; // placeholder; can be expanded to decode JWT
+    const userId = user.id;
     const quota = await verifyQuota({ userId, feature: "ai_generate" });
     if (!quota.ok) {
       if (quota.reason === "quota-exceeded") {

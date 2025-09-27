@@ -3,9 +3,17 @@ import { render, screen, within } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import ImprovedAIQuizDraft from '@/components/quiz/ImprovedAIQuizDraft'
 
-vi.mock('@/lib/ai/quizProvider', () => ({
-  quizAI: { generateQuestions: vi.fn().mockResolvedValue([]) }
-}))
+vi.mock('@/lib/ai/quizProvider', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    GRADE_LEVELS: [
+      { value: 'Åk 1', label: 'Åk 1' },
+      { value: 'Åk 2', label: 'Åk 2' },
+      { value: 'Åk 3', label: 'Åk 3' },
+    ],
+  }
+})
 
 describe('ImprovedAIQuizDraft (A11y basics)', () => {
   it('renders as aside with aria-label and has live region', () => {
