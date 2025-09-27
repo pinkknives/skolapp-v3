@@ -4,12 +4,33 @@ import React from 'react'
 import { Typography } from '@/components/ui/Typography'
 import { SubscriptionPlanSelector } from '@/components/auth/SubscriptionPlanSelector'
 import { type SubscriptionPlan, type DataRetentionMode } from '@/types/auth'
+import { Button } from '@/components/ui/Button'
 
 export function PricingContent() {
   const handlePlanSelect = (_plan: SubscriptionPlan, _dataMode: DataRetentionMode) => {
     // This would redirect to signup/login or subscription management
     // In a real app, this would redirect to auth or subscription management
     // window.location.href = `/auth/register?plan=${_plan}&dataMode=${_dataMode}`
+  }
+
+  const checkout = async (plan: 'teacher_bas' | 'teacher_pro' | 'school') => {
+    try {
+      const priceByPlan: Record<typeof plan, string> = {
+        teacher_bas: process.env.NEXT_PUBLIC_STRIPE_PRICE_BAS || 'price_teacher_bas',
+        teacher_pro: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || 'price_teacher_pro',
+        school: process.env.NEXT_PUBLIC_STRIPE_PRICE_SCHOOL || 'price_school'
+      }
+      const resp = await fetch('/api/billing/create-checkout-session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ priceId: priceByPlan[plan], plan, billingPeriod: 'monthly' })
+      })
+      if (!resp.ok) throw new Error('checkout_failed')
+      const data = await resp.json()
+      if (data?.url) window.location.href = data.url
+    } catch {
+      alert('Kunde inte starta Checkout just nu. Försök igen senare.')
+    }
   }
 
   return (
@@ -42,6 +63,24 @@ export function PricingContent() {
         onPlanSelect={handlePlanSelect}
         className="max-w-6xl mx-auto"
       />
+
+      <div className="mt-10 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="border rounded-lg p-4">
+          <Typography variant="h6" className="mb-1">Bas</Typography>
+          <Typography variant="subtitle2" className="text-neutral-600 mb-3">För enskilda lärare</Typography>
+          <Button onClick={() => checkout('teacher_bas')}>Uppgradera till Bas</Button>
+        </div>
+        <div className="border rounded-lg p-4">
+          <Typography variant="h6" className="mb-1">Pro</Typography>
+          <Typography variant="subtitle2" className="text-neutral-600 mb-3">För avancerade användare</Typography>
+          <Button onClick={() => checkout('teacher_pro')}>Uppgradera till Pro</Button>
+        </div>
+        <div className="border rounded-lg p-4">
+          <Typography variant="h6" className="mb-1">Skola</Typography>
+          <Typography variant="subtitle2" className="text-neutral-600 mb-3">För hela skolor</Typography>
+          <Button onClick={() => checkout('school')}>Kontakta försäljning</Button>
+        </div>
+      </div>
 
       {/* FAQ Section */}
       <div className="mt-16 max-w-4xl mx-auto">
