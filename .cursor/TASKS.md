@@ -29,7 +29,7 @@
 ---
 
 ## Milestone AM — Guided onboarding
-- [ ] “Kom igång”-guide (coachmarks + checklista).
+- [x] “Kom igång”-guide (coachmarks + checklista).
 - [ ] Demoquiz att testa direkt.
 - [ ] Contextual help: hjälp-ikon öppnar rätt docs/FAQ.
 **Acceptans**

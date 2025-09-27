@@ -7,11 +7,14 @@ import { Typography } from '@/components/ui/Typography'
 import { CheckCircle, Circle, Sparkles } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
 import confetti from 'canvas-confetti'
+import { Button } from '@/components/ui/Button'
+import { track } from '@/lib/telemetry'
 
 export function GettingStartedChecklist() {
   const [hasQuiz, setHasQuiz] = useState(false)
   const [hasClass, setHasClass] = useState(false)
   const [hasSession, setHasSession] = useState(false)
+  const [showTips, setShowTips] = useState(false)
 
   useEffect(() => {
     try {
@@ -83,16 +86,23 @@ export function GettingStartedChecklist() {
     } catch {}
   }, [completed])
 
-  const Item = ({ done, children }: { done: boolean; children: React.ReactNode }) => (
-    <div className="flex items-start gap-2">
-      {done ? (
-        <CheckCircle size={18} className="text-success-600 mt-0.5" />
-      ) : (
-        <Circle size={18} className="text-neutral-400 mt-0.5" />
-      )}
-      <div className="text-neutral-700">
-        {children}
+  const Item = ({ done, children, hint }: { done: boolean; children: React.ReactNode; hint?: React.ReactNode }) => (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-start gap-2">
+        {done ? (
+          <CheckCircle size={18} className="text-success-600 mt-0.5" />
+        ) : (
+          <Circle size={18} className="text-neutral-400 mt-0.5" />
+        )}
+        <div className="text-neutral-700">
+          {children}
+        </div>
       </div>
+      {!done && showTips && hint && (
+        <Typography variant="caption" className="text-neutral-500 pl-6">
+          {hint}
+        </Typography>
+      )}
     </div>
   )
 
@@ -102,10 +112,30 @@ export function GettingStartedChecklist() {
   return (
     <Card className="border-neutral-200">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles size={18} /> Kom igång – checklista
-        </CardTitle>
-        <CardDescription>Tre snabba steg för att komma igång på under 5 minuter.</CardDescription>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles size={18} /> Kom igång – checklista
+            </CardTitle>
+            <CardDescription>Tre snabba steg för att komma igång på under 5 minuter.</CardDescription>
+          </div>
+          <Button
+            variant={showTips ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => {
+              const next = !showTips
+              setShowTips(next)
+              try { track('onboarding_tips_toggle', { enabled: next }) } catch {}
+              if (next) {
+                toast.info('Tips aktiverade', { description: 'Vi visar korta tips under varje steg.' })
+              }
+            }}
+            aria-pressed={showTips}
+            title={showTips ? 'Dölj tips' : 'Visa korta tips under varje steg'}
+          >
+            {showTips ? 'Dölj tips' : 'Visa tips'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {/* Progress */}
@@ -127,24 +157,30 @@ export function GettingStartedChecklist() {
         </div>
 
         <div className="space-y-3">
-          <Item done={hasQuiz}>
+          <Item done={hasQuiz} hint={<>
+            Tips: Klicka på <Link href="/teacher/quiz/create" className="underline">Skapa nytt quiz</Link>.
+          </>}>
             <Link href="/teacher/quiz/create" className="text-primary-600 hover:underline font-medium">
               Skapa ditt första quiz
             </Link>
           </Item>
-          <Item done={hasClass}>
+          <Item done={hasClass} hint={<>
+            Tips: Gå till <Link href="/teacher/classes" className="underline">Mina klasser</Link> och välj Skapa klass.
+          </>}>
             <Link href="/teacher/classes" className="text-primary-600 hover:underline font-medium">
               Lägg till din första klass eller elevlista
             </Link>
           </Item>
-          <Item done={hasSession}>
+          <Item done={hasSession} hint={<>
+            Tips: Öppna <Link href="/live/join" className="underline">Live</Link> och dela koden med elever.
+          </>}>
             <Link href="/live/join" className="text-primary-600 hover:underline font-medium">
               Starta en live‑session och låt elever gå med med PIN
             </Link>
           </Item>
         </div>
         <Typography variant="caption" className="text-neutral-500 mt-4 block">
-          Tips: Deta avklaras automatiskt när du slutför stegen.
+          Tips: Detta avklaras automatiskt när du slutför stegen.
         </Typography>
       </CardContent>
     </Card>
