@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Typography } from '@/components/ui/Typography'
 import { QuestionTypePicker } from '@/components/ui/question-type/QuestionTypePicker'
-import { Quiz, Question, QuestionType } from '@/types/quiz'
+import { Quiz, Question, QuestionType, MultipleChoiceQuestion } from '@/types/quiz'
 import { QuestionEditor } from './QuestionEditor'
 import { createDefaultQuestion } from '@/lib/quiz-utils'
 import { questionTypes } from '@/locales/sv/quiz'
@@ -49,6 +49,11 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
   const [showAIModal, setShowAIModal] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null)
+  const [source, setSource] = useState<'prompt'|'url'|'file'>('prompt')
+  const [url, setUrl] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [extractPreview, setExtractPreview] = useState('')
+  const [isExtracting, setIsExtracting] = useState(false)
 
   // Validate on changes
   useEffect(() => {
@@ -103,6 +108,40 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
 
   const handleQuestionTypeSelect = (type: QuestionType) => {
     addQuestion(type)
+  }
+
+  const handleExtract = async () => {
+    setIsExtracting(true)
+    try {
+      const form = new FormData()
+      if (source === 'url' && url) form.append('url', url)
+      if (source === 'file' && file) form.append('file', file)
+      const resp = await fetch('/api/extract', { method: 'POST', body: form })
+      if (!resp.ok) return
+      const data = await resp.json()
+      setExtractPreview(data.preview || '')
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
+  const importHeadings = () => {
+    const lines = extractPreview.split(/\n|\r/)
+    const headings = lines.filter(l => /^\s*(#{1,6}|\d+\.|\-\s|\•\s)/.test(l) || l.trim().length > 40).slice(0, 10)
+    const questions: Question[] = headings.map((h, idx) => ({
+      id: `q-${Date.now()}-${idx}`,
+      type: 'multiple-choice',
+      title: h.replace(/^(#{1,6}|\d+\.|\-|\•)\s*/, '').slice(0, 120),
+      points: 1,
+      options: [
+        { id: 'a', text: 'Alternativ A', isCorrect: true },
+        { id: 'b', text: 'Alternativ B', isCorrect: false },
+        { id: 'c', text: 'Alternativ C', isCorrect: false },
+        { id: 'd', text: 'Alternativ D', isCorrect: false }
+      ]
+    } as MultipleChoiceQuestion))
+    onChange({ questions })
+    onValidationChange(questions.length > 0)
   }
 
   return (
@@ -166,6 +205,51 @@ export function QuizQuestionsStep({ quiz, onChange, onValidationChange, gradeLev
         </CardHeader>
         <CardContent>
           <QuestionTypePicker onSelectType={handleQuestionTypeSelect} />
+        </CardContent>
+      </Card>
+
+      {/* Källa */}
+      <Card>
+        <CardContent className="space-y-4">
+          <Typography variant="h6">Källa</Typography>
+          <div className="flex gap-4">
+            <label className="inline-flex items-center gap-2">
+              <input type="radio" name="src" checked={source==='prompt'} onChange={() => setSource('prompt')} />
+              Prompt/ämne
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="radio" name="src" checked={source==='url'} onChange={() => setSource('url')} />
+              URL
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="radio" name="src" checked={source==='file'} onChange={() => setSource('file')} />
+              PDF/TXT
+            </label>
+          </div>
+
+          {source === 'url' && (
+            <div className="flex gap-2">
+              <input className="flex-1 border rounded px-3 py-2" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+              <Button onClick={handleExtract} disabled={!url || isExtracting}>{isExtracting ? 'Hämtar…' : 'Extrahera'}</Button>
+            </div>
+          )}
+
+          {source === 'file' && (
+            <div className="flex items-center gap-2">
+              <input type="file" accept=".pdf,text/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <Button onClick={handleExtract} disabled={!file || isExtracting}>{isExtracting ? 'Läser…' : 'Extrahera'}</Button>
+            </div>
+          )}
+
+          {extractPreview && (
+            <div className="mt-4">
+              <Typography variant="subtitle2" className="mb-2">Förhandsvisning</Typography>
+              <textarea className="w-full h-40 border rounded p-2" readOnly value={extractPreview} />
+              <div className="mt-2 flex justify-end">
+                <Button variant="outline" onClick={importHeadings}>Importera rubriker som frågor</Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
