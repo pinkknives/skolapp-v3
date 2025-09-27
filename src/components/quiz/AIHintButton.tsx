@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { quizAI } from '@/lib/ai/quizProvider'
+import { UpgradeModal } from '@/components/billing/UpgradeModal'
 
 interface AIHintButtonProps {
   /** Button text */
@@ -38,17 +39,20 @@ export function AIHintButton({
   className = ''
 }: AIHintButtonProps) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const [showUpgrade, setShowUpgrade] = useState(false)
   
-  // Check if AI is available and get status
   const featureStatus = quizAI.getFeatureStatus()
-  const isDisabled = disabled || !featureStatus.available || loading
+  const isDisabled = disabled || loading
 
-  // Use appropriate tooltip based on availability
   const tooltipText = !featureStatus.available 
-    ? featureStatus.reason || 'AI ej aktiverad'
+    ? (featureStatus.reason || 'AI kräver uppgradering')
     : tooltip
 
   const handleClick = () => {
+    if (!featureStatus.available) {
+      setShowUpgrade(true)
+      return
+    }
     if (!isDisabled) {
       onClick()
     }
@@ -60,14 +64,13 @@ export function AIHintButton({
         variant={variant}
         size={size}
         onClick={handleClick}
-        disabled={isDisabled}
         aria-label={ariaLabel}
         className={`gap-x-2 ${className}`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onFocus={() => setShowTooltip(true)}
         onBlur={() => setShowTooltip(false)}
-      >
+     >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
@@ -86,6 +89,15 @@ export function AIHintButton({
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-neutral-900"></div>
         </div>
       )}
+
+      <UpgradeModal
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        onUpgrade={() => {
+          setShowUpgrade(false)
+          window.location.href = '/pricing'
+        }}
+      />
     </div>
   )
 }
